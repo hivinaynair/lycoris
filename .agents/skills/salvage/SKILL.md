@@ -18,18 +18,27 @@ people who suffer the consequences of getting it wrong.
 
 Read it before inventing anything.
 
+## First, check the premise
+
+The idea paragraph is a **claim**, not a fact. "They do it on paper" usually means nobody
+looked. Before mining (and before phase-1 research), settle:
+
+> What software, if any, already runs this job — name, vendor, cost, every transaction?
+
+Ask them only what is on the machine; you find the rest. Hold one photo/`gather` if needed.
+A paid incumbent means you replace software, not digitise paper. Wrong premise → reopen
+phase 0; do not carry it into shape.
+
 ## The rule
 
 **Mine for facts, never for structure.**
 
-Facts are what the domain is: what a receipt must legally carry, what states a booking
-moves through, what the accountant files monthly, which fields turned out to be required
-after real use. These are expensive to learn and cheap to carry over.
+Facts: receipt fields, real states, filings, always-empty columns, daily rituals.
+Structure: pages, nav, feature lists, unexplained menu labels.
 
-Structure is what the last build decided: which pages exist, how features were split, what
-the navigation looked like. Copying that reproduces the sprawl you are rebuilding to
-escape. The old app having sixteen features is evidence about scope creep, not a
-specification.
+**Job facts vs menu parity.** A Masters item you cannot explain is a hypothesis, not a
+backlog item. Photograph it; ask what staff *do* on a normal day; do not invent a subsystem
+to match a label.
 
 If you catch yourself writing "the new app should have a devotees page because the old one
 did" — that is structure. Stop.

@@ -8,6 +8,16 @@ product: kubera
 started: 2026-08-25
 size: new-product          # new-product | new-feature | small-change
 
+idea: >-
+  One paragraph claim. Rewrite when a decision voids it; or set idea_outdated: true
+  until you do (check-drift fails while true).
+
+idea_outdated: false         # true = idea: contradicts closed decisions
+
+prior_art:                   # optional; miners run on create
+  - path: /abs/path/to-legacy
+    note: Earlier build of this product
+
 phase: 2                   # the phase in progress
 phases:
   0: { name: salvage,      status: done,    artifact: docs/research/salvage.md }

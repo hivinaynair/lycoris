@@ -74,16 +74,26 @@ Routine choice — one question, options, a recommendation, then stop:
 Recommended: B — [one clause why]
 ```
 
-A choice that would **expand the contract** needs all five of these, in one message:
+A choice that would **expand the contract** needs all five of these, in one message —
+**including when they override a salvage "do not rebuild"** — before you record:
 
 1. What they originally asked for.
 2. What this would commit them to that they have not agreed to.
 3. The smallest thing that satisfies the original ask without the expansion.
-4. What accepting costs, and what declining costs.
+4. **What accepting costs, and what declining costs.**
 5. Your recommendation, and why it serves what they actually wanted.
+
+If you cannot state the cost, you are not ready to ask or record.
 
 One held item per gate — not one per question. A review that raises six questions is one
 held item pointing at the report.
+
+### Interview mode (keep tokens low)
+
+When something waits on them: **one question or one A/B/C set per message**. A few
+sentences max. No research dumps or digests in the same turn (`status` is the glance).
+Prefer tables in artifacts. Prefer `state.yaml` over re-reading design docs. Fold a
+checklist into an existing skill — do not add a new skill for ten lines of guidance.
 
 Never use the words "held", "state file", or "pipeline" when talking to them. Ask the
 question; keep the machinery to yourself.
@@ -91,7 +101,8 @@ question; keep the machinery to yourself.
 ## Recording an answer
 
 When they answer, write **their words**, verbatim, into the item. Not your summary of
-their words. Then close it and continue.
+their words. Then close it and continue. If the answer voids a claim in `idea:`, rewrite
+`idea:` in the same turn (or set `idea_outdated: true` so `check-drift` fails loudly).
 
 "Later" is an answer: set `until:` to a date, drop it out of the live list, and raise it
 again on that date. Do not leave it looking live, and do not invent a resolution.
@@ -169,7 +180,20 @@ payoff — do **not** start a new skill or a second journey file. Reopen this lo
 
 They keep typing `/next`. They do not type `/shape` or `/journeys` to revise.
 
-Phase 0 runs on every new product, not only rebuilds — there is almost always something being replaced, even if it is a spreadsheet. It is skipped only when `salvage` reports there is genuinely nothing to read. Phase 1 can run in parallel with 2 — send
+Phase 0 runs on every new product, not only rebuilds — there is almost always something being replaced, even if it is a spreadsheet. It is skipped only when `salvage` reports there is genuinely nothing to read.
+
+**Incumbent gate.** Before phase-1 fan-out: know what runs the job today (name + photos, or
+explicit "none"). Hold one `gather` if needed; do not deep-research against an unchecked
+"paper" claim.
+
+**Prior-art miners.** If `prior_art:` lists paths (or they name a legacy repo in the idea
+turn), dispatch `salvage-miner` per path in that same turn — do not wait for `/salvage`.
+
+**Gap-pass before shape.** Before marking field `done` / opening shape: skim open homework,
+incumbent screens, and hard problems; add or drop asks; rebuild the `.docx`. Ten lines of
+checklist — not a new skill.
+
+Phase 1 can run in parallel with 2 — send
 them out to gather, then keep researching while they are gone. **Never idle while a
 `gather` item is open.**
 
@@ -199,15 +223,15 @@ inherit the parent's skill catalog. `spine-checker` validates a journey YAML;
 A Cursor hook denies writes under `apps/*/src/app` and `apps/*/src/features` until
 `shape` is `done`. Do not bypass it. `ui_writes` in the state file is the override.
 
-Before advancing from any phase into building, check the artifacts still agree with each
-other: does every feature trace to journey steps, does every screen in the spine exist in
-the design doc, does the code still match the spine. Report drift; do not silently fix it.
+Before advancing from any phase into building, run `bun scripts/check-drift.ts`. Report
+what it finds; do not silently fix it.
 
 ## Starting fresh
 
-No `docs/product/state.yaml`? This is a new product. Create it, set phase 0, and ask them
-for the idea in a paragraph — then get to work. Do not interview them yet; `shape` owns
-that, and it comes after research.
+No `docs/product/state.yaml`? This is a new product. Create it, set phase 0, ask for the
+idea in a paragraph **and any prior-art paths** (legacy repo, Drive folder, screenshots).
+Record paths under `prior_art:`. Dispatch miners immediately. Do not interview yet;
+`shape` owns that, and it comes after research. Worked example: [docs/playbook/golden-path.md](../../../docs/playbook/golden-path.md).
 
 On create, set `clone.customized: pending`. `/next` will invoke `customize` after
 the design doc is approved — do not ask them to type that skill.
