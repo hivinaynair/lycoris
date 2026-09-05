@@ -43,9 +43,8 @@ print that writes are allowed unless they ask.
 say the playbook files are on disk (`.agents/skills/`, `.cursor/skills/`) but were not
 offered as skills. Omit if those skills are in your list.
 
-**Drift** — contradictions only: a phase marked done whose artifact is missing, a Linear
-issue with no journey step, a feature with no issue, criteria that no longer match the
-spine. Report; change nothing.
+**Drift** — run `bun scripts/check-drift.ts`. Report contradictions only (missing
+artifacts, stale `idea_outdated`, Linear gaps). Change nothing.
 
 ## Rules
 

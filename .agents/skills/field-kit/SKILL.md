@@ -24,6 +24,19 @@ finding, cite every fact, table anything parallel, respect the cap.
 Write `docs/product/homework/<nn>-<topic>.md`. It is a form to fill in on site, not an
 essay to read beforehand.
 
+### Photo-first, thin pack
+
+1. **Capture checklist first** (screens, receipts, printer, day-end printout).
+2. Cap typed questions at **~15**, with a ranked top five. More is usually agent curiosity.
+3. Move answered bullets under `## Closed` (or `## Settled`). `homework.mjs` **does not
+   render** those sections — rebuild the `.docx` after every close.
+4. Ask about the past, not the product. No "would you like…".
+
+### Provenance
+
+Every field artifact starts with one line: **observation** | **recollection** | **committee**
+(or mix, labelled per answer). Shape must not treat soft evidence as hard.
+
 ### First, do your own work
 
 Never send someone out for something you could find yourself. Read the repo, the salvage
@@ -83,6 +96,21 @@ booking flow", not "understood the booking flow". Number the stages and show how
 there are, so progress is visible on site.
 
 Finish with the **open questions from earlier phases** this trip should settle.
+
+### Hand over a form, not markdown
+
+```
+node scripts/homework.mjs build docs/product/homework/02-temple-visit.md
+node scripts/homework.mjs read docs/product/intake/02-temple-visit.docx
+```
+
+Markdown is source of truth; `.docx` is the render. Rebuild after pruning Closed.
+Never invent a second generator.
+
+### Gap-pass before closing field
+
+Before field → shape: open asks × incumbent photos × hard problems. Add/drop; rebuild
+docx. Then stop for their trip — do not idle on research that depends on answers.
 
 ---
 

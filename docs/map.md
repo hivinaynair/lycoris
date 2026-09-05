@@ -68,11 +68,11 @@ Type `/next`. It reads `docs/product/state.yaml` and does every step that is not
 
 | Skill | Job |
 |---|---|
-| `next` | Router. Runs the current phase. One held item at a time. |
+| `next` | Router. Runs the current phase. One held item at a time. Interview mode: one question per turn. |
 | `status` | Read-only glance. Also injected on local `sessionStart`. |
 | `artifacts` | House rules for anything under `docs/product`, `docs/plans`, `docs/research`, `docs/journeys`. |
-| `salvage` | Mine prior art for domain facts. |
-| `field-kit` | Homework only they can fill; then absorb what comes back. |
+| `salvage` | Mine prior art for domain facts. Incumbent gate first; facts ≠ menu parity. |
+| `field-kit` | Homework only they can fill; photo-first; prune Closed; gap-pass before shape. |
 | `shape` | Interview → design doc. Canvas is a view of that doc. |
 | `ontology` | Domain entities before schema or spine. |
 | `journeys` | Expand the design-doc journey table into an ID’d YAML spine. |
@@ -87,6 +87,8 @@ Type `/next`. It reads `docs/product/state.yaml` and does every step that is not
 | `turborepo` | Vendor skill for the monorepo. |
 
 Phases, from [`next/SKILL.md`](../.agents/skills/next/SKILL.md): salvage → research → field → shape → ontology → journeys → structure / visual → Linear → build. Ship one walking skeleton after the spine exists. `prototype` is not a phase. A wrong product story reopens `shape` on the journeys table, then `journeys` — still `/next`, no new skill.
+
+Worked example for idea + legacy path: [`docs/playbook/golden-path.md`](playbook/golden-path.md). Scripts: `bun scripts/check-drift.ts`, `node scripts/homework.mjs build <md>`.
 
 No `docs/product/state.yaml` means no product. Boilerplate may be edited. This repo is in that state.
 

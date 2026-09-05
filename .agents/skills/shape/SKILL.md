@@ -34,7 +34,8 @@ Shaping:
 
 Violate none of these:
 
-- **ONE question per message.** Prefer multiple choice. Never dump 8 questions.
+- **ONE question per message.** Prefer multiple choice. Never dump 8 questions. Same
+  interview-mode budget as `/next` (few sentences; no digests in the ask turn).
 - **Research after there is enough to search;** come back with 2–3 findings and a question. Write cited notes under `docs/research/` if useful.
 - **The doc is the state.** Create `docs/plans/<date>-<name>-design.md` the moment the claim is confirmed, then append each section as its gate passes. Confirmed work never lives only in this chat.
 - **Confirm in order: claim paragraph → actors → journeys → THEN screens.** Do not skip journey confirmation.
