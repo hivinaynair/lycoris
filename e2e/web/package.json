@@ -1,5 +1,5 @@
 {
-  "name": "@repo/web-e2e",
+  "name": "@repo/lycoris-e2e",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -9,7 +9,7 @@
     "e2e:install": "playwright install chromium"
   },
   "dependencies": {
-    "web": "*"
+    "lycoris": "*"
   },
   "devDependencies": {
     "@msw/playwright": "^0.6.7",

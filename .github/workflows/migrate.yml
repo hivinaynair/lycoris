@@ -1,4 +1,4 @@
-name: Migrate database
+name: Push db schema
 
 on:
   push:
@@ -11,7 +11,7 @@ concurrency:
 
 jobs:
   migrate:
-    name: Apply Drizzle migrations
+    name: drizzle-kit push (@repo/db)
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     steps:
@@ -24,16 +24,12 @@ jobs:
       - name: Install dependencies
         run: bun install --frozen-lockfile
 
-      - name: Apply migrations
+      - name: Push schema
         env:
-          DATABASE_URL_UNPOOLED: ${{ secrets.DATABASE_URL_UNPOOLED }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
-          if [ ! -f packages/db/drizzle/meta/_journal.json ]; then
-            echo "No Drizzle journal yet; skipping migrate."
-            exit 0
-          fi
-          if [ -z "$DATABASE_URL_UNPOOLED" ]; then
-            echo "DATABASE_URL_UNPOOLED is not set on the GitHub Environment for this branch."
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL is not set on the GitHub Environment for this branch."
             exit 1
           fi
-          bun run db migrate
+          bun run db:push

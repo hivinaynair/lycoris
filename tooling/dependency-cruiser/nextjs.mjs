@@ -3,32 +3,41 @@ export default {
   forbidden: [
     {
       name: "features-not-to-features",
-      comment: "Features cannot import each other. Hoist shared code to src/shared or packages/.",
+      comment: "Features cannot import each other. Hoist shared code to shared/ or packages/.",
       severity: "error",
-      from: { path: "(^src/features/)([^/]+)/" },
+      from: { path: "(^(?:src/)?features/)([^/]+)/" },
       to: { path: "^$1", pathNot: "$1$2" },
     },
     {
       name: "shared-not-to-features",
       comment: "shared/ has no knowledge of features.",
       severity: "error",
-      from: { path: "^src/shared/" },
-      to: { path: "^src/features/" },
+      from: { path: "^(?:src/)?shared/" },
+      to: { path: "^(?:src/)?features/" },
     },
     {
       name: "features-not-to-app",
       comment: "Features must not import the App Router tree. app/ composes features.",
       severity: "error",
-      from: { path: "^src/features/" },
-      to: { path: "^src/app/" },
+      from: { path: "^(?:src/)?features/" },
+      to: { path: "^(?:src/)?app/" },
     },
     {
       name: "only-app-imports-features",
       comment:
-        "Only composition roots may import features: src/app and src/proxy.ts. Features may import themselves. src/lib and src/components still belong in shared/ or a feature.",
+        "Only composition roots may import features: app/, proxy.ts, and lycoris components/lib/server. Features may import themselves.",
       severity: "error",
-      from: { pathNot: ["^src/app/", "^src/features/", "^src/proxy\\.ts$"] },
-      to: { path: "^src/features/" },
+      from: {
+        pathNot: [
+          "^(?:src/)?app/",
+          "^(?:src/)?features/",
+          "^(?:src/)?proxy\\.ts$",
+          "^components/",
+          "^lib/",
+          "^server/",
+        ],
+      },
+      to: { path: "^(?:src/)?features/" },
     },
   ],
   options: {

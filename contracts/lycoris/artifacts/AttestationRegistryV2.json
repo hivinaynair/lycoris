@@ -1,0 +1,37 @@
+{
+  "abi": [
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "commitment",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint64",
+          "name": "timestamp",
+          "type": "uint64"
+        }
+      ],
+      "name": "AttestedCommitment",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "commitment",
+          "type": "bytes32"
+        }
+      ],
+      "name": "attest",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "6080604052348015600e575f5ffd5b5060c980601a5f395ff3fe6080604052348015600e575f5ffd5b50600436106026575f3560e01c806323c3617f14602a575b5f5ffd5b60396035366004607d565b603b565b005b60405167ffffffffffffffff4216815281907f73e3c6a71519eacda632de34fd29f97ac6f2f26da8b23b39cceb6b3742ed01f29060200160405180910390a250565b5f60208284031215608c575f5ffd5b503591905056fea2646970667358221220560c6957627b727fe62702e5481d43549f8a3a93a6aaf653c56516c3807ef07a64736f6c63430008230033"
+}

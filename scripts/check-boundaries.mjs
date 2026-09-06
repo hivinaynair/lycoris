@@ -28,16 +28,24 @@ for (const name of entries) {
   }
 
   const srcDir = join(appDir, "src");
+  const featuresDir = join(appDir, "features");
+  let cruiseTarget = null;
   try {
-    if (!(await stat(srcDir)).isDirectory()) {
-      continue;
-    }
+    if ((await stat(srcDir)).isDirectory()) cruiseTarget = "src";
   } catch {
-    continue;
+    /* no src/ */
   }
+  if (!cruiseTarget) {
+    try {
+      if ((await stat(featuresDir)).isDirectory()) cruiseTarget = ".";
+    } catch {
+      /* no features/ */
+    }
+  }
+  if (!cruiseTarget) continue;
 
   cruised += 1;
-  const args = ["bunx", "depcruise", "src", "--config", config, "--output-type", "json"];
+  const args = ["bunx", "depcruise", cruiseTarget, "--config", config, "--output-type", "json"];
   const proc = Bun.spawn(args, {
     cwd: appDir,
     stdout: "pipe",
@@ -67,7 +75,7 @@ for (const name of entries) {
 }
 
 if (cruised === 0) {
-  console.error("No Next.js apps with src/ found under apps/.");
+  console.error("No Next.js apps with src/ or features/ found under apps/.");
   process.exit(1);
 }
 

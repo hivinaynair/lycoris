@@ -1,0 +1,36 @@
+import type { SignedMandate } from "@repo/shared/mandate";
+import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES } from "@repo/shared/mandate";
+import { verifyTypedData } from "viem";
+
+// USDC has 6 decimals — multiply whole-unit amounts by this to get atomic units
+export const USDC_ATOMIC_FACTOR = 1_000_000n;
+
+export function extractAuthNonce(payload: unknown): string | undefined {
+  const p = payload as Record<string, unknown>;
+  const auth = p.authorization as Record<string, unknown> | undefined;
+  return typeof auth?.nonce === "string" ? auth.nonce : undefined;
+}
+
+export function getPayerAddress(payload: unknown): `0x${string}` | undefined {
+  const p = payload as Record<string, unknown>;
+  const auth = p.authorization as Record<string, unknown> | undefined;
+  return (auth?.from ?? p.from) as `0x${string}` | undefined;
+}
+
+// Verifies the delegator's EIP-712 signature over a SignedMandate.
+export function verifyMandateSignature(mandate: SignedMandate): Promise<boolean> {
+  return verifyTypedData({
+    address: mandate.payload.delegator,
+    domain: MANDATE_EIP712_DOMAIN,
+    types: MANDATE_EIP712_TYPES,
+    primaryType: "MandatePayload",
+    message: {
+      agent: mandate.payload.agent,
+      delegator: mandate.payload.delegator,
+      maxAmountUsdc: mandate.payload.maxAmountUsdc,
+      expiry: mandate.payload.expiry,
+      nonce: mandate.payload.nonce,
+    },
+    signature: mandate.signature,
+  });
+}

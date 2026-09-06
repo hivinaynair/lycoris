@@ -1,0 +1,33 @@
+{
+  "name": "agent",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "imports": {
+    "#*": "./agent/*"
+  },
+  "scripts": {
+    "dev": "eve dev --port 3002",
+    "build": "eve build",
+    "start": "eve start --port 3002",
+    "check-types": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^4.0.20",
+    "@coinbase/cdp-sdk": "^1.51.2",
+    "@repo/db": "workspace:*",
+    "@repo/shared": "workspace:*",
+    "@x402/core": "^2.17.0",
+    "@x402/evm": "^2.17.0",
+    "@x402/fetch": "^2.17.0",
+    "ai": "^7.0.34",
+    "eve": "^0.27.6",
+    "viem": "^2",
+    "zod": "4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "24.x",
+    "typescript": "^5"
+  }
+}

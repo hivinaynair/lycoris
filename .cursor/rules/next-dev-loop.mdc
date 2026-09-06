@@ -1,9 +1,0 @@
----
-description: Verify Next.js UI/runtime changes with next-dev-loop
-globs: apps/*/src/**/*.{ts,tsx,js,jsx,css}
-alwaysApply: false
----
-
-When a change can affect what a running page does or shows, verify it at runtime with the next-dev-loop skill before treating the work as done.
-
-Do not run the loop after every small edit (types, renames, comments). Use it for UI, routing, Server Actions, data fetching, and suspected runtime bugs.

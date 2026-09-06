@@ -1,9 +1,12 @@
 {
-  "name": "vipernxt",
+  "name": "lycoris",
   "private": true,
   "scripts": {
     "build": "turbo run build",
-    "dev": "turbo run dev",
+    "dev": "turbo run dev --filter=lycoris --filter=facilitator --filter=agent",
+    "dev:ui": "turbo run dev --filter=lycoris",
+    "dev:facilitator": "turbo run dev --filter=facilitator",
+    "dev:agent": "turbo run dev --filter=agent",
     "format-and-lint": "biome check .",
     "format-and-lint:fix": "biome check . --write",
     "check-types": "turbo run check-types",
@@ -11,15 +14,14 @@
     "e2e": "turbo run e2e",
     "check-boundaries": "bun scripts/check-boundaries.mjs",
     "check-tokens": "bun scripts/check-tokens.mjs",
-    "check-journeys": "bun scripts/journey.ts ids docs/journeys",
-    "check-drift": "bun scripts/check-drift.ts",
     "ui:add": "turbo run add --filter=@repo/ui",
-    "db": "bun scripts/db.mjs",
-    "db:generate": "turbo run db:generate --filter=@repo/db",
-    "db:migrate": "turbo run db:migrate --filter=@repo/db",
-    "db:studio": "turbo run db:studio --filter=@repo/db",
+    "db:push": "turbo run db:push --filter=@repo/db",
+    "lycoris:compile-contracts": "bun packages/scripts/compile-contracts.ts",
+    "lycoris:deploy-contracts": "bun --env-file=packages/scripts/.env.local packages/scripts/deploy-contracts.ts",
+    "lycoris:fund-wallet": "bun --env-file=packages/scripts/.env.local packages/scripts/fund-wallet.ts",
+    "lycoris:bootstrap": "bun --env-file=packages/scripts/.env.local packages/scripts/demo-bootstrap/index.ts",
     "preinstall": "bunx only-allow@1.2.2 bun",
-    "prepare": "lefthook install"
+    "prepare": "lefthook install || true"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
@@ -52,5 +54,6 @@
     "packages/*",
     "e2e/*",
     "tooling/*"
-  ]
+  ],
+  "dependencies": {}
 }

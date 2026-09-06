@@ -1,0 +1,69 @@
+@import "tailwindcss";
+@import "@repo/ui/globals.css";
+
+@theme inline {
+  --color-positive: var(--success);
+  --color-positive-surface: color-mix(in srgb, var(--success) 14%, transparent);
+  --color-negative: var(--destructive);
+  --color-negative-surface: color-mix(in srgb, var(--destructive) 14%, transparent);
+  --color-warning-surface: color-mix(in srgb, var(--warning) 14%, transparent);
+  --color-surface-sunken: var(--muted);
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  color-scheme: light;
+}
+
+@layer components {
+  .settlement-flange {
+    background: var(--secondary);
+  }
+
+  .settlement-gate {
+    background: var(--muted);
+  }
+
+  .status-dot-live {
+    display: inline-block;
+    flex-shrink: 0;
+    background: var(--success);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 22%, transparent);
+  }
+
+  .gate-glow-positive {
+    background: color-mix(in srgb, var(--primary) 35%, transparent);
+  }
+
+  .gate-glow-negative {
+    background: color-mix(in srgb, var(--destructive) 22%, transparent);
+  }
+
+  .shadow-glow-positive {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 35%, transparent);
+  }
+
+  .shadow-glow-negative {
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--destructive) 25%, transparent);
+  }
+
+  .shadow-rail-panel {
+    box-shadow: 0 8px 24px rgb(26 26 26 / 6%);
+  }
+}
+
+@keyframes gate-current-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 45%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--primary) 0%, transparent);
+  }
+}
+
+.gate-current {
+  animation: gate-current-pulse 1.1s ease-in-out infinite;
+}

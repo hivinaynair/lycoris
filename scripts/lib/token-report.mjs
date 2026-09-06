@@ -29,5 +29,6 @@ export function isTokenSourcePath(path) {
   const normalized = path.replace(/\\/g, "/");
   if (normalized.endsWith("globals.css")) return false;
   if (/\.(test|spec)\./.test(normalized)) return false;
-  return /(?:^|\/)apps\/[^/]+\/src\//.test(normalized);
+  if (/(?:^|\/)apps\/[^/]+\/src\//.test(normalized)) return true;
+  return /(?:^|\/)apps\/[^/]+\/(?:app|features|components|lib|server)\//.test(normalized);
 }

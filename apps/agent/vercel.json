@@ -1,0 +1,4 @@
+{
+  "installCommand": "cd ../.. && bun install",
+  "buildCommand": "cd ../.. && turbo run build --filter=agent"
+}

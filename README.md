@@ -1,121 +1,79 @@
-# ViperNxt
+# lycoris
 
-An opinionated Bun + Next.js SaaS kit **and** the playbook that shapes a product
-before anyone writes UI. Clone it, type `/next`, approve a design doc, then build
-one journey through real data.
+Bun + Turborepo demo of **agentic USDC payments** on Base Sepolia.
 
-The valuable part is not the starter page. It is a hook that denies product UI
-until the doc is approved, a journey spine that screens and tests cite, and one
-command that runs the rest. Full map: [docs/map.md](docs/map.md). Agents:
-[AGENTS.md](AGENTS.md).
+An Eve agent pays for a paid API (Melbourne weather) through **x402**. A custom
+facilitator runs identity / mandate gates, then settles Circle USDC.
+The Lycoris UI shows the run.
 
-**Requires** [Bun](https://bun.sh) `1.4.x`. Anything else fails (`only-allow bun`).
+Tooling layout matches ViperNxt (Bun-only, Turbo, Biome, `bun test`, Playwright
+e2e). Named after *Lycoris Recoil* — agents on a mission. No ZK guest, desk, or T-bill clip.
 
-## What it is not
+**Requires** [Bun](https://bun.sh) `1.4.x`.
 
-| Not this | Why |
+## Shape
+
+```
+apps/
+  agent/         Eve agent — tools, wallet, x402 fetch
+  facilitator/   Hono x402 facilitator + settlement gates
+  lycoris/       Next.js demo UI (port 3003)
+packages/
+  shared/        Types, ABIs, chain helpers, decision records
+  db/            Neon + Drizzle (attestations, agents, policies)
+  scripts/       Compile / deploy / fund / bootstrap helpers
+  ui/            shadcn components (@repo/ui)
+contracts/lycoris/ AttestationRegistry (optional on-chain attest)
+e2e/web/         Playwright harness (points at lycoris)
+tooling/         typescript-config, mocks, dependency-cruiser
+```
+
+## What this is
+
+| Piece | Role |
 |---|---|
-| A demo SaaS to restyle | `apps/web` is leftover create-turbo copy until a product exists |
-| A vendor catalog | The stack is decided. A product records keep/strip; it does not reopen the list |
-| “Just start building” | Until `shape` is done, writes under `apps/*/src/app` and `src/features` are denied |
-| A second journey file | A wrong product story reopens the design-doc table, then the spine. Same IDs |
-| npm / pnpm / yarn, ESLint, Vitest, Prisma, NextAuth | Those fights are closed on purpose |
+| Agent | Asks for weather; pays when the API returns HTTP 402 |
+| Facilitator | Verifies payment + runs gates; settles USDC |
+| Lycoris UI | Operator view of scenarios, gates, and rain answer |
+| USDC | Circle Base Sepolia `0x036CbD…CF7e` (existing, not a custom token) |
 
-Billing and Clerk org UI are not in the tree. Add them when a product asks.
+## What we left out
 
-## Opinions worth keeping
-
-These are the kit. `/next` may **strip** a vendor after the design doc says so.
-It does not add a second option “just in case”.
-
-| Layer | Use | Skip |
-|---|---|---|
-| Install | Bun `1.4.x` | npm, pnpm, yarn |
-| App | Next.js 16, one `apps/web` | Extra apps until customize asks |
-| Auth | Clerk | NextAuth, hand-rolled JWT |
-| Database | Drizzle + Neon, import `env` from `@/env` | Prisma, `process.env` in app code |
-| Jobs | Vercel Workflows | A second queue on day one |
-| UI | shadcn in `packages/ui` | Components installed into `apps/web` |
-| Lint | Biome | ESLint, Prettier |
-| Test | `bun test`, Playwright | Vitest, Jest, Cypress |
-| Branches | PRs → `staging`; `main` is production | Trunk-only until you change it on purpose |
-
-Features must not import each other. Compose in `app/` or hoist to `shared/` or a
-package. `bun run check-boundaries` enforces that.
-
-## From clone
-
-You type `/next`. You do not type `/customize` or `/journeys`.
-
-| Step | Who | What |
-|---|---|---|
-| 1. Clone | you | New repo from this tree. Keep the opinions. |
-| 2. `/next` | agent | Researches, then interviews one question at a time. Pin `/next` as a Custom Mode. |
-| 3. Approve the design doc | you | Until then, product UI is locked. |
-| 4. Name the clone | `/next` | Product name, then keep/strip. Writes `PRODUCT`. Never set up as `vipernxt`. |
-| 5. `setup.sh` | script | One Neon project, `staging` + `production` databases, Vercel, Clerk, Linear. |
-| 6. Journey spine | `/next` | Expands the Seat / Wants / Can click table into ID’d YAML. IDs never renumber. |
-| 7. Thin slice | agent | One journey through real data before the full component inventory. |
-
-If the journey is the **wrong product story** — too hard, wrong payoff, not what
-you meant — say so. `/next` rewrites the clip and that table, you confirm, then
-it expands the spine again. Same moment keeps `J1.S2`. A new beat gets a new ID.
-
-`status` is the glance. After the spine, `/next` runs `plan` (one feature →
-spec + slices) then `build` (one slice, tests name `J1.S3`). `prototype` is
-three variants of **one** component, mid-build. None of those skills name a
-host or a model as a prerequisite.
-
-Playbook source: [saas-playbook](https://github.com/hivinaynair/saas-playbook).
-In Cursor, the same picture is a canvas titled **ViperNxt map** (a view of
-[docs/map.md](docs/map.md), not a second spec).
-
-## Layout
-
-| Path | Role |
-|---|---|
-| `apps/web` | Routes in `src/app`, domains in `src/features/*`, app-local in `src/shared` |
-| `packages/ui` | shadcn (`@repo/ui`). `bun run ui:add -- <component>` |
-| `packages/db` | Drizzle + Neon. Server-only. Schema empty until a product needs tables |
-| `e2e/web` | Playwright |
-| `docs/` | Design doc, journeys, this map — after `/next` |
-| `.agents/skills/` | Playbook. `.cursor/skills/` and `.claude/skills/` are symlinks |
+- Sietch ZK / SP1 / guest ELF / T-bill / desk room
+- ViperNxt `/next` skills, playbook hooks, journey/homework scripts
+- SaaS starter `apps/web` and `@repo/db`
 
 ## Commands
 
 ```sh
 bun install
+
+# three processes (UI + facilitator + agent)
 bun run dev
-bun run check-types && bun run check-boundaries && bun run check-tokens && bun run check-journeys && bun test
-bun run ui:add -- button
-bun run db generate && bun run db migrate
+
+# or one at a time
+bun run dev:ui
+bun run dev:facilitator
+bun run dev:agent
+
+bun test
+bun run check-types
+bun run check-boundaries
+bun run check-tokens
 ```
 
-Lefthook runs Biome, boundaries, and affected typechecks on commit.
+Copy `.env.example` → `.env.local` under `apps/agent`, `apps/facilitator`,
+`apps/lycoris`, and `packages/db` (and `packages/scripts` for
+bootstrap). See each file for required keys (CDP, Anthropic, Neon, facilitator
+URL, etc.).
 
-Env: copy `apps/web/.env.example` → `apps/web/.env.local`. Import `env` from
-`@/env`, not `process.env`. Neon wants `DATABASE_URL` (pooled) and
-`DATABASE_URL_UNPOOLED` (direct, for migrate).
+Demo bootstrap (wallets, mandate seed, funding):
 
-## Branches
+```sh
+bun run lycoris:bootstrap
+```
 
-| Branch | Role |
-|---|---|
-| `staging` | Check-in. Open PRs here. |
-| `main` | Production. Merge `staging` → `main` to release. |
+## Pitch in one line
 
-Push to either runs [migrate.yml](.github/workflows/migrate.yml). Additive
-migrations only. After the first `staging` push, make it the GitHub default
-branch.
-
-## Links
-
-[Turborepo](https://turborepo.dev/docs) ·
-[Next.js](https://nextjs.org/docs) ·
-[Clerk](https://clerk.com/docs) ·
-[Drizzle](https://orm.drizzle.team) ·
-[Neon](https://neon.com/docs) ·
-[shadcn/ui](https://ui.shadcn.com) ·
-[Workflow DevKit](https://useworkflow.dev) ·
-[Biome](https://biomejs.dev) ·
-[Bun test](https://bun.com/docs/cli/test)
+Agent wants a paid API → x402 challenge → facilitator gates → USDC settles on
+Base Sepolia → weather answer returns.

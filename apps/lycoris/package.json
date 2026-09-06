@@ -1,0 +1,43 @@
+{
+  "name": "lycoris",
+  "version": "0.0.1",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --port 3003",
+    "build": "next build",
+    "start": "next start",
+    "check-types": "SKIP_ENV_VALIDATION=1 next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@splinetool/react-spline": "^4.1.0",
+    "@splinetool/runtime": "^1.12.98",
+    "@t3-oss/env-nextjs": "^0.13.11",
+    "@repo/db": "workspace:*",
+    "@repo/shared": "workspace:*",
+    "@repo/ui": "workspace:*",
+    "@x402/core": "^2.17.0",
+    "@x402/evm": "^2.17.0",
+    "@x402/next": "^2.17.0",
+    "drizzle-orm": "^0.45.2",
+    "eve": "^0.27.6",
+    "framer-motion": "^12.42.2",
+    "lucide-react": "^1.23.0",
+    "next": "16.3.0",
+    "nuqs": "^2.9.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "viem": "^2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.15.3",
+    "@types/react": "19.2.2",
+    "@types/react-dom": "19.2.2",
+    "@repo/typescript-config": "workspace:*",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^4.3.3",
+    "typescript": "5.9.2"
+  }
+}

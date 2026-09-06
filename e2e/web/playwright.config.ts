@@ -1,9 +1,9 @@
 import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
 
-const PORT = process.env.PORT ?? "3000";
+const PORT = process.env.PORT ?? "3003";
 const baseURL = `http://localhost:${PORT}`;
-const webDir = path.join(import.meta.dirname, "../../apps/web");
+const webDir = path.join(import.meta.dirname, "../../apps/lycoris");
 
 export default defineConfig({
   testDir: "./tests",

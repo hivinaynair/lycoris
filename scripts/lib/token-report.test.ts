@@ -20,8 +20,10 @@ describe("rawTokenHits", () => {
 });
 
 describe("isTokenSourcePath", () => {
-  it("checks app sources only — shadcn in packages/ui is out of scope", () => {
+  it("checks app sources — shadcn in packages/ui is out of scope", () => {
     expect(isTokenSourcePath("apps/web/src/app/page.tsx")).toBe(true);
+    expect(isTokenSourcePath("apps/lycoris/app/page.tsx")).toBe(true);
+    expect(isTokenSourcePath("apps/lycoris/features/feed/components/feed-table.tsx")).toBe(true);
     expect(isTokenSourcePath("packages/ui/src/components/button.tsx")).toBe(false);
     expect(isTokenSourcePath("packages/ui/src/styles/globals.css")).toBe(false);
     expect(isTokenSourcePath("apps/web/src/app/page.test.tsx")).toBe(false);

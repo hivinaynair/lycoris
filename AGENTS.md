@@ -1,55 +1,36 @@
-# ViperNxt
+# lycoris
 
-Bun-only Turborepo boilerplate for a Next.js SaaS. See [README.md](README.md) for
-layout, commands, and the customize-this-clone prompt — this file is the short
-version agents need before touching anything.
+Bun-only Turborepo for an **agentic USDC payment** demo. Read [README.md](README.md)
+for layout and commands. This file is the short version agents need before
+touching anything.
 
 ## Constraints
 
 - **Bun only.** `bun`, `bunx`, `bun test`. `only-allow bun` fails other installs.
   Do not add npm/pnpm/yarn, Vitest, or ESLint.
-- **Feature-folder boundaries.** `apps/web/src` splits into `app` / `features` /
-  `shared`. Features must not import each other — compose in `app/`, or hoist to
-  `shared/` or a package. `bun run check-boundaries` enforces it.
+- **Demo scope.** Keep the x402 agent → facilitator → Lycoris path. Do not
+  reintroduce Sietch ZK / guest / T-bill / desk code.
 - **shadcn/ui lives in `packages/ui`** (`@repo/ui`). Never install components
-  into `apps/web`. Add with `bun run ui:add -- <component>`.
-- **Env vars** are validated in `apps/web/src/env.ts` — import `env` from
-  `@/env`, never `process.env`.
-- **`@repo/db`** (Drizzle + Neon) is server-only: Server Components, Server
-  Actions, Route Handlers, or `"use step"` functions.
+  into an app. Add with `bun run ui:add -- <component>`.
+- **Env vars** are validated per app (`env.ts` / `@t3-oss/env-*`). Prefer those
+  helpers over raw `process.env` in app code.
+- **`@repo/db`** is the demo database (Neon + Drizzle).
 
-## Vendors wired in
+## Apps
 
-Auth: Clerk · Database: Drizzle ORM + Neon · Background work: Vercel Workflows ·
-UI: shadcn/ui · Lint/format: Biome · E2E: Playwright.
-
-A new product shape decides which of these to keep — record the decision, do not
-strip anything outside the customize prompt.
+| App | Port | Job |
+|---|---|---|
+| `lycoris` | 3003 | Demo UI |
+| `agent` | 3002 | Eve agent |
+| `facilitator` | (see `.env`) | x402 settle + gates |
 
 ## Before merging
 
 ```sh
-bun run check-types && bun run check-boundaries && bun run check-tokens && bun run check-journeys && bun test
+bun run check-types && bun run check-boundaries && bun run check-tokens && bun test
 ```
 
-Branches: PRs target `staging`; `main` is production. Pushes to either run the
-migrate workflow.
+## Out of scope
 
-## Shaping a new product
-
-The playbook ships in this clone under `.agents/skills/` (also linked from
-`.cursor/skills/` and `.claude/skills/`). Type `/next`; it reads
-`docs/product/state.yaml` and works out what happens now. The clone map is
-[docs/map.md](docs/map.md). Pin `/next` as a Custom Mode
-for a shaping session so it stays in context. `status` is the glance. `/next`
-runs `customize` after the design doc, before `setup.sh`. After the spine,
-`/next` runs `plan` then `build`. Those skills are host-agnostic — they do not
-name a cloud or a model as a prerequisite. `shape` and `design-system` read this
-file for the constraints above.
-
-Until `shape` is `done`, do not edit product UI, routes, or features
-(`apps/*/src/app`, `apps/*/src/features`). A project hook denies those writes. No state
-file means no product yet — the boilerplate may be edited.
-
-Parallel salvage/research on Cursor uses `.cursor/agents/` on **Cursor Grok 4.6**. Do not
-fan that work out to Gemini.
+ViperNxt playbook (`/next`, shape, journeys, homework) was stripped on purpose.
+Do not restore it here.
