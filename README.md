@@ -77,3 +77,5 @@ bun run lycoris:bootstrap
 
 Agent wants a paid API → x402 challenge → facilitator gates → USDC settles on
 Base Sepolia → weather answer returns.
+
+Checkout SDK (next): [docs/plans/2026-09-07-settle-kit-design.md](docs/plans/2026-09-07-settle-kit-design.md).

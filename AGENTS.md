@@ -30,6 +30,12 @@ touching anything.
 bun run check-types && bun run check-boundaries && bun run check-tokens && bun test
 ```
 
+## Next: Settle Kit
+
+Implement [docs/plans/2026-09-07-settle-kit-design.md](docs/plans/2026-09-07-settle-kit-design.md)
+(`@settle-kit/core`, `@settle-kit/react`, `@settle-kit/agents`, Lycoris `/checkout`).
+Do not skip the spec’s package split, USDC-only path, or balance preflight.
+
 ## Out of scope
 
 ViperNxt playbook (`/next`, shape, journeys, homework) was stripped on purpose.
