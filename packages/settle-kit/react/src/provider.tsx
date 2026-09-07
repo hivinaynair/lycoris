@@ -8,7 +8,7 @@ import {
   createUsdcMethod,
 } from "@settle-kit/core";
 import { type ReactNode, useMemo, useRef, useState } from "react";
-import { type SettleAppConfig, SettleContext } from "./context.js";
+import { type SettleAppConfig, SettleContext } from "./context";
 
 export function SettleProvider({
   config,

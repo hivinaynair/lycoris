@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { payForResource } from "./pay-for-resource.js";
+import { payForResource } from "./pay-for-resource";
 
 describe("payForResource", () => {
   it("maps a 200 JSON body", async () => {

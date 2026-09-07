@@ -1,15 +1,15 @@
 import { describe, expect, it } from "bun:test";
-import { createCheckout } from "../create-checkout.js";
-import { createSettleConfig } from "../create-settle-config.js";
-import { SettleKitError } from "../errors.js";
+import { createCheckout } from "../create-checkout";
+import { createSettleConfig } from "../create-settle-config";
+import { SettleKitError } from "../errors";
 import {
   BASE_SEPOLIA_CHAIN_ID,
   BASE_SEPOLIA_USDC_ADDRESS,
   type Destination,
   type PaymentSigner,
   type Quote,
-} from "../types.js";
-import { createUsdcMethod } from "./usdc.js";
+} from "../types";
+import { createUsdcMethod } from "./usdc";
 
 const destination: Destination = {
   targetChain: BASE_SEPOLIA_CHAIN_ID,

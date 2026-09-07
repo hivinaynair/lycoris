@@ -1,4 +1,4 @@
-import type { SettleError, SettleErrorCode } from "./types.js";
+import type { SettleError, SettleErrorCode } from "./types";
 
 export class SettleKitError extends Error {
   readonly code: SettleErrorCode;

@@ -1,8 +1,8 @@
-export { formatUsdcAmount, parseUsdcAmount } from "./amounts.js";
-export { createCheckout } from "./create-checkout.js";
-export { createSettleConfig } from "./create-settle-config.js";
-export { SettleKitError } from "./errors.js";
-export { createUsdcMethod } from "./methods/usdc.js";
+export { formatUsdcAmount, parseUsdcAmount } from "./amounts";
+export { createCheckout } from "./create-checkout";
+export { createSettleConfig } from "./create-settle-config";
+export { SettleKitError } from "./errors";
+export { createUsdcMethod } from "./methods/usdc";
 export type {
   CheckoutManager,
   CheckoutState,
@@ -16,10 +16,10 @@ export type {
   SettleError,
   SettleErrorCode,
   TxHash,
-} from "./types.js";
+} from "./types";
 export {
   BASE_SEPOLIA_CHAIN_ID,
   BASE_SEPOLIA_EXPLORER,
   BASE_SEPOLIA_USDC_ADDRESS,
   DEFAULT_QUOTE_TTL_MS,
-} from "./types.js";
+} from "./types";

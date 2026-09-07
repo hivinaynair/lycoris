@@ -1,13 +1,13 @@
-import { invalidConfig, toSettleError } from "./errors.js";
-import { fetchQuote } from "./quote-client.js";
-import { type CheckoutAction, IDLE_STATE, reduce } from "./state.js";
+import { invalidConfig, toSettleError } from "./errors";
+import { fetchQuote } from "./quote-client";
+import { type CheckoutAction, IDLE_STATE, reduce } from "./state";
 import type {
   CheckoutManager,
   CheckoutState,
   CreateCheckoutInput,
   Destination,
   SettleConfig,
-} from "./types.js";
+} from "./types";
 
 export function createCheckout(config: SettleConfig, input: CreateCheckoutInput): CheckoutManager {
   const destination: Destination = input.destination ?? config.destination;

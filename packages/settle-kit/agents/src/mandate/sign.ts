@@ -1,5 +1,5 @@
 import type { HexAddress } from "@settle-kit/core";
-import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES, type MandatePayload } from "./eip712.js";
+import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES, type MandatePayload } from "./eip712";
 
 export async function signMandate(
   signer: {

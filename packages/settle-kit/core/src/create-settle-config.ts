@@ -1,7 +1,7 @@
-import { assertDestination } from "./destination.js";
-import { invalidConfig } from "./errors.js";
-import { createUsdcMethod } from "./methods/usdc.js";
-import type { SettleConfig } from "./types.js";
+import { assertDestination } from "./destination";
+import { invalidConfig } from "./errors";
+import { createUsdcMethod } from "./methods/usdc";
+import type { SettleConfig } from "./types";
 
 export type CreateSettleConfigInput = Omit<SettleConfig, "methods"> & {
   methods?: SettleConfig["methods"];

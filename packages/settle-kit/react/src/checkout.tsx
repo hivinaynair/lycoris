@@ -1,7 +1,7 @@
 "use client";
 
 import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
-import { useCheckout } from "./use-checkout.js";
+import { useCheckout } from "./use-checkout";
 
 const ERROR_COPY: Record<string, string> = {
   insufficient_usdc: "Not enough USDC to complete this payment.",

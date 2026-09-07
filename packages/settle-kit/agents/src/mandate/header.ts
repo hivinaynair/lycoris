@@ -1,5 +1,5 @@
 import type { HexAddress } from "@settle-kit/core";
-import type { MandatePayload, SignedMandate } from "./eip712.js";
+import type { MandatePayload, SignedMandate } from "./eip712";
 
 export type MandateHeaderValue = {
   agentId: bigint;

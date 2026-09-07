@@ -1,7 +1,7 @@
 import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
 import { decodePaymentRequiredHeader } from "@x402/core/http";
-import type { ResourceQuote } from "./types.js";
-import { BASE_SEPOLIA_CAIP2, challengeFromPaymentRequired } from "./x402-decode.js";
+import type { ResourceQuote } from "./types";
+import { BASE_SEPOLIA_CAIP2, challengeFromPaymentRequired } from "./x402-decode";
 
 export async function quoteResource(
   url: string,

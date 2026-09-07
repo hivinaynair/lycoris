@@ -1,6 +1,6 @@
 import type { HexAddress } from "@settle-kit/core";
 import { verifyTypedData } from "viem";
-import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES, type SignedMandate } from "./eip712.js";
+import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES, type SignedMandate } from "./eip712";
 
 export type MandateVerifyResult =
   | { ok: true }

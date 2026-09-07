@@ -1,8 +1,8 @@
 import { describe, expect, it } from "bun:test";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
-import type { MandatePayload } from "./eip712.js";
-import { signMandate } from "./sign.js";
-import { verifyMandateLocal } from "./verify.js";
+import type { MandatePayload } from "./eip712";
+import { signMandate } from "./sign";
+import { verifyMandateLocal } from "./verify";
 
 function payload(overrides: Partial<MandatePayload> = {}): MandatePayload {
   return {

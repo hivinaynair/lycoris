@@ -1,7 +1,7 @@
 import { decodePaymentRequiredHeader, decodePaymentSignatureHeader } from "@x402/core/http";
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
-import type { PaidFetchScheme, ResourceChallenge } from "./types.js";
-import { challengeFromPaymentRequired, extractAuthorizationNonce } from "./x402-decode.js";
+import type { PaidFetchScheme, ResourceChallenge } from "./types";
+import { challengeFromPaymentRequired, extractAuthorizationNonce } from "./x402-decode";
 
 export type PaidFetchFn = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 

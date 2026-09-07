@@ -4,8 +4,8 @@ export type {
   PaymentSigner,
   SettleError,
 } from "@settle-kit/core";
-export { Checkout } from "./checkout.js";
-export type { BeginCheckoutInput, SettleAppConfig } from "./context.js";
-export { SettleProvider } from "./provider.js";
-export type { UseCheckoutResult } from "./use-checkout.js";
-export { useCheckout } from "./use-checkout.js";
+export { Checkout } from "./checkout";
+export type { BeginCheckoutInput, SettleAppConfig } from "./context";
+export { SettleProvider } from "./provider";
+export type { UseCheckoutResult } from "./use-checkout";
+export { useCheckout } from "./use-checkout";

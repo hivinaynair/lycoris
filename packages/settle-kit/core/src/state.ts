@@ -1,4 +1,4 @@
-import type { CheckoutState, Destination, Quote, SettleError, TxHash } from "./types.js";
+import type { CheckoutState, Destination, Quote, SettleError, TxHash } from "./types";
 
 export const IDLE_STATE: CheckoutState = { status: "idle" };
 

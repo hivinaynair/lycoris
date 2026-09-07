@@ -1,5 +1,5 @@
-import { parseUsdcAmount } from "./amounts.js";
-import type { Destination, Quote } from "./types.js";
+import { parseUsdcAmount } from "./amounts";
+import type { Destination, Quote } from "./types";
 
 export async function fetchQuote(
   quoteUrl: string,

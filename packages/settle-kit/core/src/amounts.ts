@@ -1,5 +1,5 @@
-import { invalidConfig } from "./errors.js";
-import { USDC_DECIMALS } from "./types.js";
+import { invalidConfig } from "./errors";
+import { USDC_DECIMALS } from "./types";
 
 const AMOUNT_PATTERN = /^(0|[1-9]\d*)(?:\.(\d+))?$/;
 

@@ -2,8 +2,8 @@
 
 import type { CheckoutManager, CheckoutState } from "@settle-kit/core";
 import { useCallback, useContext, useSyncExternalStore } from "react";
-import { type BeginCheckoutInput, SettleContext } from "./context.js";
-import { startCheckout } from "./provider.js";
+import { type BeginCheckoutInput, SettleContext } from "./context";
+import { startCheckout } from "./provider";
 
 const IDLE: CheckoutState = { status: "idle" };
 

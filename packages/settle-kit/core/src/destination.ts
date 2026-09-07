@@ -1,5 +1,5 @@
-import { invalidConfig } from "./errors.js";
-import { BASE_SEPOLIA_CHAIN_ID, type Destination, type HexAddress } from "./types.js";
+import { invalidConfig } from "./errors";
+import { BASE_SEPOLIA_CHAIN_ID, type Destination, type HexAddress } from "./types";
 
 const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 

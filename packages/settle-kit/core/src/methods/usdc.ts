@@ -1,7 +1,7 @@
 import { encodeFunctionData } from "viem";
-import { parseUsdcAmount } from "../amounts.js";
-import { SettleKitError } from "../errors.js";
-import { DEFAULT_QUOTE_TTL_MS, type HexAddress, type Quote, type SettleAdapter } from "../types.js";
+import { parseUsdcAmount } from "../amounts";
+import { SettleKitError } from "../errors";
+import { DEFAULT_QUOTE_TTL_MS, type HexAddress, type Quote, type SettleAdapter } from "../types";
 
 const ERC20_ABI = [
   {

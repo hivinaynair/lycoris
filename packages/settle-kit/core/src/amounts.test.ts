@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import { formatUsdcAmount, parseUsdcAmount } from "./amounts.js";
-import { SettleKitError } from "./errors.js";
+import { formatUsdcAmount, parseUsdcAmount } from "./amounts";
+import { SettleKitError } from "./errors";
 
 describe("USDC amounts", () => {
   it("parses 12.50 to atomic units", () => {

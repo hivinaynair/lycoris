@@ -1,7 +1,7 @@
 import { decodePaymentRequiredHeader, decodePaymentResponseHeader } from "@x402/core/http";
-import type { PaidFetch, PaidFetchFn } from "./create-paid-fetch.js";
-import { explorerUrl } from "./quote-resource.js";
-import type { AgentPaymentResult } from "./types.js";
+import type { PaidFetch, PaidFetchFn } from "./create-paid-fetch";
+import { explorerUrl } from "./quote-resource";
+import type { AgentPaymentResult } from "./types";
 
 function summarizeNonJsonResponse(url: string, response: Response, text: string) {
   const contentType = response.headers.get("content-type") ?? "unknown content type";
