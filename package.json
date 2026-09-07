@@ -12,7 +12,7 @@
     "check-types": "turbo run check-types",
     "test": "bun test",
     "e2e": "turbo run e2e",
-    "check-boundaries": "bun scripts/check-boundaries.mjs",
+    "check-boundaries": "bun scripts/check-boundaries.mjs && bun scripts/check-settle-kit.mjs",
     "check-tokens": "bun scripts/check-tokens.mjs",
     "ui:add": "turbo run add --filter=@repo/ui",
     "db:push": "turbo run db:push --filter=@repo/db",
@@ -52,6 +52,7 @@
   "workspaces": [
     "apps/*",
     "packages/*",
+    "packages/settle-kit/*",
     "e2e/*",
     "tooling/*"
   ],

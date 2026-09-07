@@ -30,11 +30,12 @@ touching anything.
 bun run check-types && bun run check-boundaries && bun run check-tokens && bun test
 ```
 
-## Next: Settle Kit
+## Settle Kit
 
-Implement [docs/plans/2026-09-07-settle-kit-design.md](docs/plans/2026-09-07-settle-kit-design.md)
-(`@settle-kit/core`, `@settle-kit/react`, `@settle-kit/agents`, Lycoris `/checkout`).
-Do not skip the spec’s package split, USDC-only path, or balance preflight.
+Packages: `@settle-kit/core`, `@settle-kit/react`, `@settle-kit/agents`.
+Host demo: Lycoris `/checkout`. Spec:
+[docs/plans/2026-09-07-settle-kit-design.md](docs/plans/2026-09-07-settle-kit-design.md).
+Do not skip the package split, USDC-only path, or balance preflight.
 
 ## Out of scope
 

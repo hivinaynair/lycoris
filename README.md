@@ -19,6 +19,7 @@ apps/
   facilitator/   Hono x402 facilitator + settlement gates
   lycoris/       Next.js demo UI (port 3003)
 packages/
+  settle-kit/    Checkout SDK — @settle-kit/core, react, agents
   shared/        Types, ABIs, chain helpers, decision records
   db/            Neon + Drizzle (attestations, agents, policies)
   scripts/       Compile / deploy / fund / bootstrap helpers
@@ -78,4 +79,5 @@ bun run lycoris:bootstrap
 Agent wants a paid API → x402 challenge → facilitator gates → USDC settles on
 Base Sepolia → weather answer returns.
 
-Checkout SDK (next): [docs/plans/2026-09-07-settle-kit-design.md](docs/plans/2026-09-07-settle-kit-design.md).
+Checkout SDK: merchant names USDC destination, host embeds `SettleProvider`,
+buyer pays USDC. Spec: [docs/plans/2026-09-07-settle-kit-design.md](docs/plans/2026-09-07-settle-kit-design.md).

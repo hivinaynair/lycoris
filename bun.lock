@@ -27,6 +27,7 @@
         "@coinbase/cdp-sdk": "^1.51.2",
         "@repo/db": "workspace:*",
         "@repo/shared": "workspace:*",
+        "@settle-kit/agents": "workspace:*",
         "@x402/core": "^2.17.0",
         "@x402/evm": "^2.17.0",
         "@x402/fetch": "^2.17.0",
@@ -65,6 +66,8 @@
         "@repo/db": "workspace:*",
         "@repo/shared": "workspace:*",
         "@repo/ui": "workspace:*",
+        "@settle-kit/core": "workspace:*",
+        "@settle-kit/react": "workspace:*",
         "@splinetool/react-spline": "^4.1.0",
         "@splinetool/runtime": "^1.12.98",
         "@t3-oss/env-nextjs": "^0.13.11",
@@ -135,6 +138,48 @@
         "drizzle-orm": "^0.45.2",
         "solc": "^0.8.35",
         "viem": "^2.54.3",
+      },
+    },
+    "packages/settle-kit/agents": {
+      "name": "@settle-kit/agents",
+      "version": "0.0.1",
+      "dependencies": {
+        "@settle-kit/core": "workspace:*",
+        "@x402/core": "^2.17.0",
+        "@x402/fetch": "^2.17.0",
+        "viem": "^2",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "typescript": "^5",
+      },
+    },
+    "packages/settle-kit/core": {
+      "name": "@settle-kit/core",
+      "version": "0.0.1",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "typescript": "^5",
+        "viem": "^2",
+      },
+      "peerDependencies": {
+        "viem": "^2",
+      },
+    },
+    "packages/settle-kit/react": {
+      "name": "@settle-kit/react",
+      "version": "0.0.1",
+      "dependencies": {
+        "@settle-kit/core": "workspace:*",
+      },
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@types/react": "19.2.2",
+        "react": "^19.2.0",
+        "typescript": "^5",
+      },
+      "peerDependencies": {
+        "react": "^19",
       },
     },
     "packages/shared": {
@@ -672,6 +717,12 @@
     "@scure/bip39": ["@scure/bip39@1.6.0", "", { "dependencies": { "@noble/hashes": "~1.8.0", "@scure/base": "~1.2.5" } }, "sha512-+lF0BbLiJNwVlev4eKelw1WWLaiKXw7sSl8T6FvBlWkdX+94aGJ4o8XjUdlyhTCjd8c+B3KT3JfS8P0bLRNU6A=="],
 
     "@sec-ant/readable-stream": ["@sec-ant/readable-stream@0.4.1", "", {}, "sha512-831qok9r2t8AlxLko40y2ebgSDhenenCatLVeW/uBtnHPyhHOvG0C7TvfgecV+wHzIm5KUICgzmVpWS+IMEAeg=="],
+
+    "@settle-kit/agents": ["@settle-kit/agents@workspace:packages/settle-kit/agents"],
+
+    "@settle-kit/core": ["@settle-kit/core@workspace:packages/settle-kit/core"],
+
+    "@settle-kit/react": ["@settle-kit/react@workspace:packages/settle-kit/react"],
 
     "@shadcn/react": ["@shadcn/react@0.3.1", "", { "peerDependencies": { "@types/react": ">=19", "react": ">=19" }, "optionalPeers": ["@types/react", "react"] }, "sha512-2gOR0HDMtWeRsCZfNDaU0YDFdgH3zsDQ6lz67Fv/y/qjY9y+R8kJqAn6q56phqv7/zHi0wqURjntrNO9zL7vnQ=="],
 

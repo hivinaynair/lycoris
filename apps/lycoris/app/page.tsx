@@ -56,9 +56,9 @@ export default function Page() {
   return (
     <PageFrame>
       <PageHead
-        eyebrow="The Lycoris rail"
-        title="Compliance before settlement"
-        question="Is it going to rain in Melbourne at 1 PM tomorrow?"
+        eyebrow="Agent appendix"
+        title="Also: an agent can pay"
+        question="Is it going to rain in Melbourne at 1 PM tomorrow? Checkout is the embeddable product; this page is the Eve → x402 appendix."
       />
 
       <ScenarioPicker selectedIndex={selectedIndex} loading={loading} onSelect={selectScenario} />

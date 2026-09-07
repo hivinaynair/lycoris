@@ -1,14 +1,15 @@
 "use client";
 
 import { cn } from "@repo/ui/lib/utils";
-import { Activity, Bot, Zap } from "lucide-react";
+import { Activity, Bot, ShoppingBag, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
 const nav = [
-  { href: "/", label: "Demo", sub: "The live rail", icon: Zap },
+  { href: "/checkout", label: "Checkout", sub: "USDC to the merchant", icon: ShoppingBag },
+  { href: "/", label: "Demo", sub: "Also: an agent can pay", icon: Zap },
   { href: "/feed", label: "Feed", sub: "Flight recorder", icon: Activity },
   { href: "/agents", label: "Agents", sub: "Identity + mandates", icon: Bot },
 ];
@@ -32,9 +33,9 @@ export function AppShell({ children }: { children: ReactNode }) {
             <span className="font-heading text-[21px] leading-none tracking-tight">Lycoris</span>
           </Link>
           <p className="mt-3.5 font-heading text-[15px] leading-tight text-muted-foreground">
-            Compliance before
+            USDC checkout
             <br />
-            settlement, not after.
+            the merchant named.
           </p>
         </div>
 
@@ -72,7 +73,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             Live · Base Sepolia
           </p>
           <p className="mt-2.5 text-[11px] leading-normal text-muted-foreground">
-            A settlement-layer compliance demo for tokenized, agent-native payments.
+            Embeddable USDC checkout on Base Sepolia. The agent rail is the appendix.
           </p>
         </div>
       </aside>
