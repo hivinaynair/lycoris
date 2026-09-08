@@ -1,4 +1,4 @@
 {
   "installCommand": "cd ../.. && bunx bun@1.4.2 install --frozen-lockfile",
-  "buildCommand": "cd ../.. && bunx bun@1.4.2 run --bun build --filter=agent --env-mode=loose"
+  "buildCommand": "cd ../.. && bunx bun@1.4.2 run build --filter=agent --env-mode=loose"
 }

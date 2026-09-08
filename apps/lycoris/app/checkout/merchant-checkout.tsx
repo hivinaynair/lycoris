@@ -135,8 +135,9 @@ function MerchantPaymentStatus({
               Recipient: {state.destination.recipient}
             </p>
             <p className="mt-2 text-muted-foreground">
-              Network fees are paid separately in test ETH. Your wallet shows the fee before
-              confirmation.
+              {sponsored
+                ? "Network fees are paid by the demo in test ETH. Your wallet is never charged."
+                : "Network fees are paid separately in test ETH. Your wallet shows the fee before confirmation."}
             </p>
           </details>
         </>

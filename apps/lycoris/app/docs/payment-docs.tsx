@@ -103,16 +103,16 @@ function LimitsSection() {
           onramp.
         </li>
         <li>
-          Sessions live in memory. After a reload or an interrupted payment, inspect the wallet and
-          explorer before paying again.
+          SDK sessions live in memory. The sponsored host adds purchase recovery with a browser
+          purchase ID and a database record; other hosts must implement their own recovery.
         </li>
         <li>
           Balance preflight is not a lock. One confirmation is demo evidence; replacement
           transactions require manual inspection.
         </li>
         <li>
-          The playground starts in simulation. Its sample report and simulated receipts do not prove
-          an onchain payment.
+          The playground makes real Base Sepolia transfers from a dedicated demo wallet. Its
+          lifetime budget is ten purchases (1 test USDC); report access lasts 15 minutes.
         </li>
         <li>
           The SDK is not published to npm. Local tarballs and an independent consumer are the

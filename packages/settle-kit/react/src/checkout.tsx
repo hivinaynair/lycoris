@@ -21,6 +21,8 @@ export type CheckoutLabels = {
   idleDescription: string;
   reviewDescription: string;
   pendingWallet: string;
+  networkFee: string;
+  recoveryDescription: string;
 };
 export type CheckoutProps = CheckoutCallbacks & {
   amountUsdc: string;
@@ -73,6 +75,9 @@ export function Checkout({
       "You’ll need a browser wallet with test USDC and Base Sepolia ETH for network fees.",
     reviewDescription: "Review the recipient in payment details, then confirm in your wallet.",
     pendingWallet: "Continue in your wallet…",
+    networkFee: "Paid separately in test ETH. Your wallet shows the fee before you confirm.",
+    recoveryDescription:
+      "Keep this page open until confirmation. If you close it after submitting, check your wallet before paying again.",
     ...labels,
   };
   const heading = checkout.title ?? title;
@@ -107,7 +112,12 @@ export function Checkout({
         onBuy={onBuy}
         transactionUrl={transactionUrl}
       />
-      <PaymentDetails visual={visual} recipient={recipient} />
+      <PaymentDetails
+        visual={visual}
+        recipient={recipient}
+        networkFee={copy.networkFee}
+        recoveryDescription={copy.recoveryDescription}
+      />
       <p className={visual.classFor("footer", `sk-footer ${styles.footer}`)}>
         Test USDC only · Base Sepolia
       </p>

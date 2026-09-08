@@ -45,7 +45,17 @@ export function PaymentSummary({
   );
 }
 
-export function PaymentDetails({ visual, recipient }: { visual: Visual; recipient?: string }) {
+export function PaymentDetails({
+  visual,
+  recipient,
+  networkFee,
+  recoveryDescription,
+}: {
+  visual: Visual;
+  recipient?: string;
+  networkFee: string;
+  recoveryDescription: string;
+}) {
   return (
     <details className={visual.classFor("details", `sk-details ${styles.details}`)}>
       <summary>Payment details</summary>
@@ -55,12 +65,9 @@ export function PaymentDetails({ visual, recipient }: { visual: Visual; recipien
         <dt>Network</dt>
         <dd>Base Sepolia · 84532</dd>
         <dt>Network fee</dt>
-        <dd>Paid separately in test ETH. Your wallet shows the fee before you confirm.</dd>
+        <dd>{networkFee}</dd>
       </dl>
-      <p>
-        Keep this page open until confirmation. If you close it after submitting, check your wallet
-        before paying again.
-      </p>
+      <p>{recoveryDescription}</p>
     </details>
   );
 }

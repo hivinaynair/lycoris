@@ -31,6 +31,9 @@ export function CheckoutPreview({ look }: { look: Look }) {
             labels={{
               buy: `Pay ${WEATHER_PRICE_USDC} USDC`,
               paymentMethod: "Demo wallet",
+              networkFee: "Paid by the demo in test ETH. Your wallet is never charged.",
+              recoveryDescription:
+                "Your purchase is saved in this browser. If interrupted, return here to check the same payment without sending it again.",
               idleDescription: "We cover this payment and network fees. Just click Pay.",
               pendingWallet: "Sending your sponsored payment…",
               reviewDescription: "Paid by the demo wallet on Base Sepolia.",
