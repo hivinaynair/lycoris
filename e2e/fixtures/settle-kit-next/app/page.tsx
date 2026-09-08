@@ -1,6 +1,8 @@
 "use client";
 import { BASE_SEPOLIA_USDC_ADDRESS, createUsdcMethod } from "@settle-kit/core";
-import { Checkout, SettleProvider, useCheckout } from "@settle-kit/react";
+import { Checkout } from "@settle-kit/react/ui";
+import "@settle-kit/react/styles.css";
+import { SettleProvider, useCheckout } from "@settle-kit/react";
 import { useMemo, useState } from "react";
 
 function PurchaseButtons() {
@@ -65,9 +67,16 @@ export default function Page() {
     <main>
       <h1>Independent merchant embed</h1>
       <p>Simulated wallet and receipts. No funds move.</p>
-      <SettleProvider config={config}>
+      <SettleProvider
+        config={config}
+        appearance={{
+          theme: "dark",
+          variables: { borderRadius: "24px" },
+          elements: { card: "merchant-card" },
+        }}
+      >
         <PurchaseButtons />
-        <Checkout />
+        <Checkout amountUsdc="12.50" />
         <Status />
       </SettleProvider>
       <p>

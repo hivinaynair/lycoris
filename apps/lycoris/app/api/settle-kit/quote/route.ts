@@ -1,3 +1,4 @@
+import { WEATHER_AMOUNT_ATOMIC, WEATHER_PRICE_USDC } from "@repo/shared/demo";
 import { DEFAULT_QUOTE_TTL_MS, parseUsdcAmount } from "@settle-kit/core";
 
 export async function POST(request: Request) {
@@ -12,9 +13,11 @@ export async function POST(request: Request) {
       return Response.json({ error: "amountUsdc must be a string" }, { status: 400 });
     }
     const amountAtomic = parseUsdcAmount(body.amountUsdc);
+    if (amountAtomic !== WEATHER_AMOUNT_ATOMIC)
+      return Response.json({ error: "This report costs 0.1 USDC." }, { status: 400 });
     return Response.json({
       requestId: crypto.randomUUID(),
-      amountUsdc: body.amountUsdc,
+      amountUsdc: WEATHER_PRICE_USDC,
       amountAtomic,
       expiresAt: Date.now() + DEFAULT_QUOTE_TTL_MS,
       method: "usdc",

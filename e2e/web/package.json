@@ -12,10 +12,12 @@
     "lycoris": "*"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@msw/playwright": "^0.6.7",
     "@playwright/test": "^1.58.2",
     "@repo/mocks": "*",
     "@repo/typescript-config": "*",
+    "esbuild": "^0.28.2",
     "msw": "^2.12.10",
     "typescript": "5.9.2"
   }

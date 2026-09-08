@@ -4,8 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "inputs": ["$TURBO_DEFAULT$", ".env*"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**"]
+      "inputs": ["$TURBO_DEFAULT$", ".env*", "$TURBO_ROOT$/scripts/build-settle-kit.mjs"],
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
     },
     "//#format-and-lint": {
       "description": "Check for formatting and linting issues"
@@ -15,7 +15,13 @@
       "description": "Format and lint the code and fix the issues"
     },
     "check-types": {
-      "dependsOn": ["^check-types"],
+      "dependsOn": [
+        "^check-types",
+        "@settle-kit/core#build",
+        "@settle-kit/react#build",
+        "@settle-kit/agents#build",
+        "@settle-kit/server#build"
+      ],
       "passThroughEnv": ["SKIP_ENV_VALIDATION"]
     },
     "db:generate": {

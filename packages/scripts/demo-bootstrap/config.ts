@@ -24,7 +24,7 @@ export const UNREGISTERED_AGENT_ID = 0n;
 // Max spending per agent in whole USDC: 1n = $1.00.
 export const MAX_AMOUNT: Record<DemoAgentName, bigint> = {
   [DemoAgentName.AGENT_1]: 1n,
-  [DemoAgentName.AGENT_2]: 1n,
+  [DemoAgentName.AGENT_2]: 0n,
   [DemoAgentName.AGENT_3]: 10n,
   [DemoAgentName.GHOST]: 0n,
 };

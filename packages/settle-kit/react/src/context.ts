@@ -2,6 +2,7 @@
 
 import type { CheckoutManager, Destination, PaymentSigner, SettleAdapter } from "@settle-kit/core";
 import { createContext } from "react";
+import type { CheckoutAppearance } from "./appearance";
 
 export type SettleAppConfig = {
   appName: string;
@@ -19,6 +20,7 @@ export type BeginCheckoutInput = {
 
 export type SettleContextValue = {
   config: SettleAppConfig;
+  appearance?: CheckoutAppearance;
   manager: CheckoutManager | null;
   managerRef: { current: CheckoutManager | null };
   title: string | undefined;

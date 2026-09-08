@@ -43,7 +43,7 @@ function setup(getSigner?: () => Promise<PaymentSigner>) {
     >
       <Buyer />
       <Observer />
-      <Checkout />
+      <Checkout amountUsdc="12.50" />
     </SettleProvider>,
   );
   return { buyer: () => buyer, observer: () => observer, send, onSettled };
@@ -96,9 +96,9 @@ it("the default Buy button quotes once and reaches the pay screen", async () => 
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Buy" }));
   });
-  expect(screen.getByRole("button", { name: "Pay USDC" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: /Pay [\d.]+ USDC/ })).toBeTruthy();
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Pay USDC" }));
+    fireEvent.click(screen.getByRole("button", { name: /Pay [\d.]+ USDC/ }));
   });
   expect(screen.getByText("Payment confirmed: 12.50 USDC.")).toBeTruthy();
 });
@@ -112,4 +112,169 @@ it("invalid new purchase leaves the existing session intact", async () => {
     code: "invalid_config",
   });
   expect(f.buyer().state.status).toBe("awaiting_payment");
+});
+
+it("keeps actions stable and uses the latest committed callbacks during a payment", async () => {
+  let checkout!: UseCheckoutResult;
+  let confirm!: (value: { status: "success"; transactionHash: typeof hash }) => void;
+  const first = mock(() => {});
+  const latest = mock(() => {});
+  const config = {
+    appName: "Merchant",
+    destination,
+    getSigner: async () => ({ address: destination.recipient, sendTransaction: async () => hash }),
+    methods: [
+      createUsdcMethod({
+        client: { readContract: async () => 100000000n },
+        receiptClient: {
+          waitForTransactionReceipt: () =>
+            new Promise<{ status: "success"; transactionHash: typeof hash }>((resolve) => {
+              confirm = resolve;
+            }),
+        },
+      }),
+    ],
+  };
+  function Buyer({ callback }: { callback: () => void }) {
+    checkout = useCheckout({ onSettled: callback });
+    return null;
+  }
+  const view = render(
+    <SettleProvider config={config}>
+      <Buyer callback={first} />
+    </SettleProvider>,
+  );
+  const actions = [
+    checkout.begin,
+    checkout.pay,
+    checkout.reset,
+    checkout.selectMethod,
+    checkout.retryConfirmation,
+  ];
+  expect(checkout.canPay).toBe(false);
+  await act(async () => {
+    await checkout.begin({ amountUsdc: "4" });
+  });
+  expect(checkout.canPay).toBe(true);
+  let payment!: Promise<void>;
+  await act(async () => {
+    payment = checkout.pay();
+  });
+  expect(checkout.isBusy).toBe(true);
+  expect(checkout.canPay).toBe(false);
+  view.rerender(
+    <SettleProvider config={{ ...config }}>
+      <Buyer callback={latest} />
+    </SettleProvider>,
+  );
+  expect([
+    checkout.begin,
+    checkout.pay,
+    checkout.reset,
+    checkout.selectMethod,
+    checkout.retryConfirmation,
+  ]).toEqual(actions);
+  await act(async () => {
+    confirm({ status: "success", transactionHash: hash });
+    await payment;
+  });
+  expect(first).not.toHaveBeenCalled();
+  expect(latest).toHaveBeenCalledTimes(1);
+  expect(checkout.isBusy).toBe(false);
+});
+
+it("supports UI labels, className, destination override and lifecycle callbacks", async () => {
+  const onFailed = mock(() => {});
+  let observer!: UseCheckoutResult;
+  const override = {
+    ...destination,
+    recipient: "0x3333333333333333333333333333333333333333" as const,
+  };
+  function Observer() {
+    observer = useCheckout();
+    return null;
+  }
+  render(
+    <SettleProvider
+      config={{
+        appName: "Merchant",
+        destination,
+        getSigner: async () => {
+          throw { code: 4001 };
+        },
+      }}
+    >
+      <Observer />
+      <Checkout
+        amountUsdc="7"
+        destination={override}
+        className="merchant-brand"
+        labels={{ buy: "Review order", pay: "Confirm order", reset: "Try again" }}
+        onFailed={onFailed}
+      />
+    </SettleProvider>,
+  );
+  expect(
+    screen.getByRole("button", { name: "Review order" }).closest("section")?.className,
+  ).toContain("merchant-brand");
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Review order" }));
+  });
+  expect(observer.state).toMatchObject({
+    status: "awaiting_payment",
+    destination: override,
+    quote: { amountUsdc: "7" },
+  });
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Confirm order" }));
+  });
+  expect(onFailed).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+});
+
+it("merges Provider appearance with local overrides without resetting a checkout", async () => {
+  let checkout!: UseCheckoutResult;
+  function Observer() {
+    checkout = useCheckout();
+    return null;
+  }
+  const config = {
+    appName: "Merchant",
+    destination,
+    getSigner: async () => ({ address: destination.recipient, sendTransaction: async () => hash }),
+  };
+  const content = (theme: "light" | "dark") => (
+    <SettleProvider
+      config={config}
+      appearance={{
+        theme,
+        variables: { borderRadius: "24px", colorPrimary: "red" },
+        elements: { card: "host-card", primaryButton: "host-button" },
+      }}
+    >
+      <Observer />
+      <Checkout
+        amountUsdc="4"
+        appearance={{
+          variables: { colorPrimary: "blue" },
+          elements: { primaryButton: "local-button" },
+        }}
+      />
+    </SettleProvider>
+  );
+  const view = render(content("light"));
+  const card = screen.getByRole("button", { name: "Buy" }).closest("section");
+  if (!card) throw new Error("Checkout card not rendered");
+  expect(card.style.getPropertyValue("--sk-radius")).toBe("24px");
+  expect(card.style.getPropertyValue("--sk-primary")).toBe("blue");
+  expect(card.className).toContain("host-card");
+  expect(screen.getByRole("button", { name: "Buy" }).className).toContain("local-button");
+  expect(screen.getByRole("button", { name: "Buy" }).className).not.toContain("host-button");
+  await act(async () => {
+    await checkout.begin({ amountUsdc: "4" });
+  });
+  view.rerender(content("dark"));
+  expect(card.getAttribute("data-sk-theme")).toBe("dark");
+  expect(checkout.state.status).toBe("awaiting_payment");
+  expect(screen.getByRole("button", { name: "Pay 4 USDC" })).toBeTruthy();
 });

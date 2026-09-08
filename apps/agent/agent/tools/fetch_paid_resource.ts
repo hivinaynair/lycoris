@@ -1,40 +1,31 @@
 import { BASE_SEPOLIA_CAIP2 } from "@repo/shared/chains";
-import { DemoAgentName } from "@repo/shared/types";
 import { createPaidFetch, payForResource, quoteResource } from "@settle-kit/agents";
 import { ExactEvmScheme } from "@x402/evm";
+import { defineState } from "eve/context";
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { getCdp } from "../lib/cdp.js";
 import { getAp2CredentialForAgent } from "../lib/credentials.js";
+import { paymentScope } from "../lib/payment-scope.js";
 import { getDecisionRecord, preclearPayment, toRawMandate } from "../lib/preclear.js";
-import { isAllowedPaymentUrl } from "../lib/run-request.js";
+
+const attempt = defineState("lycoris.payment-attempt", () => ({ turnId: "" }));
 
 const denied = (reason: string) => ({ type: "denied" as const, reason });
 
 export default defineTool({
   description:
-    "Quote, preclear, then pay an allowlisted x402 resource with a named Lycoris agent wallet. " +
+    "Buy Melbourne’s next 1 PM weather report for 0.1 test USDC using the configured wallet. " +
     "If identity or the mandate refuses the payment, it is never signed.",
-  inputSchema: z.object({
-    agentName: z.enum([
-      DemoAgentName.AGENT_1,
-      DemoAgentName.AGENT_2,
-      DemoAgentName.AGENT_3,
-      DemoAgentName.GHOST,
-    ]),
-    url: z.string().url().describe("Allowlisted x402 URL to fetch"),
-  }),
-  approval: async ({ toolInput }) => {
-    const url = toolInput?.url;
-    const agentName = toolInput?.agentName;
-    const appUrl = process.env.APP_URL;
-    if (typeof url !== "string" || typeof agentName !== "string") {
-      return denied("agentName and url are required");
-    }
-    if (!appUrl) return denied("APP_URL is not configured");
-    if (!isAllowedPaymentUrl(url, appUrl)) {
-      return denied("url is not an allowlisted Lycoris or external x402 resource");
-    }
+  inputSchema: z.object({}),
+  approval: async (ctx) => {
+    const { agentName, url } = paymentScope(
+      ctx.session.auth.current?.attributes.paymentAgent,
+      process.env.APP_URL,
+    );
+    if (attempt.get().turnId === ctx.session.turn.id)
+      return denied("payment_already_attempted_this_turn");
+    attempt.update(() => ({ turnId: ctx.session.turn.id }));
 
     const cdp = await getCdp();
     const account = await cdp.evm.getOrCreateAccount({ name: agentName });
@@ -58,7 +49,11 @@ export default defineTool({
     if (!verdict.ok) return denied(verdict.reason);
     return "not-applicable";
   },
-  async execute({ agentName, url }) {
+  async execute(_input, ctx) {
+    const { agentName, url } = paymentScope(
+      ctx.session.auth.current?.attributes.paymentAgent,
+      process.env.APP_URL,
+    );
     const cdp = await getCdp();
     const account = await cdp.evm.getOrCreateAccount({ name: agentName });
     const credential = getAp2CredentialForAgent(account.address);

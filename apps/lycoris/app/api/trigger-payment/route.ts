@@ -4,14 +4,13 @@ import { Client } from "eve/client";
 import { env } from "@/env";
 import {
   buildDoneResult,
-  demoPrompt,
   outcomeFromEvent,
   type PaidRunOutcome,
 } from "@/features/settlement-pipeline/lib/agent-run";
 import { readLivePipelineGate } from "@/features/settlement-pipeline/lib/live-pipeline-gate";
 import { demoAgents } from "@/lib/demo-scenarios";
 import { isMandateFailure } from "@/lib/settlement-status";
-import { parseScenarioIndex } from "./parse-scenario";
+import { chatRequest } from "./parse-scenario";
 import { payerFallback } from "./payer-fallback";
 import { sseLine } from "./sse";
 
@@ -26,7 +25,13 @@ function sleep(ms: number) {
 }
 
 export async function POST(request: Request) {
-  const scenarioIndex = await parseScenarioIndex(request);
+  const parsed = chatRequest.safeParse(await request.json().catch(() => null));
+  if (!parsed.success)
+    return Response.json(
+      { error: "Enter a message of 1–2,000 characters and choose a valid scenario." },
+      { status: 400 },
+    );
+  const { scenarioIndex, message, session: savedSession } = parsed.data;
   const agentName = DEMO_SCENARIO_AGENTS[scenarioIndex]!;
   const route = getDemoReportRoute(DEMO_AGENT_ROUTE[agentName]);
   const targetUrl = `${new URL(request.url).origin}${route.path}`;
@@ -36,32 +41,41 @@ export async function POST(request: Request) {
   const sharedSecret = env.LYCORIS_AGENT_SHARED_SECRET?.trim();
   const client = new Client({
     host: env.AGENT_URL,
+    preserveCompletedSessions: true,
+    headers: { "x-lycoris-agent": agentName },
     ...(sharedSecret ? { auth: { basic: { username: "lycoris", password: sharedSecret } } } : {}),
   });
 
   const stream = new ReadableStream({
     async start(controller) {
+      let closed = false;
+      const emit = (event: unknown) => {
+        if (closed || request.signal.aborted) return;
+        try {
+          controller.enqueue(sseLine(event));
+        } catch {
+          closed = true;
+        }
+      };
       const finish = (result: Record<string, unknown>) => {
         const error = result.error;
-        controller.enqueue(
-          sseLine({
-            type: "done",
-            result: {
-              slot,
-              agentKey: agentName,
-              agent: demoAgent,
-              route: { id: route.id, path: route.path, price: route.priceLabel },
-              mandateValid: !isMandateFailure(error),
-              ...result,
-              body: error ? { error } : result.body,
-            },
-          }),
-        );
+        emit({
+          type: "done",
+          result: {
+            slot,
+            agentKey: agentName,
+            agent: demoAgent,
+            route: { id: route.id, path: route.path, price: route.priceLabel },
+            mandateValid: !isMandateFailure(error),
+            ...result,
+            body: error ? { error } : result.body,
+          },
+        });
       };
 
-      controller.enqueue(sseLine({ type: "gate", step: GATE_STEP.AGENT_RESOLVED }));
-
-      let payer = await payerFallback(agentName);
+      let payer = "0x";
+      let paymentStarted = false;
+      let polling = false;
       const runStartedAt = Date.now();
       let lastGate: number = GATE_STEP.AGENT_RESOLVED;
 
@@ -69,7 +83,7 @@ export async function POST(request: Request) {
       const emitGateForward = (gate: number) => {
         if (gate <= lastGate) return;
         lastGate = gate;
-        controller.enqueue(sseLine({ type: "gate", step: gate }));
+        emit({ type: "gate", step: gate });
       };
 
       /**
@@ -77,24 +91,53 @@ export async function POST(request: Request) {
        * resets and re-enters x402 after preclear.
        */
       const flushLiveGates = async () => {
-        if (!payer.startsWith("0x") || payer === "0x") return;
-        const gate = await readLivePipelineGate(env.FACILITATOR_URL, payer, runStartedAt);
-        if (gate === 0 || gate === lastGate) return;
-        lastGate = gate;
-        controller.enqueue(sseLine({ type: "gate", step: gate }));
+        if (!paymentStarted || polling || closed || payer === "0x") return;
+        polling = true;
+        try {
+          const gate = await readLivePipelineGate(env.FACILITATOR_URL, payer, runStartedAt);
+          if (gate === 0 || gate === lastGate) return;
+          lastGate = gate;
+          emit({ type: "gate", step: gate });
+        } finally {
+          polling = false;
+        }
       };
 
       const poll = setInterval(() => {
         flushLiveGates().catch(() => undefined);
       }, LIVE_POLL_MS);
 
+      const session = client.session(savedSession);
+      const signal = AbortSignal.any([request.signal, AbortSignal.timeout(110_000)]);
+      const cancel = () => {
+        void session.cancel().catch(() => undefined);
+      };
+      signal.addEventListener("abort", cancel, { once: true });
+      let primary: PaidRunOutcome | undefined;
+      let lastTextStep: number | undefined;
       try {
-        const response = await client.session().send(demoPrompt(agentName, targetUrl));
-
-        let primary: PaidRunOutcome | undefined;
+        const response = await session.send({ message, signal });
         for await (const event of response) {
           if (event.type === "message.appended") {
-            controller.enqueue(sseLine({ type: "token", text: event.data.messageDelta }));
+            if (lastTextStep !== undefined && lastTextStep !== event.data.stepIndex)
+              emit({ type: "token", text: "\n\n" });
+            lastTextStep = event.data.stepIndex;
+            emit({ type: "token", text: event.data.messageDelta });
+          } else if (
+            event.type === "actions.requested" &&
+            event.data.actions.some(
+              (action) => action.kind === "tool-call" && action.toolName === "fetch_paid_resource",
+            )
+          ) {
+            paymentStarted = true;
+            emitGateForward(GATE_STEP.PAYMENT_SUBMITTED);
+            payer = await payerFallback(agentName).catch(() => "0x");
+          } else if (
+            event.type === "turn.failed" ||
+            event.type === "session.failed" ||
+            event.type === "turn.cancelled"
+          ) {
+            throw new Error("Agent turn did not finish");
           } else if (event.type === "action.result" && !primary) {
             const outcome = outcomeFromEvent(event, targetUrl, payer);
             if (outcome) {
@@ -109,11 +152,12 @@ export async function POST(request: Request) {
           }
         }
 
-        primary ??= {
-          payer,
-          error: "agent_did_not_attempt_payment",
-          httpStatus: 500,
-        };
+        emit({ type: "session", session: session.state });
+        if (!primary) {
+          if (paymentStarted) throw new Error("Payment outcome unavailable");
+          emit({ type: "reply" });
+          return;
+        }
         if (primary.payer.startsWith("0x")) payer = primary.payer;
 
         await flushLiveGates();
@@ -132,12 +176,29 @@ export async function POST(request: Request) {
           emitGateForward(GATE_STEP.ATTESTATION);
         }
         finish(done.result);
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        finish({ httpStatus: 500, error: message, body: { error: message } });
+      } catch {
+        // A missing model reply must not hide a payment the tool already completed.
+        if (primary) {
+          try {
+            const done = await buildDoneResult(primary, env.AGENT_URL, env.FACILITATOR_URL);
+            finish(done.result);
+          } catch {
+            /* Preserve uncertainty below; never claim a failed payment was refunded. */
+          }
+        }
+        emit({
+          type: "error",
+          text: paymentStarted
+            ? "The connection ended before Lycoris could finish. A payment may have been attempted; check the evidence before requesting another report."
+            : "Lycoris could not finish its reply. Please try again.",
+        });
       } finally {
+        signal.removeEventListener("abort", cancel);
         clearInterval(poll);
-        controller.close();
+        if (!closed) {
+          closed = true;
+          controller.close();
+        }
       }
     },
   });

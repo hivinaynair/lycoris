@@ -60,4 +60,5 @@ Balance preflight is not a lock, and one confirmation is not irreversible finali
 
 v1: Base Sepolia (`84532`), Circle USDC
 `0x036CbD53842c5426634e7929541eC2318f3dCF7e` only. No cards, KYC, onramp, swaps or bridges.
-Source distribution: install peer `viem`, use TypeScript strict mode and target ES2020+.
+Distribution: compiled ESM and declarations; install peer `viem`. Bun also has a source entry point.
+Run `bun run build` before packing (also run by `prepack`).

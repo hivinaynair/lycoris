@@ -133,13 +133,6 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
 }
 
 async function importPublicClient(chainId: number) {
-  const { createPublicClient, http } = await import("viem");
-  const { baseSepolia } = await import("viem/chains");
-  if (chainId !== baseSepolia.id) {
-    throw new SettleKitError("wrong_network", `No public client for chain ${chainId}`);
-  }
-  return createPublicClient({
-    chain: baseSepolia,
-    transport: http(),
-  });
+  const { getUsdcPublicClient } = await import("./usdc-client");
+  return getUsdcPublicClient(chainId);
 }

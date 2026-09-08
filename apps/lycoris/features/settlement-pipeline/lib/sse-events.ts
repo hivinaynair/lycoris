@@ -1,6 +1,11 @@
 import type { TriggerResult } from "./payment-demo";
 
+export type ChatSession = { sessionId?: string; continuationToken?: string; streamIndex: number };
+
 export type PaymentSseEvent =
+  | { type: "reply" }
+  | { type: "session"; session: ChatSession }
+  | { type: "error"; text: string }
   | { type: "token"; text: string }
   | { type: "gate"; step: number }
   | { type: "done"; result: TriggerResult };
@@ -10,10 +15,16 @@ function parseSseEvent(line: string): PaymentSseEvent | undefined {
   try {
     const event = JSON.parse(line.slice(6)) as {
       type?: string;
+      session?: ChatSession;
       text?: string;
       step?: number;
       result?: TriggerResult;
     };
+    if (event.type === "reply") return { type: "reply" };
+    if (event.type === "session" && event.session && Number.isInteger(event.session.streamIndex))
+      return { type: "session", session: event.session };
+    if (event.type === "error" && typeof event.text === "string")
+      return { type: "error", text: event.text };
     if (event.type === "token" && event.text) {
       return { type: "token", text: event.text };
     }

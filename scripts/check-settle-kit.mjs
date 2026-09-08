@@ -5,7 +5,7 @@ import { checkSdkSource, packageAllowed } from "./lib/settle-kit-boundaries.mjs"
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 let failed = false;
-for (const name of ["core", "react", "agents"]) {
+for (const name of ["core", "react", "agents", "server"]) {
   const packageDir = join(root, "packages/settle-kit", name);
   const dir = join(packageDir, "src");
   const manifest = JSON.parse(readFileSync(join(packageDir, "package.json"), "utf8"));

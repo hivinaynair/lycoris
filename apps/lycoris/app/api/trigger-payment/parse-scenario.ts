@@ -1,14 +1,18 @@
 import { DEMO_SCENARIO_AGENTS } from "@repo/shared/demo";
+import { z } from "zod";
 
-export async function parseScenarioIndex(request: Request) {
-  let scenarioIndex = 0;
-  try {
-    const body = (await request.json()) as { scenarioIndex?: unknown };
-    if (typeof body.scenarioIndex === "number" && Number.isInteger(body.scenarioIndex)) {
-      scenarioIndex = Math.min(Math.max(body.scenarioIndex, 0), DEMO_SCENARIO_AGENTS.length - 1);
-    }
-  } catch {
-    /* no body */
-  }
-  return scenarioIndex;
-}
+export const chatRequest = z.object({
+  scenarioIndex: z
+    .number()
+    .int()
+    .min(0)
+    .max(DEMO_SCENARIO_AGENTS.length - 1),
+  message: z.string().trim().min(1).max(2000),
+  session: z
+    .object({
+      sessionId: z.string().min(1).max(500),
+      continuationToken: z.string().min(1).max(8192).optional(),
+      streamIndex: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
+    })
+    .optional(),
+});

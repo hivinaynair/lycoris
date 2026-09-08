@@ -8,8 +8,9 @@ test("checkout gives actionable missing-wallet guidance and fits mobile", async 
   page,
 }, info) => {
   await page.goto("/checkout");
+  await page.getByRole("button", { name: "Wallet", exact: true }).click();
   await page.getByRole("button", { name: "Buy", exact: true }).click();
-  await page.getByRole("button", { name: "Pay USDC" }).click();
+  await page.getByRole("button", { name: /Pay [\d.]+ USDC/ }).click();
   await expect(
     page.getByText("Open this checkout in a browser with a wallet extension, then try again."),
   ).toBeVisible();
@@ -51,8 +52,9 @@ test("checkout preflight blocks an unfunded wallet before any send", async ({ pa
     });
   });
   await page.goto("/checkout");
+  await page.getByRole("button", { name: "Wallet", exact: true }).click();
   await page.getByRole("button", { name: "Buy", exact: true }).click();
-  await page.getByRole("button", { name: "Pay USDC" }).click();
+  await page.getByRole("button", { name: /Pay [\d.]+ USDC/ }).click();
   await expect(page.getByText("Not enough USDC to complete this payment.")).toBeVisible();
   expect(await page.evaluate(() => Reflect.get(window, "sends"))).toBe(0);
 });
@@ -70,6 +72,7 @@ test("checkout waits for a receipt and confirms two purchases with a simulated w
           request: async ({ method }: { method: string }) => {
             if (method === "eth_requestAccounts") return [buyer];
             if (method === "eth_chainId") return "0x14a34";
+            if (method === "personal_sign") return `0x${"11".repeat(65)}`;
             if (method === "eth_sendTransaction") {
               Reflect.set(window, "sends", Reflect.get(window, "sends") + 1);
               return hash;
@@ -81,15 +84,36 @@ test("checkout waits for a receipt and confirms two purchases with a simulated w
     },
     { buyer, hash },
   );
+  let accessAttempts = 0;
+  await page.route("**/api/weather/checkout", async (route) => {
+    accessAttempts++;
+    expect(route.request().postDataJSON().txHash).toBe(hash);
+    if (accessAttempts === 1)
+      return route.fulfill({
+        status: 503,
+        json: { error: "Weather unavailable. Retry without paying again." },
+      });
+    await route.fulfill({
+      json: {
+        city: "Melbourne",
+        temperatureC: 18,
+        rainProbabilityPercent: 12,
+        willRainAt1Pm: false,
+        targetTime: "2026-09-09T03:00:00Z",
+        provider: "Open-Meteo",
+      },
+    });
+  });
   let sawReceipt = false;
+  let releaseReceipt!: () => void;
+  let receiptGate: Promise<void>;
   await page.route("https://sepolia.base.org/**", async (route) => {
     const request = route.request().postDataJSON();
     let result: unknown;
     if (request.method === "eth_call") result = `0x${100000000n.toString(16).padStart(64, "0")}`;
     else if (request.method === "eth_blockNumber") result = "0x1";
     else if (request.method === "eth_getTransactionReceipt") {
-      // Hold the receipt briefly so the submitted state is visible in the actual UI.
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await receiptGate;
       sawReceipt = true;
       result = {
         transactionHash: hash,
@@ -111,15 +135,53 @@ test("checkout waits for a receipt and confirms two purchases with a simulated w
     await route.fulfill({ json: { jsonrpc: "2.0", id: request.id, result } });
   });
   await page.goto("/checkout");
+  await page.getByRole("button", { name: "Wallet", exact: true }).click();
   for (let purchase = 0; purchase < 2; purchase++) {
+    receiptGate = new Promise<void>((resolve) => {
+      releaseReceipt = resolve;
+    });
     await page.getByRole("button", { name: "Buy", exact: true }).click();
-    await page.getByRole("button", { name: "Pay USDC" }).click();
+    await page
+      .getByRole("button", { name: purchase === 0 ? "Merchant UI" : "Default SDK", exact: true })
+      .click();
+    await page.getByRole("button", { name: /Pay [\d.]+ USDC/ }).click();
     await expect(page.getByText("Payment submitted. Waiting for confirmation…")).toBeVisible();
-    await expect(page.getByText("Payment confirmed: 12.50 USDC.")).toBeVisible();
+    releaseReceipt();
+    await expect(page.getByText("Payment confirmed: 0.1 USDC.")).toBeVisible();
+    await page.getByRole("button", { name: "Unlock weather report" }).click();
+    if (purchase === 0) {
+      await expect(
+        page.getByRole("region", { name: "Purchased weather report" }).getByRole("alert"),
+      ).toContainText("Retry without paying again");
+      await page.getByRole("button", { name: "Unlock weather report" }).click();
+    }
+    await expect(page.getByText("18°C · 12% rain probability")).toBeVisible();
+    expect(await page.evaluate(() => Reflect.get(window, "sends"))).toBe(purchase + 1);
     if (purchase === 0) await page.getByRole("button", { name: "New purchase" }).click();
   }
   expect(sawReceipt).toBe(true);
   expect(await page.evaluate(() => Reflect.get(window, "sends"))).toBe(2);
   expect(errors).toEqual([]);
   await page.screenshot({ path: info.outputPath("checkout-confirmed.png"), fullPage: true });
+});
+
+test("merchant checkout preserves the session across appearances and fits mobile", async ({
+  page,
+}, info) => {
+  await page.goto("/checkout");
+  await page.getByRole("button", { name: "Wallet", exact: true }).click();
+  await page.getByRole("button", { name: "Buy", exact: true }).click();
+  await page.getByRole("button", { name: "Merchant UI", exact: true }).click();
+  await expect(page.getByRole("button", { name: /Pay [\d.]+ USDC/ })).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+    ),
+  ).toBe(true);
+  await page.screenshot({ path: info.outputPath("merchant-mobile.png"), fullPage: true });
+  await page.getByRole("button", { name: /Pay [\d.]+ USDC/ }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "wallet" })).toBeVisible();
+  await page.getByRole("button", { name: "Default SDK", exact: true }).click();
+  await expect(page.getByRole("button", { name: "Reset" })).toBeVisible();
 });

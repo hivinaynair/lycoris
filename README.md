@@ -4,15 +4,25 @@ An embeddable **USDC checkout SDK**, extracted from an existing agent payment ra
 The merchant names a destination; the host app mounts `SettleProvider` once and
 calls `begin({ amountUsdc })` for each purchase. The host supplies its own wallet.
 
-**Start at `/checkout`.** It is a sample merchant storefront, not an operator dashboard.
-The agent Demo, Feed and Agents pages are the appendix: Eve pays a weather API through x402.
+The playground starts in **Simulation**: no wallet, RPC calls or funds. Choose success,
+wallet rejection, insufficient USDC or delayed confirmation. Switch to **Wallet**
+for the separate Base Sepolia test-wallet flow. Appearance can change mid-payment.
+The page shows matching embed code and also offers a host-owned shadcn example.
+
+**Start at `/checkout` (`/` redirects there).** It is a sample merchant storefront, not an operator dashboard.
+The agent `/demo` and Feed pages are the appendix: Lycoris pays a weather API through x402.
+
+See the [shared design system](packages/ui/README.md) for light/dark tokens and
+[local walkthrough and bundle measurements](docs/plans/2026-09-08-demo-proof.md).
 
 ## Try the embed
 
 ```tsx
 "use client";
 
-import { SettleProvider, Checkout, type PaymentSigner } from "@settle-kit/react";
+import { SettleProvider, type PaymentSigner } from "@settle-kit/react";
+import { Checkout } from "@settle-kit/react/ui";
+import "@settle-kit/react/styles.css";
 
 export function Store({ getSigner }: { getSigner: () => Promise<PaymentSigner> }) {
   return (
@@ -25,13 +35,13 @@ export function Store({ getSigner }: { getSigner: () => Promise<PaymentSigner> }
         recipient: "0x1111111111111111111111111111111111111111", // replace with your merchant
       },
     }}>
-      <Checkout amountUsdc="12.50" title="Rooftop hoodie" />
+      <Checkout amountUsdc="0.1" title="Melbourne weather report" />
     </SettleProvider>
   );
 }
 ```
 
-For custom buttons, call `await begin({ amountUsdc: "12.50" })`, then `pay()` once
+For custom buttons, call `await begin({ amountUsdc: "0.1" })`, then `pay()` once
 state is `awaiting_payment`. A second SKU uses the same Provider.
 See the [complete React example](packages/settle-kit/react/README.md).
 
@@ -42,6 +52,8 @@ See the [complete React example](packages/settle-kit/react/README.md).
 - `@settle-kit/react`: Context configuration, hooks backed by `useSyncExternalStore`,
   and an optional default checkout. No wagmi requirement or Zustand dependency.
 - `@settle-kit/agents`: paid fetch and AP2 mandate helpers. No React, Eve or app allowlists.
+- `@settle-kit/server`: `withAgenticPayment` for paid Next.js APIs, including per-request
+  mandate forwarding to the facilitator. See the [server SDK](packages/settle-kit/server/README.md).
 
 The amount displayed is bound to the amount transferred. `settled` means a successful
 receipt, not just a transaction hash. An unavailable receipt keeps the payment in
@@ -57,7 +69,7 @@ and Base Sepolia ETH for gas. No physical item ships from the sample store.
 
 The checkout transaction targets the USDC contract; the merchant is the recipient
 inside `transfer(recipient, amount)`. The agent payment separately goes to the
-**x402 resource payee**, not the hoodie recipient. ERC-8004 is agent identity, not KYC;
+**same weather merchant** as human checkout. Each buyer makes a separate payment. ERC-8004 is agent identity, not KYC;
 agent `/preclear` checks identity and mandate, not balance.
 
 Sessions are in memory. Keep the page open until confirmation; after a reload,
@@ -93,18 +105,17 @@ Chromium. The wallet and receipts are **simulated**. It saves desktop/mobile scr
 in the printed temporary directory. Install Chromium once with
 `bun run --cwd e2e/web e2e:install` if needed.
 
-The packages currently distribute TypeScript source, not a published JS build.
-External Next consumers need `transpilePackages: ["@settle-kit/core", "@settle-kit/react"]`,
-TypeScript `strict: true`, and target `ES2020` or later. See
+The packages ship compiled ESM and TypeScript declarations. External Next consumers
+need no SDK-specific transpilation configuration. Packages are not published. See
 [e2e/fixtures/settle-kit-next](e2e/fixtures/settle-kit-next) for the exact fixture.
 
 ## Layout
 
 | Path | Role |
 | --- | --- |
-| `packages/settle-kit/{core,react,agents}` | The SDK packages |
+| `packages/settle-kit/{core,react,agents,server}` | The SDK packages |
 | `apps/lycoris` | Merchant checkout + agent appendix UI, port 3003 |
-| `apps/agent` | Eve consumer of `@settle-kit/agents`, port 3002 |
+| `apps/agent` | Lycoris agent, built with Eve and `@settle-kit/agents`, port 3002 |
 | `apps/facilitator` | x402 verification, identity/mandate gates and USDC settlement |
 | `packages/shared`, `packages/db` | Rail helpers and Neon/Drizzle demo database |
 | `packages/ui` | Shared shadcn/ui; never installed into an app |
@@ -114,3 +125,36 @@ TypeScript `strict: true`, and target `ES2020` or later. See
 [Review follow-up and interview notes](docs/plans/2026-09-08-settle-kit-review-follow-up.md)
 
 The name is a nod to Lycoris Recoil: agents on a mission.
+
+### Shared weather purchase
+
+Human checkout and Lycoris buy the Melbourne public forecast for **0.1 USDC**
+(100000 atomic units), using the same `PAY_TO_ADDRESS`. The React SDK sends a
+direct transfer; the agents SDK uses x402. Simulation unlocks labeled sample data.
+Wallet checkout requires a free ownership signature after payment; the server checks
+the direct transfer, successful receipt, USDC Transfer event, payer signature, and
+a 15-minute access window before fetching the same Open-Meteo report. Access retries
+within that window do not require another payment. This demo does not persist orders.
+
+The capped agent now has a zero-USDC mandate, so the same 0.1-USDC resource can
+demonstrate an authorization failure. Existing credentials must be regenerated with
+`bun run lycoris:refresh-mandates` to apply that changed mandate without funding or registering agents. This writes the local credential file; remote agents using `MANDATES_JSON` need their credentials updated separately.
+
+### Chat with Lycoris
+
+`/demo` offers a compact **Get me the report** button. It sends that request to the
+Eve agent running Claude Haiku 4.5, then shows only the latest reply. The button is
+disabled while a request is running; opening the page does not send a request. The circuit follows paid-tool events
+and facilitator progress. Scenario changes start a new conversation; follow-ups
+keep Eve's session cursor and can reuse a report already purchased.
+
+The tool buys only Melbourne's next 1 PM forecast. The authenticated UI transport
+binds the selected wallet through `x-lycoris-agent`; the agent derives the weather
+URL from its configured `APP_URL`. Model arguments cannot choose a different wallet
+or destination, and only one payment attempt is allowed per turn. Identity, AP2,
+and balance checks still apply. Start UI, Eve, and facilitator with `bun run dev`.
+
+`POST /api/trigger-payment` now requires `{ scenarioIndex, message }` and accepts an
+optional Eve session cursor for follow-ups. Its SSE feed includes text, payment
+gates, session state, and a terminal reply, payment result, or connection error.
+A disconnected turn is never automatically retried.

@@ -58,3 +58,13 @@ export async function getBrowserSigner(): Promise<PaymentSigner> {
     },
   };
 }
+
+/** Host resource access proof; deliberately outside the payment SDK. */
+export async function signWeatherAccess(message: string) {
+  const ethereum = getEthereum();
+  if (!ethereum) throw new Error("Connect the wallet that made this payment.");
+  const accounts = (await ethereum.request({ method: "eth_requestAccounts" })) as string[];
+  const account = getAddress(accounts[0] ?? "");
+  const client = createWalletClient({ account, transport: custom(ethereum) });
+  return client.signMessage({ account, message });
+}

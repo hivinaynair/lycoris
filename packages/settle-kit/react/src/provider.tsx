@@ -8,13 +8,16 @@ import {
   createUsdcMethod,
 } from "@settle-kit/core";
 import { type ReactNode, useMemo, useRef, useState } from "react";
+import type { CheckoutAppearance } from "./appearance";
 import { type SettleAppConfig, SettleContext } from "./context";
 
 export function SettleProvider({
   config,
+  appearance,
   children,
 }: {
   config: SettleAppConfig;
+  appearance?: CheckoutAppearance;
   children: ReactNode;
 }) {
   const managerRef = useRef<CheckoutManager | null>(null);
@@ -24,6 +27,7 @@ export function SettleProvider({
   const value = useMemo(
     () => ({
       config,
+      appearance,
       manager,
       managerRef,
       title,
@@ -33,7 +37,7 @@ export function SettleProvider({
         setTitle(nextTitle);
       },
     }),
-    [config, manager, title],
+    [config, appearance, manager, title],
   );
 
   return <SettleContext.Provider value={value}>{children}</SettleContext.Provider>;

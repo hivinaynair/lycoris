@@ -12,6 +12,7 @@ async function run(command, cwd = host) {
 }
 await cp(join(root, "e2e/fixtures/settle-kit-next"), host, { recursive: true });
 for (const name of ["core", "react"]) {
+  await run(["bun", "run", "build"], join(root, "packages/settle-kit", name));
   await run(
     ["bun", "pm", "pack", "--filename", join(host, `${name}.tgz`), "--ignore-scripts", "--quiet"],
     join(root, "packages/settle-kit", name),
@@ -83,10 +84,10 @@ try {
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto(url);
   await page.getByRole("button", { name: "Choose hoodie" }).click();
-  await page.getByRole("button", { name: "Pay USDC" }).click();
+  await page.getByRole("button", { name: /Pay [\d.]+ USDC/ }).click();
   await page.getByText("Payment confirmed: 12.50 USDC.").waitFor();
   await page.getByRole("button", { name: "Choose patch" }).click();
-  await page.getByRole("button", { name: "Pay USDC" }).click();
+  await page.getByRole("button", { name: /Pay [\d.]+ USDC/ }).click();
   await page.getByText("Payment confirmed: 4.00 USDC.").waitFor();
   if (
     (await page.getByTestId("sent").textContent()) !== "2" ||

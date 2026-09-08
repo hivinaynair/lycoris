@@ -3,6 +3,7 @@ import ts from "typescript";
 
 const allowed = {
   core: ["viem"],
+  server: ["@settle-kit/core", "@x402/core", "@x402/evm", "@x402/next", "next", "viem"],
   react: ["react", "@settle-kit/core"],
   agents: ["viem", "@settle-kit/core", "@x402/core", "@x402/fetch"],
 };

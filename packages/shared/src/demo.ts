@@ -9,22 +9,26 @@ export const DEMO_SCENARIO_AGENTS = [
   DemoAgentName.GHOST,
 ] as const;
 
+export const WEATHER_PRICE_USDC = "0.1";
+export const WEATHER_AMOUNT_ATOMIC = "100000";
+export const WEATHER_TITLE = "Melbourne weather report";
+
 export const DEMO_REPORT_ROUTES = [
   {
     id: "basic",
     path: "/api/weather/public",
-    priceLabel: "$0.20",
-    price: "$0.20",
-    amountAtomic: "200000",
-    title: "Melbourne public forecast",
+    priceLabel: "0.1 USDC",
+    price: "$0.10",
+    amountAtomic: WEATHER_AMOUNT_ATOMIC,
+    title: WEATHER_TITLE,
     recommendation: "Paid 1 PM rain answer for Melbourne.",
   },
   {
     id: "premium",
     path: "/api/weather/rooftop-brief",
-    priceLabel: "$5.00",
-    price: "$5.00",
-    amountAtomic: "5000000",
+    priceLabel: "0.1 USDC",
+    price: "$0.10",
+    amountAtomic: WEATHER_AMOUNT_ATOMIC,
     title: "Melbourne rooftop brief",
     recommendation: "Paid rooftop-lunch brief for Melbourne at 1 PM.",
   },
@@ -32,8 +36,8 @@ export const DEMO_REPORT_ROUTES = [
 
 export const DEMO_AGENT_ROUTE: Record<DemoAgentName, ReportRouteId> = {
   [DemoAgentName.AGENT_1]: "basic",
-  [DemoAgentName.AGENT_2]: "premium",
-  [DemoAgentName.AGENT_3]: "premium",
+  [DemoAgentName.AGENT_2]: "basic",
+  [DemoAgentName.AGENT_3]: "basic",
   [DemoAgentName.GHOST]: "basic",
 };
 

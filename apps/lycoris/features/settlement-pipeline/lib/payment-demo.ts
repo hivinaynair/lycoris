@@ -5,7 +5,7 @@ export const SCENARIOS = [
   {
     agentName: "lycoris-agent-1",
     slot: "A",
-    title: "Happy path",
+    title: "Successful payment",
     displayAgent: "lycoris-agent-1",
     packetFrom: "agent wallet pending",
     mandate: "AP2 credential",
@@ -13,7 +13,7 @@ export const SCENARIOS = [
   {
     agentName: "lycoris-agent-2",
     slot: "B",
-    title: "Mandate exceeded",
+    title: "Spending limit exceeded",
     displayAgent: "lycoris-agent-2",
     packetFrom: "agent wallet pending",
     mandate: "AP2 credential",
@@ -70,8 +70,8 @@ export function scenarioIndexFromSearch(search: string) {
 }
 
 const FALLBACK_ROUTES = {
-  premium: { id: "premium", path: "/api/weather/rooftop-brief", price: "$5.00" },
-  basic: { id: "basic", path: "/api/weather/public", price: "$0.20" },
+  premium: { id: "premium", path: "/api/weather/rooftop-brief", price: "$0.10" },
+  basic: { id: "basic", path: "/api/weather/public", price: "$0.10" },
 } as const;
 
 export function fallbackRouteForAgent(agent: DemoAgent) {

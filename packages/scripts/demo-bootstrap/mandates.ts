@@ -13,7 +13,7 @@ import { MANDATE_FAR_FUTURE_EXPIRY, MAX_AMOUNT } from "./config.js";
 import type { Delegator } from "./context.js";
 import type { SignedMandateForBootstrap } from "./types.js";
 
-const MANDATE_FILE = resolve(import.meta.dirname, "../../apps/agent/mandates.json");
+const MANDATE_FILE = resolve(import.meta.dirname, "../../../apps/agent/mandates.json");
 
 function readMandateFile(): Record<string, unknown> {
   try {

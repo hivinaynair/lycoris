@@ -1,21 +1,23 @@
 import type { Metadata } from "next";
-import { Geist, IBM_Plex_Mono, Newsreader } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import type { ReactNode } from "react";
 
 import "./globals.css";
+import { DesignFonts } from "@repo/ui/components/design-fonts";
 import { Toaster } from "@repo/ui/components/sonner";
+import { ThemeProvider } from "@repo/ui/components/theme-provider";
 import { TooltipProvider } from "@repo/ui/components/tooltip";
-import { cn } from "@repo/ui/lib/utils";
 import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://lycoris.vercel.app"),
   title: "Lycoris",
-  description: "Agentic USDC settlement demo",
+  description:
+    "An embeddable USDC checkout SDK. Explore payment states, themes, and a host-owned wallet integration.",
   openGraph: {
     title: "Lycoris",
-    description: "Agentic USDC settlement demo",
+    description:
+      "An embeddable USDC checkout SDK. Explore payment states, themes, and a host-owned wallet integration.",
     url: "https://lycoris.vercel.app",
     siteName: "Lycoris",
     type: "website",
@@ -23,21 +25,10 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Lycoris",
-    description: "Agentic USDC settlement demo",
+    description:
+      "An embeddable USDC checkout SDK. Explore payment states, themes, and a host-owned wallet integration.",
   },
 };
-
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  variable: "--font-newsreader",
-  style: ["normal", "italic"],
-});
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
-  variable: "--font-plex",
-});
 
 export default function RootLayout({
   children,
@@ -45,22 +36,19 @@ export default function RootLayout({
   children: ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={cn(
-        "font-sans antialiased",
-        geist.variable,
-        newsreader.variable,
-        plexMono.variable,
-      )}
-    >
-      <body>
-        <NuqsAdapter>
-          <TooltipProvider>
-            <AppShell>{children}</AppShell>
-            <Toaster />
-          </TooltipProvider>
-        </NuqsAdapter>
+    <html lang="en" suppressHydrationWarning className="font-sans antialiased">
+      <head>
+        <DesignFonts />
+      </head>
+      <body className="ui-paper-canvas">
+        <ThemeProvider defaultTheme="dark" storageKey="lycoris-theme">
+          <NuqsAdapter>
+            <TooltipProvider>
+              <AppShell>{children}</AppShell>
+              <Toaster />
+            </TooltipProvider>
+          </NuqsAdapter>
+        </ThemeProvider>
       </body>
     </html>
   );

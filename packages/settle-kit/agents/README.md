@@ -32,3 +32,6 @@ const metadata = paidFetch.getPaymentMetadata(response);
 shared `lastAuthorizationNonce` or `lastChallenge` fields; concurrent or later free
 requests cannot inherit another request's payment details. Query metadata on the
 original response, before making a clone if one is needed.
+
+Distribution: compiled ESM and declarations, with a Bun source entry point.
+Run `bun run build` before packing (also run by `prepack`).

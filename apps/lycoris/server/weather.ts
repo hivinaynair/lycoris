@@ -54,7 +54,8 @@ export function melbourneForecastFromHourly(
     .format(new Date(targetTime))
     .replace(" ", "T");
   const index = hourly.time.findIndex((time) => time.startsWith(targetLocal.slice(0, 13)));
-  const hourIndex = index >= 0 ? index : 0;
+  if (index < 0) throw new Error("Open-Meteo omitted the Melbourne 1 PM hour");
+  const hourIndex = index;
   const rainProbabilityPercent = hourly.precipitation_probability[hourIndex] ?? 0;
   const precipitationMm = hourly.precipitation[hourIndex] ?? 0;
   const temperatureC = hourly.temperature_2m[hourIndex] ?? 0;

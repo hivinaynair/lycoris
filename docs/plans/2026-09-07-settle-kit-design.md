@@ -1,4 +1,8 @@
+**Resource refinement (September 8):** Human checkout and the agent now buy the same Melbourne weather report for 0.1 USDC, paid to the same merchant in separate transactions. Historical hoodie examples below describe the original design. Resource verification stays in the host app.
+
 # Settle Kit SDK design
+
+**React packaging refinement (September 8):** [React embed improvements](2026-09-08-react-embed-improvements.md) supersedes source-only exports and the default UI import examples below.
 
 **Implementation refinement (September 8):** [Review follow-up](2026-09-08-settle-kit-review-follow-up.md) adds receipt confirmation, in-flight reset guards, validated quotes/destinations, automatic USDC selection in React `begin`, and request-scoped paid-fetch metadata. These refine the lifecycle examples below.
 
