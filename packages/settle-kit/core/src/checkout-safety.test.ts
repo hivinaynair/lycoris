@@ -266,3 +266,77 @@ it("rejects a wrong-network signer before balance or send", async () => {
   expect(readContract).not.toHaveBeenCalled();
   expect(sendTransaction).not.toHaveBeenCalled();
 });
+
+describe("destination resolution", () => {
+  const withoutDestination = (quote: Partial<Quote> = {}) =>
+    createSettleConfig({
+      getSigner: async () => ({
+        address: destination.recipient,
+        sendTransaction: async () => hash,
+      }),
+      methods: [
+        {
+          id: "usdc",
+          quote: async () => ({ ...makeQuote(), ...quote }),
+          settle: async () => hash,
+          confirm: async () => "success" as const,
+        },
+      ],
+    });
+
+  it("pays the destination the quote returned when the app configured none", async () => {
+    const manager = createCheckout(withoutDestination({ destination }), { amountUsdc: "12.50" });
+    await manager.selectMethod("usdc");
+    expect(manager.getState()).toMatchObject({ status: "awaiting_payment", destination });
+  });
+
+  it("fails the quote when no destination resolves at all", async () => {
+    const manager = createCheckout(withoutDestination(), { amountUsdc: "12.50" });
+    await expect(manager.selectMethod("usdc")).rejects.toThrow(/destination is required/);
+    expect(manager.getState()).toMatchObject({
+      status: "failed",
+      error: { code: "invalid_config" },
+    });
+  });
+
+  it("still rejects a malformed app destination when the session is created", () => {
+    expect(() =>
+      createCheckout(withoutDestination(), {
+        amountUsdc: "12.50",
+        destination: { ...destination, recipient: "0xnope" as never },
+      }),
+    ).toThrow(/recipient/);
+  });
+
+  it("prefers the per-checkout destination over the app default", async () => {
+    const perCheckout = {
+      ...destination,
+      recipient: "0x3333333333333333333333333333333333333333" as const,
+    };
+    const f = fixture();
+    const manager = createCheckout(f.config, { amountUsdc: "12.50", destination: perCheckout });
+    await manager.selectMethod("usdc");
+    expect(manager.getState()).toMatchObject({
+      status: "awaiting_payment",
+      destination: perCheckout,
+    });
+  });
+
+  it("refuses to settle a quote bound to a different recipient", async () => {
+    const method = createUsdcMethod({ client: { readContract: async () => 100000000n } });
+    const quote = { ...makeQuote(), destination };
+    const other = {
+      ...destination,
+      recipient: "0x4444444444444444444444444444444444444444" as const,
+    };
+    const sendTransaction = mock(async () => hash);
+    await expect(
+      method.settle({
+        quote,
+        destination: other,
+        signer: { address: other.recipient, sendTransaction },
+      }),
+    ).rejects.toMatchObject({ code: "transfer_failed" });
+    expect(sendTransaction).not.toHaveBeenCalled();
+  });
+});

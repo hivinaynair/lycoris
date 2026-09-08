@@ -74,7 +74,7 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
     },
     async settle({ quote, destination, signer }) {
       assertDestination(destination);
-      validateQuote(quote, quote.amountUsdc);
+      validateQuote(quote, quote.amountUsdc, destination);
       if (signer.getChainId) {
         const chainId = await signer.getChainId();
         if (chainId !== destination.targetChain) {

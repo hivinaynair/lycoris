@@ -14,7 +14,8 @@ import type {
 } from "./types";
 
 export function createCheckout(config: SettleConfig, input: CreateCheckoutInput): CheckoutManager {
-  const destination = assertDestination(input.destination ?? config.destination);
+  const requested = input.destination ?? config.destination;
+  const destination = requested ? assertDestination(requested) : undefined;
   parseUsdcAmount(input.amountUsdc);
   const amountUsdc = input.amountUsdc.trim();
   let state: CheckoutState = IDLE_STATE;
@@ -74,8 +75,14 @@ export function createCheckout(config: SettleConfig, input: CreateCheckoutInput)
           ? await fetchQuote(config.quoteUrl, { amountUsdc, destination, method: "usdc" })
           : await adapter.quote({ amountUsdc, destination });
         if (token !== generation) return;
-        const quote = validateQuote(value, amountUsdc);
-        setState({ type: "QUOTE_OK", quote, destination });
+        const quote = validateQuote(value, amountUsdc, destination);
+        const settleTo = quote.destination ?? destination;
+        if (!settleTo) {
+          invalidConfig(
+            "destination is required: set it on the config, pass it to the checkout, or return it from the quote",
+          );
+        }
+        setState({ type: "QUOTE_OK", quote, destination: settleTo });
       } catch (error) {
         if (token !== generation) return;
         setState({ type: "QUOTE_FAILED", error: toSettleError(error) });

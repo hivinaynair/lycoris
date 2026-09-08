@@ -11,7 +11,7 @@ export function createSettleConfig(input: CreateSettleConfigInput): SettleConfig
   if (typeof input.getSigner !== "function") {
     invalidConfig("getSigner is required");
   }
-  const destination = assertDestination(input.destination);
+  const destination = input.destination ? assertDestination(input.destination) : undefined;
   const methods = input.methods ?? [createUsdcMethod()];
   if (
     methods.length !== 1 ||
