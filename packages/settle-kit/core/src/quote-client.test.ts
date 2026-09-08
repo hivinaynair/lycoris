@@ -27,9 +27,9 @@ describe("validateQuote destination binding", () => {
       targetAsset: destination.targetAsset.toLowerCase() as Destination["targetAsset"],
       recipient: `0x${destination.recipient.slice(2).toUpperCase()}` as Destination["recipient"],
     };
-    expect(
-      validateQuote(body({ destination: shouted }), "12.50", destination).destination,
-    ).toBeDefined();
+    expect(validateQuote(body({ destination: shouted }), "12.50", destination).destination).toEqual(
+      shouted,
+    );
   });
 
   it("rejects a server destination that redirects the payment", () => {
