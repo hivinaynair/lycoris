@@ -17,9 +17,10 @@ function ReactSection() {
   return (
     <DocsSection id="react" title="Add a React checkout">
       <p>
-        Mount one Provider around your store. Supply the merchant destination and a wallet signer,
-        then render Checkout for each purchase. Amounts are decimal strings with at most six decimal
-        places.
+        Mount one Provider around your store. Supply a wallet signer and, optionally, a default
+        merchant destination: each purchase can override it, and a quote endpoint can return its own
+        recipient. Then render Checkout for each purchase. Amounts are decimal strings with at most
+        six decimal places.
       </p>
       <CodeExample title="store.tsx" code={examples.reactCheckout} />
       <p className="text-muted-foreground">

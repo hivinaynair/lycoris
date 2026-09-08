@@ -31,9 +31,14 @@ The transaction's `to` is Circle USDC, with the merchant inside `transfer` calld
 
 ## Contract
 
-- Session creation validates positive six-decimal USDC amounts and the effective
-  destination, including per-purchase overrides. Invalid host configuration throws
-  `SettleKitError` with `invalid_config`.
+- Session creation validates positive six-decimal USDC amounts and any destination it
+  is given. The effective destination is the per-purchase override, then the config
+  default, then the one the quote returns; if none resolves, the quote fails with
+  `invalid_config`.
+- A quote may carry its own `destination`. It is validated as external data, and when
+  the host also asked for a recipient the two must match, or the quote fails with
+  `transfer_failed`. Prefer this when the recipient belongs to the resource: the server
+  then decides where funds go, and a tampered client cannot redirect them.
 - Server and adapter quotes must match the purchase amount in both displayed and
   atomic units. Quote amounts are JSON-safe strings; accepted quotes are frozen.
 - `pay()` checks expiry before/after wallet acquisition. The USDC adapter checks

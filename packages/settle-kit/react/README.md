@@ -63,6 +63,9 @@ call `payNow({ amountUsdc, title })` from a user click. Both paths retain balanc
 network, expiry and receipt checks; wallet approval still happens in the wallet.
 
 Optional `destination` overrides the Provider destination for a new purchase.
+The Provider `destination` is optional. Marketplaces with a per-resource recipient can
+omit it and pass `destination` to `begin`/`payNow`/`Checkout`, or return `destination`
+from the `quoteUrl` response so the server stays authoritative.
 `labels` supports `buy`, `pay`, `reset`, `newPurchase`, `retryConfirmation`,
 `paymentMethod`, `idleDescription`, `reviewDescription`, `pendingWallet`,
 `networkFee`, and `recoveryDescription`. Sponsored hosts should override wallet
