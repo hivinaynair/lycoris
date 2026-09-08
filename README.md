@@ -65,8 +65,9 @@ bun run check-tokens
 
 Copy `.env.example` → `.env.local` under `apps/agent`, `apps/facilitator`,
 `apps/lycoris`, and `packages/db` (and `packages/scripts` for
-bootstrap). See each file for required keys (CDP, Anthropic, Neon, facilitator
-URL, etc.).
+bootstrap). Reuse Sietch CDP / Anthropic / facilitator keys; give Lycoris its
+own Neon `DATABASE_URL` (Feed, Agents, and facilitator attestations). Checkout
+itself does not query Postgres, but the Lycoris app still loads that URL.
 
 Demo bootstrap (wallets, mandate seed, funding):
 
