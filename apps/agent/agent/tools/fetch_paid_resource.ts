@@ -1,11 +1,13 @@
+import { BASE_SEPOLIA_CAIP2 } from "@repo/shared/chains";
 import { DemoAgentName } from "@repo/shared/types";
+import { createPaidFetch, payForResource, quoteResource } from "@settle-kit/agents";
+import { ExactEvmScheme } from "@x402/evm";
 import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { getCdp } from "../lib/cdp.js";
 import { getAp2CredentialForAgent } from "../lib/credentials.js";
 import { getDecisionRecord, preclearPayment, toRawMandate } from "../lib/preclear.js";
 import { isAllowedPaymentUrl } from "../lib/run-request.js";
-import { performX402Fetch, quoteX402 } from "../lib/tools.js";
 
 const denied = (reason: string) => ({ type: "denied" as const, reason });
 
@@ -39,16 +41,16 @@ export default defineTool({
     const credential = getAp2CredentialForAgent(account.address);
     if (!credential) return denied("mandate_missing");
 
-    let quoted: Awaited<ReturnType<typeof quoteX402>>;
+    let quoted: Awaited<ReturnType<typeof quoteResource>>;
     try {
-      quoted = await quoteX402(url);
+      quoted = await quoteResource(url);
     } catch (err) {
       return denied(`Could not quote ${url}: ${(err as Error).message}`);
     }
     if (!quoted) return denied(`${url} is not an x402-gated resource`);
 
     const verdict = await preclearPayment({
-      amountAtomic: quoted.amountAtomic,
+      amountAtomic: BigInt(quoted.amountAtomic),
       mandateHeader: credential.header,
       payer: account.address,
       resource: url,
@@ -64,7 +66,14 @@ export default defineTool({
       return { settled: false, url, error: "mandate_missing", payer: account.address };
     }
 
-    const paid = await performX402Fetch(account, url, { mandateHeader: credential.header });
+    const paidFetch = createPaidFetch({
+      scheme: {
+        network: BASE_SEPOLIA_CAIP2,
+        client: new ExactEvmScheme(account as never),
+      },
+      getMandateHeader: () => credential.header,
+    });
+    const paid = await payForResource({ url, paidFetch });
     const error =
       paid.paymentRequiredError ??
       (paid.httpStatus >= 400 && paid.body && typeof paid.body === "object" && "error" in paid.body
@@ -85,7 +94,7 @@ export default defineTool({
       body: paid.body,
       txHash: paid.txHash,
       authorizationNonce: paid.authorizationNonce,
-      x402Challenge: paid.x402Challenge,
+      x402Challenge: paid.challenge,
       error: error ?? decisionRecord?.rejectionReason,
       decisionRecord,
       rawMandate: toRawMandate(credential.entry),

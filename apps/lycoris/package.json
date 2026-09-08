@@ -16,6 +16,8 @@
     "@repo/db": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@settle-kit/core": "workspace:*",
+    "@settle-kit/react": "workspace:*",
     "@x402/core": "^2.17.0",
     "@x402/evm": "^2.17.0",
     "@x402/next": "^2.17.0",
