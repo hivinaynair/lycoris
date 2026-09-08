@@ -63,8 +63,11 @@ call `payNow({ amountUsdc, title })` from a user click. Both paths retain balanc
 network, expiry and receipt checks; wallet approval still happens in the wallet.
 
 Optional `destination` overrides the Provider destination for a new purchase.
-`labels` supports `buy`, `pay`, `reset`, `newPurchase`, and `retryConfirmation`.
-These are action labels, not a complete localization API. Use your own UI for full copy control.
+`labels` supports `buy`, `pay`, `reset`, `newPurchase`, `retryConfirmation`,
+`paymentMethod`, `idleDescription`, `reviewDescription`, `pendingWallet`,
+`networkFee`, and `recoveryDescription`. Sponsored hosts should override wallet
+instructions to describe who pays and how recovery works. This is not a complete
+localization API; use your own UI for full copy control.
 `className` applies to the outer section. The stylesheet is optional, scoped to
 `.sk-checkout`, and has no reset, Tailwind requirement or inline style injection.
 Import it once in your host. The headless entry point imports no UI or styles.

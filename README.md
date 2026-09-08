@@ -1,22 +1,94 @@
+<div align="center">
+
 # Lycoris · Settle Kit
 
-An embeddable **USDC checkout SDK**, extracted from an existing agent payment rail.
-The merchant names a destination; the host app mounts `SettleProvider` once and
-calls `begin({ amountUsdc })` for each purchase. The host supplies its own wallet.
+**USDC payments for people and agents. Built into your app.**
 
-The checkout makes real Base Sepolia transfers from a dedicated, faucet-funded demo
-wallet. Visitors click Pay without signing in, connecting a wallet, or supplying funds.
-The report opens automatically after receipt verification. The host enforces a fixed
-merchant, 0.1 USDC price, persistent idempotency, and a ten-purchase budget.
-See [sponsored checkout setup](docs/sponsored-checkout.md).
+A TypeScript SDK for checkout, paid agent requests, and payment-protected APIs.
+Lycoris is the working demo: a person and an AI agent buy the same weather report.
 
-**Start at `/checkout` (`/` redirects there).** It is a sample merchant storefront, not an operator dashboard.
-The agent `/demo` and Feed pages are the appendix: Lycoris pays a weather API through x402.
+[Try checkout](https://lycoris.vinaynair.dev/checkout) · [Watch an agent pay](https://lycoris.vinaynair.dev/demo) · [Documentation](https://lycoris.vinaynair.dev/docs) · [Payment feed](https://lycoris.vinaynair.dev/feed)
 
-See the [shared design system](packages/ui/README.md) for light/dark tokens and
-[local walkthrough and bundle measurements](docs/plans/2026-09-08-demo-proof.md).
+**Base Sepolia · Test USDC · Experimental SDK · Not published to npm**
 
-## Try the embed
+</div>
+
+## Why this exists
+
+A payment involves more than sending a transaction. An application needs to bind
+an amount to a destination, check the payer's balance, handle wallet rejection,
+wait for confirmation, and decide when to release a resource. An agent also needs
+permission to spend.
+
+Settle Kit puts those concerns behind small, separate APIs. A merchant can mount
+a checkout or bring its own components. An agent can request a paid resource over
+HTTP. A server can require payment before returning that resource. The host keeps
+control of its wallet, credentials, authorization policy, and product experience.
+
+The weather report makes this concrete. Both demos buy Melbourne's next 1 PM
+forecast for **0.1 test USDC**, from the same merchant, using two payment paths.
+
+## Explore the demos
+
+| Page | What to try | What it demonstrates |
+| --- | --- | --- |
+| [Checkout playground](https://lycoris.vinaynair.dev/checkout) | Click **Pay**, open the report, then switch checkout styles. | A confirmed USDC transfer, resource access, and replaceable UI around the same session. |
+| [Agent demo](https://lycoris.vinaynair.dev/demo) | Choose a scenario and click **Get me the report**. | An AI agent buying through x402, with identity, mandate, balance, and settlement checks. |
+| [Payment feed](https://lycoris.vinaynair.dev/feed) | Explore public commitments and disclosed decision evidence. | How the facilitator records agent payment decisions. Direct checkout transfers do not create facilitator records. |
+| [SDK docs](https://lycoris.vinaynair.dev/docs) | Follow the React, wallet, agent, and server examples. | How to embed each package in another application. |
+
+**No signup or wallet connection is needed for the public checkout.** A dedicated
+CDP server wallet supplies test USDC and gas. These are real testnet transactions;
+the visitor's wallet is never charged. The host fixes the merchant and price,
+persists a purchase ID, and caps the sponsor at **10 purchases total / 1 USDC**.
+Report access lasts 15 minutes. When the budget is exhausted, checkout reports
+unavailability; it does not switch to simulation.
+
+The agent demo uses separate configured agent wallets. Its scenarios exercise
+successful payment, an exceeded spending limit, and an unregistered identity. The animated
+preview does not send a request; the button starts the live run.
+
+## Choose a package
+
+| Package | Responsibility | Guide |
+| --- | --- | --- |
+| `@settle-kit/core` | Headless checkout sessions, validation, USDC balance preflight, transfer submission, and receipt confirmation. | [Core](packages/settle-kit/core/README.md) |
+| `@settle-kit/react` | `SettleProvider`, `useCheckout`, and optional checkout UI with compiled CSS. | [React](packages/settle-kit/react/README.md) |
+| `@settle-kit/agents` | x402 paid fetch and AP2 mandate helpers, independent of React or Eve. | [Agents](packages/settle-kit/agents/README.md) |
+| `@settle-kit/server` | A Next.js paid-route wrapper with request-scoped mandate forwarding. | [Server](packages/settle-kit/server/README.md) |
+
+The React package requires React 19 and viem 2. The optional UI has no wagmi,
+Zustand, shadcn, or consumer Tailwind requirement. Packages ship ESM and TypeScript
+declarations; Next.js consumers need no SDK-specific `transpilePackages` setting.
+
+## Add checkout to your app
+
+The packages are currently distributed as local tarballs. In this repository:
+
+```sh
+bun install --frozen-lockfile
+bun run pack:settle-kit
+```
+
+Add these entries to your host application's `package.json`, replacing
+`/absolute/path/to/lycoris`, then run `bun install` there. The override keeps the
+unpublished core dependency local.
+
+```json
+{
+  "dependencies": {
+    "@settle-kit/core": "file:/absolute/path/to/lycoris/dist/settle-kit/core.tgz",
+    "@settle-kit/react": "file:/absolute/path/to/lycoris/dist/settle-kit/react.tgz",
+    "react": "^19.2.0",
+    "viem": "^2"
+  },
+  "overrides": {
+    "@settle-kit/core": "file:/absolute/path/to/lycoris/dist/settle-kit/core.tgz"
+  }
+}
+```
+
+Mount one Provider and supply your wallet adapter and merchant address:
 
 ```tsx
 "use client";
@@ -27,135 +99,172 @@ import "@settle-kit/react/styles.css";
 
 export function Store({ getSigner }: { getSigner: () => Promise<PaymentSigner> }) {
   return (
-    <SettleProvider config={{
-      appName: "Rooftop",
-      getSigner,
-      destination: {
-        targetChain: 84532,
-        targetAsset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
-        recipient: "0x1111111111111111111111111111111111111111", // replace with your merchant
-      },
-    }}>
-      <Checkout amountUsdc="0.1" title="Melbourne weather report" />
+    <SettleProvider
+      config={{
+        appName: "Your store",
+        getSigner,
+        destination: {
+          targetChain: 84532,
+          targetAsset: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+          recipient: "0x1111111111111111111111111111111111111111", // Your merchant
+        },
+      }}
+    >
+      <Checkout amountUsdc="0.1" title="Weather report" skipReview />
     </SettleProvider>
   );
 }
 ```
 
-For custom buttons, call `await begin({ amountUsdc: "0.1" })`, then `pay()` once
-state is `awaiting_payment`. A second SKU uses the same Provider.
-See the [complete React example](packages/settle-kit/react/README.md).
+`getSigner` supplies an address, `sendTransaction`, and preferably `getChainId`.
+See the [wallet adapter example](https://lycoris.vinaynair.dev/docs#wallet).
+`skipReview` gives the checkout one initial Pay button; approval still follows
+the supplied wallet's rules. The public demo's popup-free experience comes from
+its [server-sponsored adapter](docs/sponsored-checkout.md).
 
-## What this proves
+Prefer your own UI? Use `useCheckout()` and call
+`payNow({ amountUsdc: "0.1" })` from your Pay button. Use `begin()` followed by
+`pay()` when you want a separate review step. Customize the default UI through
+`appearance.variables` and `appearance.elements` without resetting the session.
 
-- `@settle-kit/core`: headless session manager, amount/destination validation,
-  USDC balance preflight, transfer submission and receipt confirmation.
-- `@settle-kit/react`: Context configuration, hooks backed by `useSyncExternalStore`,
-  and an optional default checkout. No wagmi requirement or Zustand dependency.
-- `@settle-kit/agents`: paid fetch and AP2 mandate helpers. No React, Eve or app allowlists.
-- `@settle-kit/server`: `withAgenticPayment` for paid Next.js APIs, including per-request
-  mandate forwarding to the facilitator. See the [server SDK](packages/settle-kit/server/README.md).
+## How payments move
 
-The amount displayed is bound to the amount transferred. `settled` means a successful
-receipt, not just a transaction hash. An unavailable receipt keeps the payment in
-`settling` with its hash; `retryConfirmation()` checks status without resending.
-In-flight payments cannot be reset or replaced by another purchase.
+```mermaid
+flowchart LR
+  Person[Person clicks Pay] --> React[React checkout + core]
+  React --> Sponsor[Demo server wallet]
+  Sponsor --> USDC[Base Sepolia USDC]
+  USDC --> Receipt[Verify transfer and receipt]
+  Receipt --> Report[Weather report]
 
-## Honest demo limits
-
-Base Sepolia (`84532`) only. Circle USDC
-`0x036CbD53842c5426634e7929541eC2318f3dCF7e`. **USDC → USDC only.**
-No cards, KYC, fiat onramp, real DEX, bridge or mainnet support. Buyers need test USDC
-and Base Sepolia ETH for gas. No physical item ships from the sample store.
-
-The checkout transaction targets the USDC contract; the merchant is the recipient
-inside `transfer(recipient, amount)`. The agent payment separately goes to the
-**same weather merchant** as human checkout. Each buyer makes a separate payment. ERC-8004 is agent identity, not KYC;
-agent `/preclear` checks identity and mandate, not balance.
-
-Sessions are in memory. Keep the page open until confirmation; after a reload,
-inspect the wallet/explorer before another payment. Receipt timeouts and replacement
-transactions remain unresolved with the original hash; this demo does not reconcile
-replacements or recover sessions across reloads. One confirmation is demo evidence,
-not a promise of irreversible finality. Balance preflight is not a balance lock.
-
-## Run locally
-
-Bun `1.4.x` only. No npm, pnpm or Yarn installs.
-
-```sh
-bun install
-bun run --cwd packages/shared build # rail helpers used by the app shell/demo
-bun run dev:ui             # /checkout on localhost:3003
-bun run dev                # UI + agent + facilitator for the appendix
-bun run check-types && bun run check-boundaries && bun run check-tokens && bun test
-bun run smoke:settle-kit   # packed SDKs in an independent Next app + browser smoke
+  Agent[AI agent] --> PaidFetch[Agents SDK: paid fetch]
+  PaidFetch --> API[Server SDK: weather API]
+  API --> Facilitator[Facilitator]
+  Facilitator --> Gates[Identity + mandate + balance]
+  Gates --> Settlement[Settle USDC]
+  Settlement --> API
+  API --> Agent
 ```
 
-Copy `.env.example` to `.env.local` under the apps and `packages/db` as applicable.
-The merchant recipient is `apps/lycoris`'s `PAY_TO_ADDRESS`. Checkout does not call
-the facilitator or agent; those processes and their credentials are for the appendix.
-For its wallet/mandate bootstrap, also configure `packages/scripts/.env.local` and run
-`bun run lycoris:bootstrap`.
+For checkout, `settled` means a successful receipt was observed. A transaction
+hash alone is not success. Receipt lookup failures retain the hash in `settling`;
+`retryConfirmation()` checks it again without submitting another transfer.
+In-flight purchases cannot be reset or replaced. The demo server independently
+verifies the transfer before releasing the report.
 
-## Independent consumer proof
+For agents, x402 supplies the payment challenge and signed retry. The facilitator
+checks ERC-8004 identity, AP2 permission, and balance before settlement. Identity
+is not KYC, and `/preclear` checks permission rather than locking funds. The host
+binds the selected wallet and allowed weather URL; the model cannot choose an
+arbitrary merchant. Each turn permits one payment attempt.
 
-`bun run smoke:settle-kit` packs core/react into tarballs, installs them outside the
-workspace, builds a Next app and exercises two purchases under one Provider in
-Chromium. The wallet and receipts are **simulated**. It saves desktop/mobile screenshots
-in the printed temporary directory. Install Chromium once with
-`bun run --cwd e2e/web e2e:install` if needed.
+The paid API handler runs after verification but before settlement. Keep handlers
+read-only or independently idempotent: the wrapper cannot undo their side effects.
+See the [server guide](packages/settle-kit/server/README.md).
 
-The packages ship compiled ESM and TypeScript declarations. External Next consumers
-need no SDK-specific transpilation configuration. Packages are not published. The [npm release guide](docs/settle-kit-releases.md) explains validation, versioning, and tagged publishing. See
-[e2e/fixtures/settle-kit-next](e2e/fixtures/settle-kit-next) for the exact fixture.
+## Run Lycoris locally
 
-## Layout
+Use **Bun 1.4.x**. Copy the relevant `.env.example` files to `.env.local` and fill
+in their values before starting the apps.
 
-| Path | Role |
+```sh
+git clone https://github.com/hivinaynair/lycoris.git
+cd lycoris
+bun install --frozen-lockfile
+bun run --cwd packages/shared build
+
+bun run dev:ui   # Checkout and docs: http://localhost:3003
+bun run dev      # UI + Eve agent + facilitator
+```
+
+| App / package | Configuration |
 | --- | --- |
-| `packages/settle-kit/{core,react,agents,server}` | The SDK packages |
-| `apps/lycoris` | Merchant checkout + agent appendix UI, port 3003 |
-| `apps/agent` | Lycoris agent, built with Eve and `@settle-kit/agents`, port 3002 |
-| `apps/facilitator` | x402 verification, identity/mandate gates and USDC settlement |
-| `packages/shared`, `packages/db` | Rail helpers and Neon/Drizzle demo database |
-| `packages/ui` | Shared shadcn/ui; never installed into an app |
-| `e2e/web` | Browser tests |
+| [Lycoris](apps/lycoris/.env.example) | Merchant address, database, CDP credentials, sponsor wallet, and agent/facilitator URLs. |
+| [Agent](apps/agent/.env.example) | Anthropic and CDP credentials, app/facilitator URLs, bootstrap secret, shared transport secret, and mandates. |
+| [Facilitator](apps/facilitator/.env.example) | Settlement signer, attestation registry, database, and local port. |
+| [Database](packages/db/.env.example) | Neon connection for database tooling. |
+| [Scripts](packages/scripts/.env.example) | Credentials used by the setup and funding commands. |
 
-[Original design](docs/plans/2026-09-07-settle-kit-design.md) ·
-[Review follow-up and interview notes](docs/plans/2026-09-08-settle-kit-review-follow-up.md)
+The standalone SDK packages do not require these app environment files; consumers
+pass configuration and signers through their APIs. Keep private keys and CDP
+credentials server-side. The web and agent apps must share the same
+`LYCORIS_AGENT_SHARED_SECRET`.
 
-The name is a nod to Lycoris Recoil: agents on a mission.
+For sponsored checkout, follow the [wallet and database setup](docs/sponsored-checkout.md).
+For the agent scenarios, configure scripts and run `bun run lycoris:bootstrap`.
+`bun run lycoris:refresh-mandates` refreshes local credentials without registering
+or funding new agents. Hosted agents consume `MANDATES_JSON`; update it when you
+refresh mandates.
 
-### Shared weather purchase
+### Deploy to Vercel
 
-Human checkout and Lycoris buy the Melbourne public forecast for **0.1 USDC**
-(100000 atomic units), using the same `PAY_TO_ADDRESS`. The React SDK sends a
-direct transfer; the agents SDK uses x402. Simulation unlocks labeled sample data.
-Wallet checkout requires a free ownership signature after payment; the server checks
-the direct transfer, successful receipt, USDC Transfer event, payer signature, and
-a 15-minute access window before fetching the same Open-Meteo report. Access retries
-within that window do not require another payment. This demo does not persist orders.
+Deploy the repository as three projects, using roots `apps/lycoris`, `apps/agent`,
+and `apps/facilitator`, with the Next.js, Eve, and Hono presets respectively.
+Each app's `vercel.json` defines its monorepo install and build commands. Configure
+the matching production environment variables, point the web app to both services,
+and set the agent's `APP_URL` to the web app's public origin. Attach your custom
+domain to the web project.
 
-The capped agent now has a zero-USDC mandate, so the same 0.1-USDC resource can
-demonstrate an authorization failure. Existing credentials must be regenerated with
-`bun run lycoris:refresh-mandates` to apply that changed mandate without funding or registering agents. This writes the local credential file; remote agents using `MANDATES_JSON` need their credentials updated separately.
+## Validate and contribute
 
-### Chat with Lycoris
+```sh
+bun run check-types
+bun run check-boundaries
+bun run check-tokens
+bun test
 
-`/demo` offers a compact **Get me the report** button. It sends that request to the
-Eve agent running Claude Haiku 4.5, then shows only the latest reply. The button is
-disabled while a request is running; opening the page does not send a request. The circuit follows paid-tool events
-and facilitator progress. Scenario changes start a new conversation; follow-ups
-keep Eve's session cursor and can reuse a report already purchased.
+# Check distribution outside this workspace
+bun run pack:settle-kit
+bun run check:settle-kit-package
+bun run --cwd e2e/web e2e:install
+bun run smoke:settle-kit
+```
 
-The tool buys only Melbourne's next 1 PM forecast. The authenticated UI transport
-binds the selected wallet through `x-lycoris-agent`; the agent derives the weather
-URL from its configured `APP_URL`. Model arguments cannot choose a different wallet
-or destination, and only one payment attempt is allowed per turn. Identity, AP2,
-and balance checks still apply. Start UI, Eve, and facilitator with `bun run dev`.
+The independent consumer test installs packed SDKs in a separate Next.js app,
+builds it, and exercises checkout in Chromium. Its wallet and receipts are mocked;
+these tests do not spend funds. Live demo transactions are separate evidence.
 
-`POST /api/trigger-payment` now requires `{ scenarioIndex, message }` and accepts an
-optional Eve session cursor for follow-ups. Its SSE feed includes text, payment
-gates, session state, and a terminal reply, payment result, or connection error.
-A disconnected turn is never automatically retried.
+Keep changes small, preserve the package boundaries, and include relevant checks
+when opening a pull request. Put shared shadcn components in `packages/ui`, and
+use each app's validated environment helper. See [AGENTS.md](AGENTS.md) for repository
+constraints and the [shared design system](packages/ui/README.md) for UI conventions.
+
+### Repository map
+
+```text
+apps/
+  lycoris/              Next.js storefront, docs, agent demo, and feed
+  agent/                Eve agent and constrained weather tool
+  facilitator/          x402 verification, gates, settlement, and evidence
+packages/
+  settle-kit/           core · react · agents · server
+  shared/               Demo payment-rail helpers
+  db/                   Neon + Drizzle
+  ui/                   Shared shadcn components and design tokens
+  scripts/              Setup, wallet funding, and mandate tooling
+e2e/                    Browser tests and independent consumer fixture
+```
+
+## Scope and release status
+
+This is an independent SDK exploration for **Base Sepolia (chain 84532)** and
+Circle test USDC (`0x036CbD53842c5426634e7929541eC2318f3dCF7e`). It does not support
+mainnet, cards, fiat onramps, swaps, or bridges. Balance preflight is not a balance
+lock, and one confirmation is demo evidence rather than irreversible finality.
+
+Core sessions live in memory. The sponsored host adds database idempotency and
+browser purchase recovery; other hosts need their own persistence. Transaction
+replacement reconciliation remains outside this demo. The anonymous sponsor has
+a small fixed budget and no automatic refill; broader use needs an explicit abuse
+control and funding policy.
+
+**An npm release is optional and has not happened.** The repository includes
+packing, validation, versioning, and tagged release tooling. Publishing still
+requires npm scope ownership, credentials, and a license decision. No open-source
+license is currently granted; do not assume MIT. See the
+[release guide](docs/settle-kit-releases.md) before distributing a release.
+
+---
+
+Built by [Vinay Nair](https://vinaynair.dev). The name nods to *Lycoris Recoil*:
+agents on a mission.
