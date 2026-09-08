@@ -31,7 +31,7 @@ export async function validateMandateForPayment(
   }: {
     payer: string;
     amountAtomic: bigint;
-    authorizationNonce?: string;
+    authorizationNonce?: string | undefined;
     resource?: unknown;
   },
   deps: VerifyDeps,
@@ -42,7 +42,7 @@ export async function validateMandateForPayment(
   const reject = async (
     reason: string,
     identityStatus: IdentityStatus,
-    extra?: { agentId?: bigint; mandateEntry?: MandateHeaderValue },
+    extra?: { agentId?: bigint | undefined; mandateEntry?: MandateHeaderValue | undefined },
   ): Promise<ValidateMandateResult> => {
     await recordRejection({
       amountAtomic,

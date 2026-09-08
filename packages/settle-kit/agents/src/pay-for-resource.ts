@@ -26,6 +26,13 @@ function summarizeNonJsonResponse(url: string, response: Response, text: string)
     : `Upstream returned ${contentType} for ${url} (${response.status} ${response.statusText})`;
 }
 
+/** The error this exchange reported, from the challenge or the upstream body. */
+function wireError(status: number, body: unknown, paymentRequiredError?: string) {
+  if (paymentRequiredError) return paymentRequiredError;
+  if (status < 400 || !body || typeof body !== "object" || !("error" in body)) return undefined;
+  return body.error === undefined || body.error === null ? undefined : String(body.error);
+}
+
 export async function payForResource(input: {
   url: string;
   paidFetch: PaidFetch | PaidFetchFn;
@@ -65,6 +72,7 @@ export async function payForResource(input: {
     body,
     txHash,
     authorizationNonce: metadata?.authorizationNonce,
+    error: wireError(response.status, body, paymentRequiredError),
     paymentRequiredError,
     basescan: explorerUrl(txHash),
     challenge: metadata?.challenge,

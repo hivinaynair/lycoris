@@ -8,10 +8,10 @@ export async function getDecisionRecord(
     payer,
     settlementTxHash,
   }: {
-    authorizationNonce?: string;
+    authorizationNonce?: string | undefined;
     facilitatorUrl: string | undefined;
     payer: string;
-    settlementTxHash?: string;
+    settlementTxHash?: string | undefined;
   },
   retries = 5,
 ): Promise<DecisionRecord | undefined> {

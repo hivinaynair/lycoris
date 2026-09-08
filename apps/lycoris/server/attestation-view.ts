@@ -22,7 +22,7 @@ export type AttestationSourceRow = {
   commitment: string | null;
   commitmentSalt: string | null;
   decisionRecord: unknown;
-  rejectionReason?: string;
+  rejectionReason?: string | undefined;
 };
 
 type Common = {
@@ -43,7 +43,7 @@ export type AuditorAttestation = Common & {
   mandateMaxAmountUsdc: bigint;
   identityStatus: number;
   decision: number;
-  rejectionReason?: string;
+  rejectionReason?: string | undefined;
   commitmentSalt: string | null;
 };
 

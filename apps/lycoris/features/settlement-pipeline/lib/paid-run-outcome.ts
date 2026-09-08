@@ -3,14 +3,14 @@ import type { HandleMessageStreamEvent } from "eve/client";
 
 /** Exact tool output for the demo's paid fetch, read off `action.result`. */
 export type PaidRunOutcome = {
-  authorizationNonce?: string;
+  authorizationNonce?: string | undefined;
   body?: unknown;
-  error?: string;
-  httpStatus?: number;
+  error?: string | undefined;
+  httpStatus?: number | undefined;
   payer: string;
-  rawMandate?: RawMandate;
-  settlementTxHash?: string;
-  x402Challenge?: X402Challenge;
+  rawMandate?: RawMandate | undefined;
+  settlementTxHash?: string | undefined;
+  x402Challenge?: X402Challenge | undefined;
 };
 
 function sameResource(a: string, b: string) {

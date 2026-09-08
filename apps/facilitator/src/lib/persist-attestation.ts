@@ -17,14 +17,14 @@ export async function persistAttestationRow({
   authorizationNonce,
 }: {
   paymentHash: `0x${string}`;
-  settlementTx?: string | null;
-  published?: PublishedAttestation | null;
+  settlementTx?: string | null | undefined;
+  published?: PublishedAttestation | null | undefined;
   payer: string;
   amountUsdc: bigint;
   decisionRecord: DecisionRecord;
   identityStatus: IdentityStatus;
   decision: Decision;
-  authorizationNonce?: string | null;
+  authorizationNonce?: string | null | undefined;
 }) {
   try {
     await getDb()
@@ -61,16 +61,16 @@ export async function recordSettledPayment({
   rejectionReason,
 }: {
   paymentHash: `0x${string}`;
-  settlementTx?: string | null;
-  published?: PublishedAttestation | null;
+  settlementTx?: string | null | undefined;
+  published?: PublishedAttestation | null | undefined;
   payer: string;
   amountUsdc: bigint;
   identityStatus: IdentityStatus;
   decision: Decision;
-  authorizationNonce?: string | null;
-  mandateEntry?: MandateHeaderValue;
+  authorizationNonce?: string | null | undefined;
+  mandateEntry?: MandateHeaderValue | undefined;
   resource?: unknown;
-  rejectionReason?: string;
+  rejectionReason?: string | undefined;
 }) {
   await persistAttestationRow({
     paymentHash,

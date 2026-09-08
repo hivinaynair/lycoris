@@ -84,7 +84,7 @@ export function Checkout({
 
   async function onBuy() {
     const start = skipReview ? checkout.payNow : checkout.begin;
-    await start({ amountUsdc, title, destination });
+    await start({ amountUsdc, title, ...(destination ? { destination } : {}) });
   }
 
   return (

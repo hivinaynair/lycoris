@@ -62,6 +62,14 @@ export function validateQuote(value: unknown, amountUsdc: string, requested?: De
   });
 }
 
+/**
+ * Re-check a quote at the settle seam, where the quote itself is the only input:
+ * its shape, its two amount fields against each other, and its binding to `destination`.
+ */
+export function assertQuoteBinding(quote: Quote, destination: Destination): void {
+  validateQuote(quote, quote.amountUsdc, destination);
+}
+
 export async function fetchQuote(
   quoteUrl: string,
   input: { amountUsdc: string; destination?: Destination; method: "usdc" },

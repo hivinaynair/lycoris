@@ -1,5 +1,6 @@
 import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
 import { decodePaymentRequiredHeader } from "@x402/core/http";
+import { isAddress } from "viem";
 import type { ResourceQuote } from "./types";
 import { BASE_SEPOLIA_CAIP2, challengeFromPaymentRequired } from "./x402-decode";
 
@@ -29,9 +30,10 @@ export async function quoteResource(
   const payTo = terms && "payTo" in terms ? terms.payTo : undefined;
   if (!amount) return undefined;
 
+  // A third-party challenge is decoded, not asserted: accept any well-formed address.
   return {
     amountAtomic: amount,
-    payTo: typeof payTo === "string" ? payTo : "",
+    ...(typeof payTo === "string" && isAddress(payTo, { strict: false }) ? { payTo } : {}),
     challenge: challengeFromPaymentRequired(decoded as Record<string, unknown>),
   };
 }

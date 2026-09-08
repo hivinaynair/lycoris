@@ -23,11 +23,11 @@ export function createSettleConfig(input: CreateSettleConfigInput): SettleConfig
     invalidConfig("Provide one USDC method with quote, settle, and confirm");
   }
   return {
-    destination,
+    ...(destination ? { destination } : {}),
     getSigner: input.getSigner,
     methods,
-    quoteUrl: input.quoteUrl,
-    onSettled: input.onSettled,
-    onFailed: input.onFailed,
+    ...(input.quoteUrl !== undefined ? { quoteUrl: input.quoteUrl } : {}),
+    ...(input.onSettled ? { onSettled: input.onSettled } : {}),
+    ...(input.onFailed ? { onFailed: input.onFailed } : {}),
   };
 }

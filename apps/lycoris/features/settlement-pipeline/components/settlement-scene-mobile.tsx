@@ -58,12 +58,12 @@ export function MobileSettlementScene({
   rejectedReason,
   verticalBarClass,
 }: {
-  agentReasoning?: string;
+  agentReasoning?: string | undefined;
   amountLabel: string;
   activeStep: number;
   running: boolean;
   approved: boolean;
-  rejectedReason?: string;
+  rejectedReason?: string | undefined;
   verticalBarClass: string;
 }) {
   const latestReasoning = latestAgentReasoning(agentReasoning);

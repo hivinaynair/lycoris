@@ -52,18 +52,19 @@ export function startCheckout(
     onFailed?: (state: Extract<CheckoutState, { status: "failed" }>) => void;
   },
 ) {
+  const destination = input.destination ?? config.destination;
   return createCheckout(
     createSettleConfig({
-      destination: input.destination ?? config.destination,
+      ...(destination ? { destination } : {}),
       getSigner: config.getSigner,
       methods: config.methods ?? [createUsdcMethod()],
-      quoteUrl: config.quoteUrl,
-      onSettled: hooks?.onSettled,
-      onFailed: hooks?.onFailed,
+      ...(config.quoteUrl !== undefined ? { quoteUrl: config.quoteUrl } : {}),
+      ...(hooks?.onSettled ? { onSettled: hooks.onSettled } : {}),
+      ...(hooks?.onFailed ? { onFailed: hooks.onFailed } : {}),
     }),
     {
       amountUsdc: input.amountUsdc,
-      destination: input.destination,
+      ...(input.destination ? { destination: input.destination } : {}),
     },
   );
 }

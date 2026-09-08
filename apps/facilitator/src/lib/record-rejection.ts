@@ -16,11 +16,11 @@ export async function recordRejection({
   reason,
   resource,
 }: {
-  agentId?: bigint;
+  agentId?: bigint | undefined;
   amountAtomic: bigint;
-  authorizationNonce?: string;
+  authorizationNonce?: string | undefined;
   identityStatus: IdentityStatus;
-  mandateEntry?: MandateHeaderValue;
+  mandateEntry?: MandateHeaderValue | undefined;
   payer: string;
   reason: string;
   resource?: unknown;

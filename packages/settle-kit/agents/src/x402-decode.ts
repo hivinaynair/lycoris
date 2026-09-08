@@ -1,5 +1,3 @@
-import { decodePaymentRequiredHeader } from "@x402/core/http";
-
 export const BASE_SEPOLIA_CAIP2 = "eip155:84532";
 
 export function challengeFromPaymentRequired(decoded: Record<string, unknown>) {
@@ -23,8 +21,4 @@ export function extractAuthorizationNonce(paymentPayload: unknown) {
     | undefined;
   const authorization = payload?.authorization as Record<string, unknown> | undefined;
   return typeof authorization?.nonce === "string" ? authorization.nonce : undefined;
-}
-
-export function decodeRequiredHeader(header: string) {
-  return decodePaymentRequiredHeader(header) as Record<string, unknown>;
 }

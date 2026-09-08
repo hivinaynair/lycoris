@@ -34,10 +34,10 @@ export async function publishAndRecord(args: {
   identityStatus: IdentityStatus;
   decision: Decision;
   authorizationNonce: string | null;
-  mandateEntry?: ReturnType<typeof parseMandateHeader>;
+  mandateEntry?: ReturnType<typeof parseMandateHeader> | undefined;
   resource?: unknown;
-  rejectionReason?: string;
-  settlementTx?: `0x${string}` | null;
+  rejectionReason?: string | undefined;
+  settlementTx?: `0x${string}` | null | undefined;
 }) {
   const published = await publishAttestation({
     amountUsdc: args.amountUsdc,

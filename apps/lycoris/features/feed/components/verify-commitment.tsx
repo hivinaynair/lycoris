@@ -21,7 +21,7 @@ export function VerifyCommitment({
   mandateMaxAmountUsdc: bigint;
   identityStatus: number;
   decision: number;
-  rejectionReason?: string;
+  rejectionReason?: string | undefined;
   salt: string | null;
   commitment: string | null;
 }) {

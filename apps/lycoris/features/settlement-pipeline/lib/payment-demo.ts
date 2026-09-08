@@ -47,7 +47,7 @@ export type TriggerResult = {
   decisionProof?: DecisionProof;
   rawMandate?: RawMandate;
   x402Challenge?: X402Challenge;
-  completedAt?: string;
+  completedAt?: string | undefined;
   body?: {
     error?: string;
     willRainAt1Pm?: boolean;

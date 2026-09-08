@@ -10,7 +10,7 @@ export { buildTraceSteps } from "@/lib/trace-steps";
 
 type TracePanelProps = {
   steps: TraceStep[];
-  onStepClick?: (step: TraceStep) => void;
+  onStepClick?: ((step: TraceStep) => void) | undefined;
 };
 
 function StepIcon({ status }: { status: StepStatus }) {
@@ -48,7 +48,7 @@ function TraceRow({
 }: {
   step: TraceStep;
   last: boolean;
-  onStepClick?: (step: TraceStep) => void;
+  onStepClick?: ((step: TraceStep) => void) | undefined;
 }) {
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions: row opens detail; nested explorer links stay as anchors

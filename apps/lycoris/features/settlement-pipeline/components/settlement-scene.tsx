@@ -9,13 +9,13 @@ import { MobileSettlementScene, SceneAgentBar } from "./settlement-scene-mobile"
 type SettlementSceneProps = {
   agentLabel: string;
   agentStatus?: string;
-  agentReasoning?: string;
+  agentReasoning?: string | undefined;
   amountLabel: string;
   routeLabel: string;
   activeStep: number;
   running: boolean;
   approved: boolean;
-  rejectedReason?: string;
+  rejectedReason?: string | undefined;
   action?: ReactNode;
 };
 

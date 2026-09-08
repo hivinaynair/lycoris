@@ -9,7 +9,7 @@ export function PacketPanel({
   amount: string;
   from: string;
   mandate: string;
-  completedAt?: string;
+  completedAt?: string | undefined;
 }) {
   const createdLabel = completedAt
     ? new Date(completedAt).toLocaleTimeString([], {

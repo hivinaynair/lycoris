@@ -25,7 +25,7 @@ export function committedRecordFrom(input: {
   mandateMaxAmountUsdc: bigint;
   identityStatus: number;
   decision: number;
-  rejectionReason?: string;
+  rejectionReason?: string | undefined;
 }): CommittedRecord {
   return {
     paymentHash: input.paymentHash as `0x${string}`,

@@ -9,8 +9,8 @@ export function WorkspaceReadout({
 }: {
   view: ReturnType<typeof useWorkspacePhase>;
   running: boolean;
-  chatError?: string;
-  rejectedReason?: string;
+  chatError?: string | undefined;
+  rejectedReason?: string | undefined;
 }) {
   const { preview, chatting, stopped, step, phase } = view;
   return (

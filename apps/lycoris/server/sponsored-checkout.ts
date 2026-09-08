@@ -64,9 +64,9 @@ export async function paySponsored(id: string) {
     throw new Error("This purchase needs operator review. Do not start another payment.");
   if (purchase.tx_hash) return { txHash: purchase.tx_hash };
   const cdp = new CdpClient({
-    apiKeyId: env.CDP_API_KEY_ID,
-    apiKeySecret: env.CDP_API_KEY_SECRET,
-    walletSecret: env.CDP_WALLET_SECRET,
+    ...(env.CDP_API_KEY_ID ? { apiKeyId: env.CDP_API_KEY_ID } : {}),
+    ...(env.CDP_API_KEY_SECRET ? { apiKeySecret: env.CDP_API_KEY_SECRET } : {}),
+    ...(env.CDP_WALLET_SECRET ? { walletSecret: env.CDP_WALLET_SECRET } : {}),
   });
   const { transactionHash } = await cdp.evm.sendTransaction({
     address,

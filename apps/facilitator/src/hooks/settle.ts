@@ -92,14 +92,15 @@ async function recordSuccessfulSettlement(
   settlementTx: `0x${string}`,
 ) {
   const ctx = settlementContext(paymentPayload);
-  if (!ctx.payer) return;
-  reportPipelineGate(ctx.payer, GATE_STEP.SETTLEMENT);
+  const payer = ctx.payer;
+  if (!payer) return;
+  reportPipelineGate(payer, GATE_STEP.SETTLEMENT);
 
   const paymentHash = keccak256(settlementTx);
   const record = (decision: Decision, rejectionReason?: string) =>
     publishAndRecord({
       ...ctx,
-      payer: ctx.payer!,
+      payer,
       paymentHash,
       decision,
       rejectionReason,

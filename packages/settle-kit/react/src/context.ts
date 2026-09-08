@@ -21,7 +21,7 @@ export type BeginCheckoutInput = {
 
 export type SettleContextValue = {
   config: SettleAppConfig;
-  appearance?: CheckoutAppearance;
+  appearance?: CheckoutAppearance | undefined;
   manager: CheckoutManager | null;
   managerRef: { current: CheckoutManager | null };
   title: string | undefined;

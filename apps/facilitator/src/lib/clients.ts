@@ -21,7 +21,10 @@ export const walletClient = createWalletClient({
 export const facilitatorSigner = toFacilitatorEvmSigner({
   address: account.address,
   getCode: (args) => publicClient.getCode(args),
-  readContract: (args) => publicClient.readContract({ ...args, args: args.args ?? [] } as any),
+  readContract: (args) =>
+    publicClient.readContract({ ...args, args: args.args ?? [] } as Parameters<
+      typeof publicClient.readContract
+    >[0]),
   verifyTypedData: (args) =>
     publicClient.verifyTypedData(args as Parameters<typeof publicClient.verifyTypedData>[0]),
   writeContract: (args) =>

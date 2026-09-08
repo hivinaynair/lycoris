@@ -1,4 +1,4 @@
-import { BASE_SEPOLIA_USDC_ADDRESS, parseUsdcAmount } from "@settle-kit/core";
+import { BASE_SEPOLIA_USDC_ADDRESS, parseUsdcAmount, SettleKitError } from "@settle-kit/core";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import { withX402, x402ResourceServer } from "@x402/next";
@@ -16,7 +16,13 @@ export type AgenticPaymentOptions = {
   description?: string;
 };
 
-/** Protect a Next.js App Router resource with x402 and per-request AP2 forwarding. */
+/**
+ * Protect a Next.js App Router resource with x402 and per-request AP2 forwarding.
+ *
+ * Options are validated eagerly and throw `SettleKitError("invalid_config")`. Each request
+ * builds and initializes its own facilitator client and resource server: a buyer's mandate
+ * is never shared with a simultaneous buyer, at the cost of that setup per request.
+ */
 export function withAgenticPayment<Args extends unknown[] = []>(
   handler: (request: NextRequest, ...args: Args) => Response | Promise<Response>,
   options: AgenticPaymentOptions,
@@ -34,7 +40,7 @@ export function withAgenticPayment<Args extends unknown[] = []>(
         extra: { name: "USDC", version: "2" },
       },
     },
-    description: options.description,
+    ...(options.description !== undefined ? { description: options.description } : {}),
   };
 
   return async (request, ...args) => {
@@ -72,14 +78,20 @@ export function withAgenticPayment<Args extends unknown[] = []>(
 function validatePaymentOptions(options: AgenticPaymentOptions) {
   const amount = parseUsdcAmount(options.priceUsdc);
   if (options.network !== "eip155:84532") {
-    throw new Error("Agentic payments currently support Base Sepolia only");
+    throw new SettleKitError(
+      "invalid_config",
+      "Agentic payments currently support Base Sepolia only",
+    );
   }
   if (!isAddress(options.payTo) || options.payTo.toLowerCase() === zeroAddress) {
-    throw new Error("payTo must be a nonzero EVM address");
+    throw new SettleKitError("invalid_config", "payTo must be a nonzero EVM address");
   }
   const url = new URL(options.facilitatorUrl);
   if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) {
-    throw new Error("facilitatorUrl must be an HTTP(S) URL without credentials");
+    throw new SettleKitError(
+      "invalid_config",
+      "facilitatorUrl must be an HTTP(S) URL without credentials",
+    );
   }
   const facilitatorUrl = url.href;
   return { amount, facilitatorUrl };

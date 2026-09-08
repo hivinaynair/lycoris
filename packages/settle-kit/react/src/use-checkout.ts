@@ -32,9 +32,10 @@ function requireManager(manager: CheckoutManager | null, verb: string): Checkout
   return manager;
 }
 
+/** Prop-shaped: a React caller may pass an explicit undefined, so these admit it. */
 export type CheckoutCallbacks = {
-  onSettled?: (state: Extract<CheckoutState, { status: "settled" }>) => void;
-  onFailed?: (state: Extract<CheckoutState, { status: "failed" }>) => void;
+  onSettled?: ((state: Extract<CheckoutState, { status: "settled" }>) => void) | undefined;
+  onFailed?: ((state: Extract<CheckoutState, { status: "failed" }>) => void) | undefined;
 };
 
 export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {

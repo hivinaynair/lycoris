@@ -10,11 +10,11 @@ import { WorkspaceReadout } from "./workspace-readout";
 
 type Props = {
   hasConversation: boolean;
-  chatError?: string;
+  chatError?: string | undefined;
   activeStep: number;
   running: boolean;
   approved: boolean;
-  rejectedReason?: string;
+  rejectedReason?: string | undefined;
   hasResult: boolean;
   request: ReactNode;
   response: ReactNode;
