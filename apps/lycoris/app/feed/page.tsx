@@ -24,7 +24,7 @@ export default async function FeedPage({
   const question =
     role === "public"
       ? "Each row is a commitment. Disclose the record to verify it."
-      : "Each row is a lifecycle trace: approved settlements include on-chain proof; rejections preserve the policy snapshot.";
+      : "Each row is a lifecycle trace: approved settlements include on-chain proof; rejections keep the mandate snapshot.";
 
   return (
     <PageFrame>

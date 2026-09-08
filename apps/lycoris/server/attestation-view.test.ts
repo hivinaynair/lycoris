@@ -5,7 +5,6 @@ const v2: AttestationSourceRow = {
   paymentHash: "0xpay",
   payerAddress: "0x1111111111111111111111111111111111111111",
   amountUsdc: 200_000n,
-  policyMaxAmountUsdc: 2_000_000n,
   identityStatus: 1,
   decision: 0,
   createdAt: new Date("2026-08-16T12:00:00Z"),

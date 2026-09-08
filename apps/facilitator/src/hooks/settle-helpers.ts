@@ -2,8 +2,7 @@ import { parseMandateHeader } from "@repo/shared/mandate-header";
 import { type Decision, IdentityStatus } from "@repo/shared/types";
 import type { FacilitatorSettleResultContext } from "@x402/core/facilitator";
 import { publishAttestation } from "../lib/attest.js";
-import { limitSnapshotAtomic } from "../lib/limit-snapshot.js";
-import { extractAuthNonce, getPayerAddress } from "../lib/mandate.js";
+import { extractAuthNonce, getPayerAddress, mandateMaxAtomic } from "../lib/mandate.js";
 import { recordSettledPayment } from "../lib/persist-attestation.js";
 import { requestCtx } from "../lib/request-context.js";
 
@@ -23,7 +22,7 @@ export function settlementContext(
     mandateEntry,
     identityStatus: mandateEntry ? IdentityStatus.Verified : IdentityStatus.NotFound,
     resource: paymentPayload.resource,
-    policyMaxAtomic: limitSnapshotAtomic(mandateEntry),
+    mandateMaxAtomic: mandateMaxAtomic(mandateEntry),
   };
 }
 
@@ -31,7 +30,7 @@ export async function publishAndRecord(args: {
   payer: string;
   amountUsdc: bigint;
   paymentHash: `0x${string}`;
-  policyMaxAtomic: bigint;
+  mandateMaxAtomic: bigint;
   identityStatus: IdentityStatus;
   decision: Decision;
   authorizationNonce: string | null;
@@ -46,7 +45,7 @@ export async function publishAndRecord(args: {
     identityStatus: args.identityStatus,
     payer: args.payer,
     paymentHash: args.paymentHash,
-    policyMaxAmountUsdc: args.policyMaxAtomic,
+    mandateMaxAmountUsdc: args.mandateMaxAtomic,
     rejectionReason: args.rejectionReason,
   });
   await recordSettledPayment({
@@ -55,7 +54,6 @@ export async function publishAndRecord(args: {
     published,
     payer: args.payer,
     amountUsdc: args.amountUsdc,
-    policyMaxAtomic: args.policyMaxAtomic,
     identityStatus: args.identityStatus,
     decision: args.decision,
     authorizationNonce: args.authorizationNonce,

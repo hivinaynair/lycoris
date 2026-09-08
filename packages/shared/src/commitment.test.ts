@@ -13,7 +13,7 @@ const record: CommittedRecord = committedRecordFrom({
   paymentHash: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   payer: "0x1111111111111111111111111111111111111111",
   amountUsdc: 200_000n,
-  policyMaxAmountUsdc: 2_000_000n,
+  mandateMaxAmountUsdc: 2_000_000n,
   identityStatus: 1,
   decision: 0,
 });
@@ -44,7 +44,7 @@ describe("commitment", () => {
       },
     ],
     ["amountUsdc", { ...record, amountUsdc: 5_000_000n }],
-    ["policyMaxAmountUsdc", { ...record, policyMaxAmountUsdc: 1n }],
+    ["mandateMaxAmountUsdc", { ...record, mandateMaxAmountUsdc: 1n }],
     ["identityStatus", { ...record, identityStatus: 0 }],
     ["decision", { ...record, decision: 1 }],
     ["rejectionReason", { ...record, rejectionReason: "denied" }],

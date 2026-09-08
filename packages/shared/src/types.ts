@@ -51,10 +51,6 @@ export type DecisionProof = {
     maxAmountUsdc: string;
     valid: boolean;
   };
-  policy: {
-    maxAmountUsdc: string;
-    decision: "approved" | "rejected";
-  };
   failureGate?: "identity" | "mandate" | "settlement" | "attestation";
   rejectionReason?: string;
   settlementTxHash?: string;

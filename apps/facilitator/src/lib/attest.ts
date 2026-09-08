@@ -14,7 +14,7 @@ export async function publishAttestation({
   identityStatus,
   payer,
   paymentHash,
-  policyMaxAmountUsdc,
+  mandateMaxAmountUsdc,
   rejectionReason,
 }: {
   amountUsdc: bigint;
@@ -22,7 +22,7 @@ export async function publishAttestation({
   identityStatus: IdentityStatus;
   payer: string;
   paymentHash: `0x${string}`;
-  policyMaxAmountUsdc: bigint;
+  mandateMaxAmountUsdc: bigint;
   rejectionReason?: string;
 }): Promise<PublishedAttestation | null> {
   const salt = randomSalt();
@@ -31,7 +31,7 @@ export async function publishAttestation({
       paymentHash,
       payer,
       amountUsdc,
-      policyMaxAmountUsdc,
+      mandateMaxAmountUsdc,
       identityStatus,
       decision,
       rejectionReason,

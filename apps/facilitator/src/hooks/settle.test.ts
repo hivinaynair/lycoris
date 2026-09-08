@@ -17,16 +17,14 @@ const mockInsertValues = mock(async () => {});
 const mockInsert = mock(() => ({ values: mockInsertValues }));
 
 const mockSelectLimit = mock(async () => []);
-const mockPolicyLimit = mock(async () => [{ policyMaxAmountUsdc: "10" }]);
 const mockSelect = mock(() => ({
-  from: () => ({ where: () => ({ limit: mockSelectLimit }), limit: mockPolicyLimit }),
+  from: () => ({ where: () => ({ limit: mockSelectLimit }) }),
 }));
 
 mock.module("@repo/db", () => ({
   createDb: () => ({ select: mockSelect, insert: mockInsert }),
   schema: {
     settlementAttestations: { authorizationNonce: "authorization_nonce", decision: "decision" },
-    facilitatorConfig: {},
   },
 }));
 
@@ -142,7 +140,6 @@ beforeEach(() => {
   mockInsert.mockClear();
   mockInsertValues.mockClear();
   mockSelectLimit.mockClear();
-  mockPolicyLimit.mockClear();
   mockWriteContract.mockClear();
   mockPublishAttestation.mockClear();
   mockWaitForTransactionReceipt.mockClear();
@@ -150,7 +147,6 @@ beforeEach(() => {
   mockVerifyMandateSig.mockClear();
   mockLookupIdentity.mockClear();
   mockSelectLimit.mockImplementation(async () => []);
-  mockPolicyLimit.mockImplementation(async () => [{ policyMaxAmountUsdc: "10" }]);
   mockPublishAttestation.mockImplementation(async () => ({
     attestationTx: "0xattesttx",
     commitment: "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
@@ -234,7 +230,6 @@ describe("onAfterSettle", () => {
           payer: PAYER,
           settlementTxHash: SETTLEMENT_TX,
         }),
-        policyMaxAmountUsdc: 100_000_000n, // mandate max $100 in atomic USDC
         commitment: expect.stringMatching(/^0x/),
         commitmentSalt: expect.stringMatching(/^0x/),
       }),

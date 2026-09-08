@@ -1,9 +1,18 @@
-import type { SignedMandate } from "@repo/shared/mandate";
-import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES } from "@repo/shared/mandate";
+import {
+  MANDATE_EIP712_DOMAIN,
+  MANDATE_EIP712_TYPES,
+  type SignedMandate,
+} from "@repo/shared/mandate";
+import type { MandateHeaderValue } from "@repo/shared/mandate-header";
 import { verifyTypedData } from "viem";
 
 // USDC has 6 decimals — multiply whole-unit amounts by this to get atomic units
 export const USDC_ATOMIC_FACTOR = 1_000_000n;
+
+export function mandateMaxAtomic(mandateEntry?: MandateHeaderValue): bigint {
+  if (!mandateEntry) return 0n;
+  return mandateEntry.mandate.payload.maxAmountUsdc * USDC_ATOMIC_FACTOR;
+}
 
 export function extractAuthNonce(payload: unknown): string | undefined {
   const p = payload as Record<string, unknown>;

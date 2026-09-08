@@ -1,4 +1,5 @@
 import { BASE_SEPOLIA_EXPLORER } from "@repo/shared/chains";
+import { mandateMaxAtomicFromDecisionRecord } from "@repo/shared/decision-record";
 
 export type ViewerRole = "public" | "auditor" | "institution";
 
@@ -13,7 +14,6 @@ export type AttestationSourceRow = {
   paymentHash: string;
   payerAddress: string;
   amountUsdc: bigint;
-  policyMaxAmountUsdc: bigint;
   identityStatus: number;
   decision: number;
   createdAt: Date;
@@ -40,7 +40,7 @@ export type AuditorAttestation = Common & {
   paymentHash: string;
   payer: string;
   amountUsdc: bigint;
-  policyMaxAmountUsdc: bigint;
+  mandateMaxAmountUsdc: bigint;
   identityStatus: number;
   decision: number;
   rejectionReason?: string;
@@ -77,7 +77,7 @@ export function projectAttestation(row: AttestationSourceRow, role: ViewerRole):
     paymentHash: row.paymentHash,
     payer: row.payerAddress,
     amountUsdc: row.amountUsdc,
-    policyMaxAmountUsdc: row.policyMaxAmountUsdc,
+    mandateMaxAmountUsdc: mandateMaxAtomicFromDecisionRecord(row.decisionRecord),
     identityStatus: row.identityStatus,
     decision: row.decision,
     rejectionReason: row.rejectionReason,

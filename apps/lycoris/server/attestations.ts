@@ -20,7 +20,6 @@ type AttestationDbRow = {
   paymentHash: string;
   payerAddress: string;
   amountUsdc: bigint;
-  policyMaxAmountUsdc?: bigint;
   identityStatus: number;
   decision: number;
   createdAt: Date;
@@ -30,8 +29,6 @@ type AttestationDbRow = {
   commitmentSalt: string | null;
   decisionRecord: unknown;
 };
-
-const DEFAULT_POLICY_MAX_ATOMIC = 0n;
 
 async function decisionWithReceiptStatus(row: AttestationDbRow) {
   if (row.decision !== Decision.Approved || !row.settlementTx) return row.decision;
@@ -63,48 +60,29 @@ export async function getAttestations(role: "institution"): Promise<InstitutionA
 export async function getAttestations(role?: ViewerRole): Promise<AttestationView[]>;
 export async function getAttestations(role: ViewerRole = "public"): Promise<AttestationView[]> {
   const db = getDb();
-  const baseSelect = {
-    paymentHash: schema.settlementAttestations.paymentHash,
-    payerAddress: schema.settlementAttestations.payerAddress,
-    amountUsdc: schema.settlementAttestations.amountUsdc,
-    identityStatus: schema.settlementAttestations.identityStatus,
-    decision: schema.settlementAttestations.decision,
-    createdAt: schema.settlementAttestations.createdAt,
-    settlementTx: schema.settlementAttestations.settlementTx,
-    attestationTx: schema.settlementAttestations.attestationTx,
-    commitment: schema.settlementAttestations.commitment,
-    commitmentSalt: schema.settlementAttestations.commitmentSalt,
-    decisionRecord: schema.settlementAttestations.decisionRecord,
-  };
-
-  let rows: AttestationDbRow[];
-
-  try {
-    rows = await db
-      .select({
-        ...baseSelect,
-        policyMaxAmountUsdc: schema.settlementAttestations.policyMaxAmountUsdc,
-      })
-      .from(schema.settlementAttestations)
-      .orderBy(desc(schema.settlementAttestations.createdAt))
-      .limit(50);
-  } catch (err) {
-    if (!(err instanceof Error) || !err.message.includes("policy_max_amount_usdc")) {
-      throw err;
-    }
-    rows = await db
-      .select(baseSelect)
-      .from(schema.settlementAttestations)
-      .orderBy(desc(schema.settlementAttestations.createdAt))
-      .limit(50);
-  }
+  const rows = await db
+    .select({
+      paymentHash: schema.settlementAttestations.paymentHash,
+      payerAddress: schema.settlementAttestations.payerAddress,
+      amountUsdc: schema.settlementAttestations.amountUsdc,
+      identityStatus: schema.settlementAttestations.identityStatus,
+      decision: schema.settlementAttestations.decision,
+      createdAt: schema.settlementAttestations.createdAt,
+      settlementTx: schema.settlementAttestations.settlementTx,
+      attestationTx: schema.settlementAttestations.attestationTx,
+      commitment: schema.settlementAttestations.commitment,
+      commitmentSalt: schema.settlementAttestations.commitmentSalt,
+      decisionRecord: schema.settlementAttestations.decisionRecord,
+    })
+    .from(schema.settlementAttestations)
+    .orderBy(desc(schema.settlementAttestations.createdAt))
+    .limit(50);
 
   return Promise.all(
     rows.map(async (row) =>
       projectAttestation(
         {
           ...row,
-          policyMaxAmountUsdc: row.policyMaxAmountUsdc ?? DEFAULT_POLICY_MAX_ATOMIC,
           decision: await decisionWithReceiptStatus(row),
           rejectionReason: rejectionReasonFromRecord(row.decisionRecord),
         },

@@ -39,7 +39,6 @@ export type TriggerResult = {
   mandateDelegator?: string;
   mandateValid?: boolean;
   authorizationNonce?: string;
-  policyThreshold?: string;
   proofLookupError?: string;
   settlementTxHash?: string;
   settlementTxUrl?: string;

@@ -11,7 +11,6 @@ export async function persistAttestationRow({
   published,
   payer,
   amountUsdc,
-  policyMaxAmountUsdc,
   decisionRecord,
   identityStatus,
   decision,
@@ -22,7 +21,6 @@ export async function persistAttestationRow({
   published?: PublishedAttestation | null;
   payer: string;
   amountUsdc: bigint;
-  policyMaxAmountUsdc: bigint;
   decisionRecord: DecisionRecord;
   identityStatus: IdentityStatus;
   decision: Decision;
@@ -39,7 +37,6 @@ export async function persistAttestationRow({
         commitmentSalt: published?.salt ?? null,
         payerAddress: payer,
         amountUsdc,
-        policyMaxAmountUsdc,
         decisionRecord,
         identityStatus,
         decision,
@@ -56,7 +53,6 @@ export async function recordSettledPayment({
   published,
   payer,
   amountUsdc,
-  policyMaxAtomic,
   identityStatus,
   decision,
   authorizationNonce,
@@ -69,7 +65,6 @@ export async function recordSettledPayment({
   published?: PublishedAttestation | null;
   payer: string;
   amountUsdc: bigint;
-  policyMaxAtomic: bigint;
   identityStatus: IdentityStatus;
   decision: Decision;
   authorizationNonce?: string | null;
@@ -83,7 +78,6 @@ export async function recordSettledPayment({
     published,
     payer,
     amountUsdc,
-    policyMaxAmountUsdc: policyMaxAtomic,
     decisionRecord: buildDecisionRecord({
       agentId: mandateEntry?.agentId,
       amountAtomic: amountUsdc,
@@ -93,7 +87,6 @@ export async function recordSettledPayment({
       payer,
       paymentHash,
       authorizationNonce,
-      policyMaxAtomic,
       resource,
       rejectionReason,
       settlementTxHash: settlementTx ?? undefined,

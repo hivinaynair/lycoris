@@ -8,7 +8,7 @@ export function VerifyCommitment({
   paymentHash,
   payer,
   amountUsdc,
-  policyMaxAmountUsdc,
+  mandateMaxAmountUsdc,
   identityStatus,
   decision,
   rejectionReason,
@@ -18,7 +18,7 @@ export function VerifyCommitment({
   paymentHash: string;
   payer: string;
   amountUsdc: bigint;
-  policyMaxAmountUsdc: bigint;
+  mandateMaxAmountUsdc: bigint;
   identityStatus: number;
   decision: number;
   rejectionReason?: string;
@@ -36,7 +36,7 @@ export function VerifyCommitment({
           paymentHash,
           payer,
           amountUsdc,
-          policyMaxAmountUsdc,
+          mandateMaxAmountUsdc,
           identityStatus,
           decision,
           rejectionReason,

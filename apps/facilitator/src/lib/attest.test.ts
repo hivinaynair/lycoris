@@ -30,7 +30,7 @@ const input = {
   identityStatus: IdentityStatus.Verified,
   payer: "0x1111111111111111111111111111111111111111",
   paymentHash: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" as const,
-  policyMaxAmountUsdc: 2_000_000n,
+  mandateMaxAmountUsdc: 2_000_000n,
 };
 
 describe("publishAttestation", () => {

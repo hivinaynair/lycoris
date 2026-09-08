@@ -32,7 +32,6 @@ export function buildDecisionRecord({
   mandate,
   payer,
   paymentHash,
-  policyMaxAtomic,
   resource,
   rejectionReason,
   settlementTxHash,
@@ -46,7 +45,6 @@ export function buildDecisionRecord({
   mandate?: SignedMandate;
   payer?: string;
   paymentHash?: string;
-  policyMaxAtomic: bigint;
   resource?: unknown;
   rejectionReason?: string;
   settlementTxHash?: string;
@@ -67,15 +65,23 @@ export function buildDecisionRecord({
       maxAmountUsdc: mandate?.payload.maxAmountUsdc.toString() ?? "unknown",
       valid: !rejectionReason?.startsWith("mandate_"),
     },
-    policy: {
-      // Limit snapshot for attestation commitment (mandate max). Not a separate policy gate.
-      maxAmountUsdc: formatUsdcAtomic(policyMaxAtomic),
-      decision: "approved",
-    },
     identityStatus,
     failureGate: rejected ? failureGateForReason(rejectionReason) : undefined,
     rejectionReason,
     settlementTxHash,
     attestationTxHash: attestationTxHash ?? undefined,
   };
+}
+
+/** Whole-USDC mandate cap from a stored decision record, as atomic USDC. */
+export function mandateMaxAtomicFromDecisionRecord(record: unknown): bigint {
+  if (!record || typeof record !== "object" || !("mandate" in record)) return 0n;
+  const mandate = record.mandate;
+  if (!mandate || typeof mandate !== "object" || !("maxAmountUsdc" in mandate)) return 0n;
+  const raw = mandate.maxAmountUsdc;
+  if (typeof raw !== "string" || raw === "unknown") return 0n;
+  const match = /^(0|[1-9]\d*)(?:\.(\d{1,6}))?$/.exec(raw.trim());
+  if (!match) return 0n;
+  const fraction = (match[2] ?? "").padEnd(6, "0");
+  return BigInt(match[1] ?? "0") * 1_000_000n + BigInt(fraction);
 }

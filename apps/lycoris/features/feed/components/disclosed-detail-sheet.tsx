@@ -43,7 +43,7 @@ export function DisclosedDetailSheet({ row }: { row: DisclosedRow }) {
         paymentHash={row.paymentHash}
         payer={row.payer}
         amountUsdc={row.amountUsdc}
-        policyMaxAmountUsdc={row.policyMaxAmountUsdc}
+        mandateMaxAmountUsdc={row.mandateMaxAmountUsdc}
         identityStatus={row.identityStatus}
         decision={row.decision}
         rejectionReason={row.rejectionReason}
