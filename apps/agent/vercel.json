@@ -1,4 +1,4 @@
 {
-  "installCommand": "cd ../.. && bun install",
-  "buildCommand": "cd ../.. && turbo run build --filter=agent"
+  "installCommand": "cd ../.. && bun install --frozen-lockfile",
+  "buildCommand": "cd ../.. && bunx turbo run build --filter=agent --env-mode=loose"
 }

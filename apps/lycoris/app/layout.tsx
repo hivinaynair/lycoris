@@ -10,7 +10,7 @@ import { TooltipProvider } from "@repo/ui/components/tooltip";
 import { AppShell } from "@/components/app-shell";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://lycoris.vercel.app"),
+  metadataBase: new URL("https://lycoris.vinaynair.dev"),
   title: "Lycoris",
   description:
     "An embeddable USDC checkout SDK. Explore payment states, themes, and a host-owned wallet integration.",
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     title: "Lycoris",
     description:
       "An embeddable USDC checkout SDK. Explore payment states, themes, and a host-owned wallet integration.",
-    url: "https://lycoris.vercel.app",
+    url: "https://lycoris.vinaynair.dev",
     siteName: "Lycoris",
     type: "website",
   },
