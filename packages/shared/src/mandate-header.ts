@@ -1,3 +1,4 @@
+import { isAddress, isHex } from "viem";
 import type { SignedMandate } from "./mandate.js";
 
 export type MandateHeaderValue = {
@@ -38,38 +39,49 @@ export function serializeMandateHeader(value: MandateHeaderValue): string {
   return JSON.stringify(toSerializedMandateHeader(value));
 }
 
-export function parseSerializedMandateHeader(raw: unknown): MandateHeaderValue | undefined {
-  try {
-    const value = raw as SerializedMandateHeader;
-    if (
-      typeof value.agentId !== "string" ||
-      typeof value.signature !== "string" ||
-      !value.payload ||
-      typeof value.payload.agent !== "string" ||
-      typeof value.payload.delegator !== "string" ||
-      typeof value.payload.maxAmountUsdc !== "string" ||
-      typeof value.payload.expiry !== "string" ||
-      typeof value.payload.nonce !== "string"
-    ) {
-      return undefined;
-    }
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === "object" && !Array.isArray(value)
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
 
-    return {
-      agentId: BigInt(value.agentId),
-      mandate: {
-        payload: {
-          agent: value.payload.agent as `0x${string}`,
-          delegator: value.payload.delegator as `0x${string}`,
-          maxAmountUsdc: BigInt(value.payload.maxAmountUsdc),
-          expiry: BigInt(value.payload.expiry),
-          nonce: BigInt(value.payload.nonce),
-        },
-        signature: value.signature as `0x${string}`,
-      },
-    };
+/** Serialized bigints are digit strings. `BigInt("")` is 0n, so an empty value must not reach it. */
+function asDigits(value: unknown): bigint | undefined {
+  if (typeof value !== "string" || !/^\d+$/.test(value)) return undefined;
+  try {
+    return BigInt(value);
   } catch {
     return undefined;
   }
+}
+
+/**
+ * A mandate header is presented by whoever made the request, so every field is checked
+ * rather than asserted. A verifier checks the signature against `delegator`; a malformed
+ * one must not reach that comparison wearing the address type.
+ */
+export function parseSerializedMandateHeader(raw: unknown): MandateHeaderValue | undefined {
+  const value = asRecord(raw);
+  const body = asRecord(value?.payload);
+  if (!value || !body) return undefined;
+
+  const agentId = asDigits(value.agentId);
+  const maxAmountUsdc = asDigits(body.maxAmountUsdc);
+  const expiry = asDigits(body.expiry);
+  const nonce = asDigits(body.nonce);
+  if (agentId === undefined || maxAmountUsdc === undefined) return undefined;
+  if (expiry === undefined || nonce === undefined) return undefined;
+
+  const { agent, delegator } = body;
+  const { signature } = value;
+  if (typeof agent !== "string" || !isAddress(agent, { strict: false })) return undefined;
+  if (typeof delegator !== "string" || !isAddress(delegator, { strict: false })) return undefined;
+  if (typeof signature !== "string" || !isHex(signature)) return undefined;
+
+  return {
+    agentId,
+    mandate: { payload: { agent, delegator, maxAmountUsdc, expiry, nonce }, signature },
+  };
 }
 
 export function parseMandateHeader(json: string): MandateHeaderValue | undefined {

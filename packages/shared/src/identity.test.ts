@@ -3,6 +3,8 @@ import { ERC8004_ADDRESS } from "./abis";
 import { lookupIdentity } from "./identity";
 import type { AgentProfile } from "./types";
 
+type Client = Parameters<typeof lookupIdentity>[2];
+
 const REGISTRY = ERC8004_ADDRESS;
 const AGENT_ID = 42n;
 const WALLET = "0xdeadbeef00000000000000000000000000000002" as `0x${string}`;
@@ -17,25 +19,25 @@ const registered: AgentProfile = {
 describe("lookupIdentity", () => {
   it("returns profile for registered agentId", async () => {
     const client = {
-      readContract: mock((args: any) => {
+      readContract: mock((args: { functionName: string }) => {
         if (args.functionName === "tokenURI") return Promise.resolve(AGENT_URI);
         if (args.functionName === "getAgentWallet") return Promise.resolve(WALLET);
         return Promise.reject(new Error("unexpected call"));
       }),
     };
-    const result = await lookupIdentity(AGENT_ID, REGISTRY, client as any);
+    const result = await lookupIdentity(AGENT_ID, REGISTRY, client as unknown as Client);
     expect(result).toEqual(registered);
   });
 
   it("returns null when tokenURI is empty (unregistered agentId)", async () => {
     const client = {
-      readContract: mock((args: any) => {
+      readContract: mock((args: { functionName: string }) => {
         if (args.functionName === "tokenURI") return Promise.resolve("");
         if (args.functionName === "getAgentWallet") return Promise.resolve(WALLET);
         return Promise.reject(new Error("unexpected call"));
       }),
     };
-    const result = await lookupIdentity(AGENT_ID, REGISTRY, client as any);
+    const result = await lookupIdentity(AGENT_ID, REGISTRY, client as unknown as Client);
     expect(result).toBeNull();
   });
 
@@ -43,7 +45,31 @@ describe("lookupIdentity", () => {
     const client = {
       readContract: mock(() => Promise.reject(new Error("not a contract"))),
     };
-    const result = await lookupIdentity(AGENT_ID, REGISTRY, client as any);
+    const result = await lookupIdentity(AGENT_ID, REGISTRY, client as unknown as Client);
     expect(result).toBeNull();
+  });
+});
+
+describe("lookupIdentity address validation", () => {
+  const clientReturning = (wallet: unknown) =>
+    ({
+      readContract: mock((args: { functionName: string }) =>
+        args.functionName === "tokenURI"
+          ? Promise.resolve(AGENT_URI)
+          : Promise.resolve(wallet as never),
+      ),
+    }) as unknown as Client;
+
+  it("returns null when the registry answers with something that is not an address", async () => {
+    // The caller decides identity by comparing this wallet to the payer, so a junk
+    // answer must read as "not registered" rather than reach that comparison.
+    for (const wallet of ["", "0xshort", "not-an-address", 42, null]) {
+      expect(await lookupIdentity(AGENT_ID, REGISTRY, clientReturning(wallet))).toBeNull();
+    }
+  });
+
+  it("still accepts a lowercase, non-checksummed address", async () => {
+    const result = await lookupIdentity(AGENT_ID, REGISTRY, clientReturning(WALLET.toLowerCase()));
+    expect(result?.wallet).toBe(WALLET.toLowerCase() as `0x${string}`);
   });
 });

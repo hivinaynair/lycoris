@@ -1,4 +1,4 @@
-import { encodeAbiParameters, getAddress, keccak256, toHex } from "viem";
+import { encodeAbiParameters, getAddress, isHex, keccak256, toHex } from "viem";
 
 /**
  * Fields bound by the on-chain commitment. Field order is part of the
@@ -27,8 +27,12 @@ export function committedRecordFrom(input: {
   decision: number;
   rejectionReason?: string | undefined;
 }): CommittedRecord {
+  // Throws like the getAddress below it: a commitment must never bind a malformed field.
+  if (!isHex(input.paymentHash) || input.paymentHash.length !== 66) {
+    throw new Error("paymentHash must be a 32-byte hex value");
+  }
   return {
-    paymentHash: input.paymentHash as `0x${string}`,
+    paymentHash: input.paymentHash,
     payer: getAddress(input.payer),
     amountUsdc: input.amountUsdc,
     mandateMaxAmountUsdc: input.mandateMaxAmountUsdc,
