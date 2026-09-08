@@ -45,7 +45,7 @@ export function WeatherAccess({ simulated }: { simulated: boolean }) {
   return (
     <section
       aria-label="Purchased weather report"
-      className="m-4 space-y-3 border border-border bg-card p-5 sm:mx-10"
+      className="space-y-3 border border-border bg-card p-5 mb-5 mx-5"
     >
       <h2 className="text-lg font-medium">
         {simulated ? "Sample report unlocked" : "Your Melbourne weather report"}

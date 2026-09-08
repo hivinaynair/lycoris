@@ -1,6 +1,6 @@
 import type { GateState } from "../lib/settlement-gates";
 import { Gate, Robot, Station, Wire } from "./payment-machine-parts";
-import styles from "./payment-workspace.module.css";
+import styles from "./payment-workspace-styles";
 
 const RECLAIMED_LEFT_SPACE = 62 * 0.3;
 const AGENT_X = 105 - RECLAIMED_LEFT_SPACE;
@@ -148,18 +148,9 @@ function Evidence({
 }
 
 export function PaymentMachine(props: Props) {
-  const extra = props.width - 1080;
-  // Reserve a wider first column for the agent's request/response exchange.
-  // The remaining machines share one width and one gutter at every viewport.
-  const redistributedSpace = RECLAIMED_LEFT_SPACE + 24;
-  const apiX = 355 - redistributedSpace + extra * 0.28;
-  const gap = 44 + redistributedSpace / 2 + extra * 0.04;
-  const columnWidth = (props.width - apiX - 32 - gap * 2) / 3;
-  const apiWidth = columnWidth;
-  const gatesX = apiX + columnWidth + gap;
-  const gateWidth = columnWidth;
-  const settleX = gatesX + columnWidth + gap;
-  const settleWidth = columnWidth;
+  const { apiX, apiWidth, gatesX, gateWidth, settleX, settleWidth, gap } = machineLayout(
+    props.width,
+  );
   const apiState =
     props.delivered !== "idle" ? props.delivered : props.step <= 1 ? props.state(1) : "idle";
   const paidFlow = props.step >= 4 && !props.chatting ? props.state(4) : "idle";
@@ -180,38 +171,13 @@ export function PaymentMachine(props: Props) {
         d={`M${gatesX + gateWidth} 219 C${gatesX + gateWidth + gap / 2} 219 ${settleX - gap / 2} 201 ${settleX} 201`}
         state={props.state(4)}
       />
-      <g data-actor="facilitator">
-        <Gate
-          x={gatesX}
-          y={108}
-          width={gateWidth}
-          title="ERC-8004"
-          subtitle="Registered identity?"
-          state={props.state(2)}
-        />
-        <Gate
-          x={gatesX}
-          y={192}
-          width={gateWidth}
-          title="AP2 mandate"
-          subtitle="May it spend this much?"
-          state={props.state(3)}
-        />
-        <text className={styles.smallLabel} x={gatesX} y="279">
-          IDENTITY + PERMISSION
-        </text>
-        <Station
-          x={settleX}
-          y={173}
-          width={settleWidth}
-          title="Settlement"
-          subtitle="Check balance · pay"
-          state={props.state(4)}
-          tone="settlement"
-        />
-        <Wire d={`M${settleX + settleWidth / 2} 173 V121`} state={props.state(5)} />
-        <Evidence x={settleX} y={72} width={settleWidth} state={props.state(5)} />
-      </g>
+      <Facilitator
+        gatesX={gatesX}
+        gateWidth={gateWidth}
+        settleX={settleX}
+        settleWidth={settleWidth}
+        state={props.state}
+      />
       <Cloud x={apiX + apiWidth / 2} y={121} />
       <Station
         x={apiX}
@@ -236,6 +202,67 @@ export function PaymentMachine(props: Props) {
       )}
       <Funds {...props} apiX={apiX} apiWidth={apiWidth} />
       <Agent stopped={props.stopped} />
+    </g>
+  );
+}
+
+function machineLayout(width: number) {
+  const extra = width - 1080;
+  // Reserve a wider first column for the agent's request/response exchange.
+  // The remaining machines share one width and one gutter at every viewport.
+  const redistributedSpace = RECLAIMED_LEFT_SPACE + 24;
+  const apiX = 355 - redistributedSpace + extra * 0.28;
+  const gap = 44 + redistributedSpace / 2 + extra * 0.04;
+  const columnWidth = (width - apiX - 32 - gap * 2) / 3;
+  const apiWidth = columnWidth;
+  const gatesX = apiX + columnWidth + gap;
+  const gateWidth = columnWidth;
+  const settleX = gatesX + columnWidth + gap;
+  const settleWidth = columnWidth;
+  return { apiX, apiWidth, gatesX, gateWidth, settleX, settleWidth, gap };
+}
+
+function Facilitator({
+  gatesX,
+  gateWidth,
+  settleX,
+  settleWidth,
+  state,
+}: Pick<ReturnType<typeof machineLayout>, "gatesX" | "gateWidth" | "settleX" | "settleWidth"> & {
+  state: Props["state"];
+}) {
+  return (
+    <g data-actor="facilitator">
+      <Gate
+        x={gatesX}
+        y={108}
+        width={gateWidth}
+        title="ERC-8004"
+        subtitle="Registered identity?"
+        state={state(2)}
+      />
+      <Gate
+        x={gatesX}
+        y={192}
+        width={gateWidth}
+        title="AP2 mandate"
+        subtitle="May it spend this much?"
+        state={state(3)}
+      />
+      <text className={styles.smallLabel} x={gatesX} y="279">
+        IDENTITY + PERMISSION
+      </text>
+      <Station
+        x={settleX}
+        y={173}
+        width={settleWidth}
+        title="Settlement"
+        subtitle="Check balance · pay"
+        state={state(4)}
+        tone="settlement"
+      />
+      <Wire d={`M${settleX + settleWidth / 2} 173 V121`} state={state(5)} />
+      <Evidence x={settleX} y={72} width={settleWidth} state={state(5)} />
     </g>
   );
 }

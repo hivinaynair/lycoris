@@ -38,7 +38,9 @@ export function PacketPanel({
           )}
         >
           <span className="text-muted-foreground">{label}</span>
-          <span className="text-right font-mono text-foreground">{value}</span>
+          <span className="min-w-0 wrap-anywhere text-right font-mono text-foreground">
+            {value}
+          </span>
         </div>
       ))}
     </div>

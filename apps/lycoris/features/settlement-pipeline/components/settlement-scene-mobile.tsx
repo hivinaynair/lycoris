@@ -83,10 +83,12 @@ export function MobileSettlementScene({
       <div className="relative">
         <div className="absolute top-[28px] bottom-[28px] left-[38px] w-px bg-border" />
         <motion.div
-          className={cn("absolute top-[28px] left-[38px] w-px origin-top", verticalBarClass)}
+          className={cn(
+            "absolute top-[28px] left-[38px] h-[calc(100%-56px)] w-px origin-top",
+            verticalBarClass,
+          )}
           initial={false}
           animate={{ scaleY: Math.max(0, (activeStep - 1) / Math.max(settlementGates.length, 1)) }}
-          style={{ height: "calc(100% - 56px)" }}
           transition={{ duration: 0.55, ease: [0.2, 0, 0, 1] }}
         />
 

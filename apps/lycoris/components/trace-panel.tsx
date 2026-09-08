@@ -30,93 +30,109 @@ export function TracePanel({ steps, onStepClick }: TracePanelProps) {
   return (
     <div className="flex flex-col gap-0">
       {steps.map((step, i) => (
-        // biome-ignore lint/a11y/noStaticElementInteractions: row opens detail; nested explorer links stay as anchors
-        // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled via onKeyDown below
-        <div
+        <TraceRow
           key={step.id}
-          className={cn("flex gap-3", step.rawData && "group cursor-pointer")}
-          onClick={() => step.rawData && onStepClick?.(step)}
-          onKeyDown={(event) => {
-            if (!step.rawData) return;
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              onStepClick?.(step);
-            }
-          }}
-          role={step.rawData ? "button" : undefined}
-          tabIndex={step.rawData ? 0 : undefined}
-        >
-          <div className="flex flex-col items-center">
-            <div className="mt-1">
-              <StepIcon status={step.status} />
-            </div>
-            {i < steps.length - 1 && (
-              <div
-                className={cn(
-                  "my-1 min-h-[20px] w-px flex-1",
-                  step.status === "skipped" ? "bg-border/30" : "bg-border",
-                )}
-              />
-            )}
-          </div>
-
-          <div className={cn("min-w-0 pb-4", step.status === "skipped" && "opacity-40")}>
-            <div className="flex items-center gap-2">
-              <span
-                className={cn(
-                  "text-sm font-medium",
-                  step.status === "rejected" && "text-destructive",
-                  step.status === "approved" && "text-foreground",
-                  (step.status === "pending" || step.status === "skipped") &&
-                    "text-muted-foreground",
-                )}
-              >
-                {step.label}
-              </span>
-              {step.rawData && (
-                <span className="ml-1 text-xs text-muted-foreground/50 transition-colors group-hover:text-primary">
-                  view ↗
-                </span>
-              )}
-              {step.status === "rejected" && (
-                <Badge variant="destructive" className="py-0 text-xs">
-                  rejected
-                </Badge>
-              )}
-              {step.status === "approved" && (
-                <Badge variant="outline" className="border-primary/30 py-0 text-xs text-primary">
-                  approved
-                </Badge>
-              )}
-            </div>
-            {step.detail && (
-              <p className="mt-0.5 font-mono text-xs text-muted-foreground">{step.detail}</p>
-            )}
-            <div className="mt-0.5 flex gap-3">
-              {step.link && (
-                <a
-                  href={step.link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-xs text-primary hover:underline"
-                >
-                  {step.link.label} ↗
-                </a>
-              )}
-              {step.attestationLink && (
-                <a
-                  href={step.attestationLink.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-mono text-xs text-primary hover:underline"
-                >
-                  {step.attestationLink.label} ↗
-                </a>
-              )}
-            </div>
-          </div>
-        </div>
+          step={step}
+          last={i === steps.length - 1}
+          onStepClick={onStepClick}
+        />
       ))}
+    </div>
+  );
+}
+
+function TraceRow({
+  step,
+  last,
+  onStepClick,
+}: {
+  step: TraceStep;
+  last: boolean;
+  onStepClick?: (step: TraceStep) => void;
+}) {
+  return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: row opens detail; nested explorer links stay as anchors
+    <div
+      className={cn("flex gap-3", step.rawData && "group cursor-pointer")}
+      onClick={() => step.rawData && onStepClick?.(step)}
+      onKeyDown={(event) => {
+        if (!step.rawData) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onStepClick?.(step);
+        }
+      }}
+      role={step.rawData ? "button" : undefined}
+      tabIndex={step.rawData ? 0 : undefined}
+    >
+      <div className="flex flex-col items-center">
+        <div className="mt-1">
+          <StepIcon status={step.status} />
+        </div>
+        {!last && (
+          <div
+            className={cn(
+              "my-1 min-h-[20px] w-px flex-1",
+              step.status === "skipped" ? "bg-border/30" : "bg-border",
+            )}
+          />
+        )}
+      </div>
+
+      <div className={cn("min-w-0 pb-4", step.status === "skipped" && "opacity-40")}>
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "text-sm font-medium",
+              step.status === "rejected" && "text-destructive",
+              step.status === "approved" && "text-foreground",
+              (step.status === "pending" || step.status === "skipped") && "text-muted-foreground",
+            )}
+          >
+            {step.label}
+          </span>
+          {step.rawData && (
+            <span className="ml-1 text-xs text-muted-foreground/50 transition-colors group-hover:text-primary">
+              view ↗
+            </span>
+          )}
+          {step.status === "rejected" && (
+            <Badge variant="destructive" className="py-0 text-xs">
+              rejected
+            </Badge>
+          )}
+          {step.status === "approved" && (
+            <Badge variant="outline" className="border-primary/30 py-0 text-xs text-primary">
+              approved
+            </Badge>
+          )}
+        </div>
+        {step.detail && (
+          <p className="mt-0.5 font-mono text-xs text-muted-foreground">{step.detail}</p>
+        )}
+        <div className="mt-0.5 flex gap-3">
+          {step.link && (
+            <a
+              href={step.link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-xs text-primary hover:underline"
+            >
+              {step.link.label} ↗
+            </a>
+          )}
+          {step.attestationLink && (
+            <a
+              href={step.attestationLink.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-xs text-primary hover:underline"
+            >
+              {step.attestationLink.label} ↗
+            </a>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

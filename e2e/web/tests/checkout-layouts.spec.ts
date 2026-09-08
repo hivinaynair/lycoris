@@ -1,46 +1,43 @@
-import AxeBuilder from "@axe-core/playwright";
+import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
+import { mockSponsored } from "./sponsored-fixture";
 
-test("checkout layouts preserve a purchase and fit desktop and mobile", async ({ page }, info) => {
+test("checkout disclosures preserve a purchase and fit desktop and mobile", async ({
+  page,
+}, info) => {
+  await mockSponsored(page);
   await page.goto("/checkout");
-  await page.getByRole("button", { name: "Buy", exact: true }).click();
-  for (const name of ["02 / Embed studio", "03 / Guided demo", "01 / Storefront"]) {
-    await page.getByRole("button", { name, exact: true }).click();
-    await expect(page.getByTestId("checkout-state")).toHaveText("awaiting_payment");
-    await expect(page.getByRole("button", { name: "Pay 0.1 USDC" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Checkout layout" })).toHaveCount(0);
+  await expect(page.getByLabel("Payment scenario")).toBeHidden();
+  await expect(page.getByRole("region", { name: "Integration code" })).toBeVisible();
+  await page.getByRole("button", { name: "Pay 0.1 USDC", exact: true }).click();
+  for (const name of ["Customize this demo", "Add checkout to your app"]) {
+    await page.getByText(name, { exact: true }).click();
+    await expect(page.getByTestId("checkout-state")).toHaveText("settled");
+    await page.getByText(name, { exact: true }).click();
   }
-  await page.getByRole("button", { name: "Pay 0.1 USDC" }).click();
-  await expect(page.getByTestId("checkout-state")).toHaveText("settled");
-  for (const name of ["01 / Storefront", "02 / Embed studio", "03 / Guided demo"]) {
-    await page.getByRole("button", { name, exact: true }).click();
-    await expect(page.getByTestId("simulation-sends")).toHaveText("1");
-    await expect(page.getByRole("heading", { name: "Sample report unlocked" })).toBeVisible();
-  }
+  await expect(page.getByRole("heading", { name: "Your Melbourne weather report" })).toBeVisible();
+  await page.getByText("Customize this demo", { exact: true }).click();
+  await page.getByRole("button", { name: "Merchant UI", exact: true }).click();
+  await expect(page.getByRole("heading", { name: "Your Melbourne weather report" })).toBeVisible();
+  await page.getByRole("button", { name: "Default SDK", exact: true }).click();
+  await page.getByText("Customize this demo", { exact: true }).click();
   await page.getByRole("button", { name: "New purchase" }).click();
   for (const theme of ["light", "dark"]) {
     const toggle = page.getByRole("button", { name: `Switch to ${theme} theme` });
     if (await toggle.count()) await toggle.click();
-    for (const name of ["01 / Storefront", "02 / Embed studio", "03 / Guided demo"]) {
-      await page.getByRole("button", { name, exact: true }).click();
-      await page.setViewportSize({ width: 1435, height: 1100 });
+    for (const width of [1435, 390]) {
+      await page.setViewportSize({ width, height: 844 });
       expect(
         (await new AxeBuilder({ page }).include("main").withTags(["wcag2a", "wcag2aa"]).analyze())
           .violations,
       ).toEqual([]);
-      await page.screenshot({
-        path: info.outputPath(`${theme}-${name.slice(0, 2)}.png`),
-        fullPage: true,
-      });
-      await page.setViewportSize({ width: 390, height: 844 });
       expect(
         await page.evaluate(
           () => document.documentElement.scrollWidth <= document.documentElement.clientWidth,
         ),
       ).toBe(true);
-      await page.screenshot({
-        path: info.outputPath(`${theme}-${name.slice(0, 2)}-mobile.png`),
-        fullPage: true,
-      });
+      await page.screenshot({ path: info.outputPath(`${theme}-${width}.png`), fullPage: true });
     }
   }
 });

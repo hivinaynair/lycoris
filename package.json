@@ -25,7 +25,11 @@
     "prepare": "lefthook install || true",
     "smoke:settle-kit": "bun scripts/smoke-settle-kit-next.mjs",
     "measure:settle-kit": "bun scripts/measure-settle-kit.mjs",
-    "record:walkthrough": "RECORD_WALKTHROUGH=1 bun run --cwd e2e/web e2e tests/walkthrough.spec.ts --workers=1"
+    "record:walkthrough": "RECORD_WALKTHROUGH=1 bun run --cwd e2e/web e2e tests/walkthrough.spec.ts --workers=1",
+    "pack:settle-kit": "bun scripts/pack-settle-kit.mjs",
+    "check:settle-kit-package": "bun scripts/check-settle-kit-package.mjs",
+    "version:settle-kit": "bun scripts/version-settle-kit.mjs",
+    "lycoris:setup-sponsored-checkout": "bun --env-file=packages/scripts/.env.local packages/scripts/setup-sponsored-checkout.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",

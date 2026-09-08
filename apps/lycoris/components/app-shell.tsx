@@ -30,11 +30,15 @@ export function AppShell({ children }: { children: ReactNode }) {
               SETTLE KIT
             </span>
           </Link>
-          <nav aria-label="Main navigation" className="flex items-center gap-6 text-sm">
+          <nav
+            aria-label="Main navigation"
+            className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm"
+          >
             {[
               ["/checkout", "Playground"],
               ["/demo", "Agent demo"],
               ["/feed", "Feed"],
+              ["/docs", "Docs"],
             ].map(([href, label]) => (
               <Link
                 key={href}
@@ -42,7 +46,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 prefetch={false}
                 aria-current={pathname === href ? "page" : undefined}
                 className={cn(
-                  "ui-nav-link transition-colors hover:text-foreground",
+                  "relative text-[16px] font-medium aria-[current=page]:after:absolute aria-[current=page]:after:left-1/2 aria-[current=page]:after:-bottom-2 aria-[current=page]:after:size-1.5 aria-[current=page]:after:rounded-full aria-[current=page]:after:bg-primary aria-[current=page]:after:-translate-x-1/2 aria-[current=page]:after:content-[''] transition-colors hover:text-foreground",
                   pathname === href ? "text-foreground" : "text-muted-foreground",
                 )}
               >

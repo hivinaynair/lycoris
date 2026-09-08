@@ -11,8 +11,8 @@ export function AgentActor({ reasoning }: { reasoning?: string }) {
   return (
     <div className="relative h-full w-44 shrink-0">
       <div
-        className="absolute top-5 left-0 z-40 w-56 rounded-md border border-border bg-card px-3 py-2 text-left shadow-rail-panel transition-opacity duration-700"
-        style={{ opacity: robotLoaded ? 1 : 0 }}
+        className="absolute top-5 left-0 z-40 w-56 rounded-md border border-border bg-card px-3 py-2 text-left shadow-rail-panel opacity-0 data-[loaded=true]:opacity-100 transition-opacity duration-700"
+        data-loaded={robotLoaded}
       >
         <p className="line-clamp-2 font-mono text-[0.68rem] leading-[1.45] text-muted-foreground">
           {latestReasoning || "I'm ready to make the payment!"}

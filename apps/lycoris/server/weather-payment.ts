@@ -21,7 +21,7 @@ export async function verifyWeatherPayment(
     }) => Promise<{ status: string; blockHash: Hex; logs: Log[] }>;
     getBlock: (args: { blockHash: Hex }) => Promise<{ timestamp: bigint }>;
   },
-  input: { txHash: Hex; signature: Hex; recipient: Hex },
+  input: { txHash: Hex; recipient: Hex } & ({ signature: Hex } | { sponsoredPayer: Hex }),
   now = Date.now(),
 ) {
   const [tx, receipt] = await Promise.all([
@@ -60,11 +60,13 @@ export async function verifyWeatherPayment(
   );
   if (!paid) return reject();
   if (
-    !(await verifyMessage({
-      address: tx.from,
-      message: weatherAccessMessage(input.txHash),
-      signature: input.signature,
-    }))
+    !("sponsoredPayer" in input
+      ? tx.from.toLowerCase() === input.sponsoredPayer.toLowerCase()
+      : await verifyMessage({
+          address: tx.from,
+          message: weatherAccessMessage(input.txHash),
+          signature: input.signature,
+        }))
   ) {
     throw new InvalidWeatherPayment("Sign with the wallet that made this payment.");
   }

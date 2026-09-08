@@ -1,6 +1,7 @@
 # @settle-kit/react
 
-Mount `SettleProvider` once. Each purchase is `begin` + `pay`; `begin` selects and
+Mount `SettleProvider` once. A purchase can use `payNow` from a single button, or
+`begin` + `pay` for a separate review step; `begin` selects and
 quotes USDC automatically. Config lives in Context; the core manager owns session
 state, subscribed through `useSyncExternalStore`. No required wagmi or Zustand.
 
@@ -57,6 +58,10 @@ import "@settle-kit/react/styles.css";
 ```
 
 Render this inside the Provider. Amount is required; there is no implicit purchase price.
+Set `skipReview` on `Checkout` to show a single initial Pay button. For custom UI,
+call `payNow({ amountUsdc, title })` from a user click. Both paths retain balance,
+network, expiry and receipt checks; wallet approval still happens in the wallet.
+
 Optional `destination` overrides the Provider destination for a new purchase.
 `labels` supports `buy`, `pay`, `reset`, `newPurchase`, and `retryConfirmation`.
 These are action labels, not a complete localization API. Use your own UI for full copy control.
@@ -163,3 +168,11 @@ properties in a stylesheet using `elements.card` or `className`. Theme attribute
 and element classes work without inline styles. This is a smaller API inspired by
 [Clerk's appearance model](https://clerk.com/docs/react/guides/customizing-clerk/appearance-prop/overview),
 not a dependency on Clerk or its full theme system.
+
+### Styling build
+
+The default checkout is authored with Tailwind CSS 4.3.3. `bun run build` compiles
+its `sk:`-prefixed utilities into the exported `styles.css`, without Preflight.
+Consumers import that CSS and need no Tailwind installation or source scanning.
+The SDK rules sit in `components.settle-kit`, so host utilities and the existing
+`appearance.elements` and `appearance.variables` APIs can customize the embed.

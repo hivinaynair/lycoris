@@ -33,5 +33,18 @@
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "README.md"
-  ]
+  ],
+  "description": "x402 paid fetch and AP2 mandate helpers for agents.",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hivinaynair/lycoris.git",
+    "directory": "packages/settle-kit/agents"
+  },
+  "bugs": {
+    "url": "https://github.com/hivinaynair/lycoris/issues"
+  }
 }

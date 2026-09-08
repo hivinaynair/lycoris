@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const name = process.argv[2];
@@ -45,5 +45,18 @@ async function fixSpecifiers(directory) {
 await fixSpecifiers(join(cwd, "dist"));
 if (name === "react") {
   await mkdir(join(cwd, "dist"), { recursive: true });
-  await cp(join(cwd, "src/styles.css"), join(cwd, "dist/styles.css"));
+  const css = Bun.spawn(
+    [
+      "bunx",
+      "--no-install",
+      "@tailwindcss/cli",
+      "-i",
+      "src/styles.css",
+      "-o",
+      "dist/styles.css",
+      "--minify",
+    ],
+    { cwd, stdout: "inherit", stderr: "inherit" },
+  );
+  if ((await css.exited) !== 0) throw new Error("SDK Tailwind compilation failed");
 }

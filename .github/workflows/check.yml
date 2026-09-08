@@ -17,6 +17,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: "1.4.0"
@@ -35,3 +38,12 @@ jobs:
 
       - name: Unit tests
         run: bun test
+
+      - name: Pack SDK and check independent consumers
+        run: bun run pack:settle-kit && bun run check:settle-kit-package
+
+      - name: Install browser
+        run: bun run --cwd e2e/web e2e:install --with-deps
+
+      - name: Independent Next.js checkout smoke
+        run: bun run smoke:settle-kit "$GITHUB_WORKSPACE/dist/settle-kit"

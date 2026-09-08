@@ -31,5 +31,18 @@
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "README.md"
-  ]
+  ],
+  "description": "Headless USDC checkout sessions with balance preflight and receipt confirmation.",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hivinaynair/lycoris.git",
+    "directory": "packages/settle-kit/core"
+  },
+  "bugs": {
+    "url": "https://github.com/hivinaynair/lycoris/issues"
+  }
 }

@@ -1,4 +1,4 @@
-import AxeBuilder from "@axe-core/playwright";
+import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
 test("one animated payment machine previews without paying, respects reduced motion, and fits both themes and mobile", async ({
@@ -137,6 +137,22 @@ test("one animated payment machine previews without paying, respects reduced mot
   const circuit = page.getByRole("region", {
     name: "Payment circuit, scroll horizontally on small screens",
   });
+  const reportButton = machine.getByRole("button", { name: "Get me the report", exact: true });
+  // ResizeObserver updates the fitted SVG after viewport changes. Measure the
+  // final mobile arrangement, rather than mixing bounds from two layout frames.
+  await expect
+    .poll(async () => {
+      const reportBounds = await reportButton.boundingBox();
+      const circuitBounds = await circuit.boundingBox();
+      return Boolean(
+        reportBounds &&
+          circuitBounds &&
+          reportBounds.height >= 44 &&
+          reportBounds.y + reportBounds.height < circuitBounds.y,
+      );
+    })
+    .toBe(true);
+  await expect(machine.getByRole("region", { name: "Lycoris response" })).toBeHidden();
   await expect.poll(() => circuit.evaluate((el) => el.scrollWidth > el.clientWidth)).toBe(true);
   await circuit.focus();
   await page.keyboard.press("ArrowRight");

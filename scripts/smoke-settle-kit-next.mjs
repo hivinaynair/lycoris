@@ -4,6 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const root = join(import.meta.dirname, "..");
+const artifacts = process.argv[2];
 const host = await mkdtemp(join(tmpdir(), "settle-kit-next-"));
 console.log(`Independent host and evidence: ${host}`);
 async function run(command, cwd = host) {
@@ -11,7 +12,11 @@ async function run(command, cwd = host) {
   if ((await child.exited) !== 0) throw new Error(`Failed: ${command.join(" ")}`);
 }
 await cp(join(root, "e2e/fixtures/settle-kit-next"), host, { recursive: true });
-for (const name of ["core", "react"]) {
+for (const name of ["core", "react", "agents", "server"]) {
+  if (artifacts) {
+    await cp(join(artifacts, `${name}.tgz`), join(host, `${name}.tgz`));
+    continue;
+  }
   await run(["bun", "run", "build"], join(root, "packages/settle-kit", name));
   await run(
     ["bun", "pm", "pack", "--filename", join(host, `${name}.tgz`), "--ignore-scripts", "--quiet"],
@@ -34,6 +39,8 @@ await writeFile(
       dependencies: {
         "@settle-kit/core": "file:./core.tgz",
         "@settle-kit/react": "file:./react.tgz",
+        "@settle-kit/agents": "file:./agents.tgz",
+        "@settle-kit/server": "file:./server.tgz",
         next: await installed("next"),
         react: await installed("react"),
         "react-dom": await installed("react-dom"),
@@ -95,6 +102,28 @@ try {
   )
     throw new Error("Expected exactly two transfers and two confirmations");
   if (errors.length) throw new Error(errors.join("\n"));
+  // No Tailwind or Preflight is installed in this host. Check the actual CSS
+  // export, including defaults that browsers normally receive from a reset.
+  const embedStyles = await page.locator(".sk-checkout").evaluate((card) => {
+    const cardStyle = getComputedStyle(card);
+    const details = getComputedStyle(card.querySelector("details"));
+    const button = getComputedStyle(card.querySelector("button"));
+    return {
+      display: cardStyle.display,
+      padding: cardStyle.paddingTop,
+      detailsTop: details.borderTopWidth,
+      detailsRight: details.borderRightWidth,
+      buttonFont: button.fontSize,
+    };
+  });
+  if (
+    embedStyles.display !== "grid" ||
+    embedStyles.padding !== "24px" ||
+    embedStyles.detailsTop !== "1px" ||
+    embedStyles.detailsRight !== "0px" ||
+    embedStyles.buttonFont !== "14px"
+  )
+    throw new Error(`Standalone checkout styles failed: ${JSON.stringify(embedStyles)}`);
   await page.screenshot({ path: join(host, "embed-desktop.png"), fullPage: true });
   await page.setViewportSize({ width: 390, height: 844 });
   if (

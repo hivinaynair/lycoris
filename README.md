@@ -4,10 +4,11 @@ An embeddable **USDC checkout SDK**, extracted from an existing agent payment ra
 The merchant names a destination; the host app mounts `SettleProvider` once and
 calls `begin({ amountUsdc })` for each purchase. The host supplies its own wallet.
 
-The playground starts in **Simulation**: no wallet, RPC calls or funds. Choose success,
-wallet rejection, insufficient USDC or delayed confirmation. Switch to **Wallet**
-for the separate Base Sepolia test-wallet flow. Appearance can change mid-payment.
-The page shows matching embed code and also offers a host-owned shadcn example.
+The checkout makes real Base Sepolia transfers from a dedicated, faucet-funded demo
+wallet. Visitors click Pay without signing in, connecting a wallet, or supplying funds.
+The report opens automatically after receipt verification. The host enforces a fixed
+merchant, 0.1 USDC price, persistent idempotency, and a ten-purchase budget.
+See [sponsored checkout setup](docs/sponsored-checkout.md).
 
 **Start at `/checkout` (`/` redirects there).** It is a sample merchant storefront, not an operator dashboard.
 The agent `/demo` and Feed pages are the appendix: Lycoris pays a weather API through x402.
@@ -106,7 +107,7 @@ in the printed temporary directory. Install Chromium once with
 `bun run --cwd e2e/web e2e:install` if needed.
 
 The packages ship compiled ESM and TypeScript declarations. External Next consumers
-need no SDK-specific transpilation configuration. Packages are not published. See
+need no SDK-specific transpilation configuration. Packages are not published. The [npm release guide](docs/settle-kit-releases.md) explains validation, versioning, and tagged publishing. See
 [e2e/fixtures/settle-kit-next](e2e/fixtures/settle-kit-next) for the exact fixture.
 
 ## Layout

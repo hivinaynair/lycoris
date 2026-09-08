@@ -25,12 +25,18 @@ export function PageHead({
   return (
     <div className="grid items-end gap-6 pb-6 lg:grid-cols-[1.2fr_1fr] lg:gap-16">
       <div className="max-w-3xl">
-        <p className="ui-label text-muted-foreground">{eyebrow}</p>
-        {title ? <h1 className="ui-page-heading mt-5">{title}</h1> : null}
+        <p className="font-sans text-micro tracking-[0.16em] uppercase in-[.demo-type]:text-meta in-[.demo-type]:tracking-[0.12em] text-muted-foreground">
+          {eyebrow}
+        </p>
+        {title ? (
+          <h1 className="text-display leading-[1.04] tracking-[-0.03em] font-medium mt-5">
+            {title}
+          </h1>
+        ) : null}
       </div>
       <div className="space-y-5">
         {question ? (
-          <p className="ui-page-description max-w-[480px] text-muted-foreground">{question}</p>
+          <p className="text-lead leading-[1.6] max-w-[480px] text-muted-foreground">{question}</p>
         ) : null}
         {right}
       </div>

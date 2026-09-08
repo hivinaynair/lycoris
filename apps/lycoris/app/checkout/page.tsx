@@ -24,13 +24,14 @@ export default function CheckoutPage() {
             successful receipt before confirming payment.
           </p>
           <p>
-            Human checkout and the agent buy the same Melbourne weather report for 0.1 USDC, paid to
-            the same merchant. Each purchase is a separate transfer. ERC-8004 is agent identity, not
-            KYC; preclear checks mandate and identity, not balance.
+            Sponsored checkout and the agent buy the same Melbourne weather report for 0.1 USDC,
+            paid to the same merchant. Each purchase is a separate transfer. ERC-8004 is agent
+            identity, not KYC; preclear checks mandate and identity, not balance.
           </p>
           <p>
-            Keep this page open until confirmation. Sessions are in memory; if you close it after
-            submitting, inspect your wallet and Basescan before trying another payment.
+            The demo pays from a dedicated test wallet with a total budget of 10 purchases. Payment
+            IDs are saved in this browser so retries reuse the same transfer. No personal wallet is
+            connected.
           </p>
         </div>
       </details>

@@ -45,8 +45,44 @@ export function DecisionLog({
   traceSteps?: TraceStep[];
   onStepClick?: (step: TraceStep) => void;
 }) {
-  const route = result?.route ?? fallbackRouteForAgent(selectedAgent);
+  const rows = decisionRows(result, selectedAgent, selectedScenario);
   const rejectedReason = cleanRejectionReason(result?.body?.error);
+
+  if (!running && !result) {
+    return (
+      <div className="flex h-full min-h-52 flex-col justify-center rounded-sm border border-dashed border-border px-5 py-8 text-sm text-muted-foreground">
+        <p className="font-medium text-foreground">Waiting for a run.</p>
+        <p className="mt-2 leading-6">
+          The settlement checks will appear here as the payment moves through the pipeline.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid gap-3">
+      {rows.map((row) => (
+        <DecisionRow
+          key={row.label}
+          row={row}
+          activeStep={activeStep}
+          result={result}
+          running={running}
+          traceSteps={traceSteps}
+          onStepClick={onStepClick}
+          rejectedReason={rejectedReason}
+        />
+      ))}
+    </div>
+  );
+}
+
+function decisionRows(
+  result: TriggerResult | null,
+  selectedAgent: DemoAgent,
+  selectedScenario: DemoScenario,
+) {
+  const route = result?.route ?? fallbackRouteForAgent(selectedAgent);
 
   const rows = [
     {
@@ -83,85 +119,86 @@ export function DecisionLog({
     },
   ];
 
-  if (!running && !result) {
-    return (
-      <div className="flex h-full min-h-52 flex-col justify-center rounded-sm border border-dashed border-border px-5 py-8 text-sm text-muted-foreground">
-        <p className="font-medium text-foreground">Waiting for a run.</p>
-        <p className="mt-2 leading-6">
-          The settlement checks will appear here as the payment moves through the pipeline.
-        </p>
-      </div>
-    );
-  }
+  return rows;
+}
+
+function DecisionRow({
+  row,
+  activeStep,
+  result,
+  running,
+  traceSteps,
+  onStepClick,
+  rejectedReason,
+}: {
+  row: ReturnType<typeof decisionRows>[number];
+  activeStep: number;
+  result: TriggerResult | null;
+  running: boolean;
+  traceSteps?: TraceStep[];
+  onStepClick?: (step: TraceStep) => void;
+  rejectedReason?: string | null;
+}) {
+  const status = decisionStatus(row.step, activeStep, result, running);
+  const approved = status === "approved";
+  const rejected = status === "rejected";
+  const runningStep = status === "running";
+
+  const traceStep = traceSteps?.find((s) => s.id === row.step);
+  const clickable = !!traceStep?.rawData;
 
   return (
-    <div className="grid gap-3">
-      {rows.map((row) => {
-        const status = decisionStatus(row.step, activeStep, result, running);
-        const approved = status === "approved";
-        const rejected = status === "rejected";
-        const runningStep = status === "running";
-
-        const traceStep = traceSteps?.find((s) => s.id === row.step);
-        const clickable = !!traceStep?.rawData;
-
-        return (
-          // biome-ignore lint/a11y/noStaticElementInteractions: row opens gate detail panel
-          // biome-ignore lint/a11y/useKeyWithClickEvents: keyboard handled via onKeyDown below
-          <div
-            key={row.label}
+    // biome-ignore lint/a11y/noStaticElementInteractions: row opens gate detail panel
+    <div
+      className={cn(
+        "flex gap-3 rounded-sm border border-transparent px-2 py-1.5 group",
+        runningStep && "border-border bg-muted/30",
+        status === "skipped" && "opacity-45",
+        clickable && "cursor-pointer",
+      )}
+      onClick={() => clickable && traceStep && onStepClick?.(traceStep)}
+      onKeyDown={(event) => {
+        if (!clickable || !traceStep) return;
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          onStepClick?.(traceStep);
+        }
+      }}
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+    >
+      <span className="mt-0.5">
+        {approved ? (
+          <CheckCircle2 className="size-4 text-success" />
+        ) : rejected ? (
+          <XCircle className="size-4 text-destructive" />
+        ) : runningStep ? (
+          <Zap className="size-4 animate-pulse text-foreground" />
+        ) : (
+          <span className="block size-4 rounded-full border border-border" />
+        )}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-1">
+          <span
             className={cn(
-              "flex gap-3 rounded-sm border border-transparent px-2 py-1.5 group",
-              runningStep && "border-border bg-muted/30",
-              status === "skipped" && "opacity-45",
-              clickable && "cursor-pointer",
+              "block text-sm font-medium",
+              rejected && "text-destructive",
+              !approved && !rejected && !runningStep && "text-muted-foreground",
             )}
-            onClick={() => clickable && traceStep && onStepClick?.(traceStep)}
-            onKeyDown={(event) => {
-              if (!clickable || !traceStep) return;
-              if (event.key === "Enter" || event.key === " ") {
-                event.preventDefault();
-                onStepClick?.(traceStep);
-              }
-            }}
-            role={clickable ? "button" : undefined}
-            tabIndex={clickable ? 0 : undefined}
           >
-            <span className="mt-0.5">
-              {approved ? (
-                <CheckCircle2 className="size-4 text-success" />
-              ) : rejected ? (
-                <XCircle className="size-4 text-destructive" />
-              ) : runningStep ? (
-                <Zap className="size-4 animate-pulse text-foreground" />
-              ) : (
-                <span className="block size-4 rounded-full border border-border" />
-              )}
+            {row.label}
+          </span>
+          {clickable && (
+            <span className="text-xs text-muted-foreground/50 group-hover:text-primary transition-colors">
+              view ↗
             </span>
-            <span className="min-w-0 flex-1">
-              <span className="flex items-center gap-1">
-                <span
-                  className={cn(
-                    "block text-sm font-medium",
-                    rejected && "text-destructive",
-                    !approved && !rejected && !runningStep && "text-muted-foreground",
-                  )}
-                >
-                  {row.label}
-                </span>
-                {clickable && (
-                  <span className="text-xs text-muted-foreground/50 group-hover:text-primary transition-colors">
-                    view ↗
-                  </span>
-                )}
-              </span>
-              <span className="mt-0.5 block truncate font-mono text-xs text-muted-foreground">
-                {rejected && rejectedReason ? rejectedReason : row.detail}
-              </span>
-            </span>
-          </div>
-        );
-      })}
+          )}
+        </span>
+        <span className="mt-0.5 block truncate font-mono text-xs text-muted-foreground">
+          {rejected && rejectedReason ? rejectedReason : row.detail}
+        </span>
+      </span>
     </div>
   );
 }

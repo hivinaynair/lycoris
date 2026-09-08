@@ -1,0 +1,75 @@
+name: Release Settle Kit
+
+on:
+  push:
+    tags: ["settle-kit-v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: settle-kit-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+      - name: Require tagged releases to be on main
+        if: startsWith(github.ref, 'refs/tags/')
+        run: git merge-base --is-ancestor HEAD origin/main
+      - run: bun install --frozen-lockfile
+      - run: bun run check-types
+      - run: bun run check-boundaries
+      - run: bun run check-tokens
+      - run: bun test
+      - name: Build and pack all SDK packages
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            bun scripts/pack-settle-kit.mjs dist/settle-kit "${RELEASE_TAG#settle-kit-v}"
+          else
+            bun run pack:settle-kit
+          fi
+      - run: bun run check:settle-kit-package
+      - run: bun run --cwd e2e/web e2e:install --with-deps
+      - name: Independent Next.js checkout smoke
+        run: bun run smoke:settle-kit "$GITHUB_WORKSPACE/dist/settle-kit"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: settle-kit-packages
+          path: dist/settle-kit/*.tgz
+          if-no-files-found: error
+
+  publish:
+    if: startsWith(github.ref, 'refs/tags/settle-kit-v')
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.0"
+      - uses: actions/download-artifact@v4
+        with:
+          name: settle-kit-packages
+          path: dist/settle-kit
+      - name: Publish validated tarballs in dependency order
+        env:
+          NPM_CONFIG_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          test -n "$NPM_CONFIG_TOKEN" || { echo "Configure NPM_TOKEN in the npm environment"; exit 1; }
+          bun scripts/publish-settle-kit.mjs "${RELEASE_TAG#settle-kit-v}"

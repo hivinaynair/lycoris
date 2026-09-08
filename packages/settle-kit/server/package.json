@@ -39,5 +39,18 @@
     "src",
     "!src/**/*.test.ts",
     "README.md"
-  ]
+  ],
+  "description": "Next.js paid API routes with x402 and per-request AP2 mandates.",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hivinaynair/lycoris.git",
+    "directory": "packages/settle-kit/server"
+  },
+  "bugs": {
+    "url": "https://github.com/hivinaynair/lycoris/issues"
+  }
 }

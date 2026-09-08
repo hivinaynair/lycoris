@@ -29,8 +29,10 @@ supports system preferences; Lycoris chooses dark as its initial default and sto
 manual selection under `lycoris-theme`. Both themes have visible keyboard focus and
 reduced-motion support.
 
-`ui-paper-canvas`, `ui-dot-grid`, `ui-page-heading`, `ui-page-description`, `ui-label`,
-and `ui-nav-link` provide shared compositions. Add new shadcn components with
+Tailwind CSS 4.3.3 owns component styling. Use `text-display`, `text-section`,
+`text-body`, `text-small`, and semantic color utilities; shared CSS contains only
+theme tokens and base accessibility defaults. Layouts and state variants live
+in component utility strings, with no CSS modules. Add new shadcn components with
 `bun run ui:add -- <component>` from the repository root.
 
 The independently distributable Settle Kit does not import this package. The host

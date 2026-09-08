@@ -21,18 +21,7 @@ export function withAgenticPayment<Args extends unknown[] = []>(
   handler: (request: NextRequest, ...args: Args) => Response | Promise<Response>,
   options: AgenticPaymentOptions,
 ): (request: NextRequest, ...args: Args) => Promise<NextResponse> {
-  const amount = parseUsdcAmount(options.priceUsdc);
-  if (options.network !== "eip155:84532") {
-    throw new Error("Agentic payments currently support Base Sepolia only");
-  }
-  if (!isAddress(options.payTo) || options.payTo.toLowerCase() === zeroAddress) {
-    throw new Error("payTo must be a nonzero EVM address");
-  }
-  const url = new URL(options.facilitatorUrl);
-  if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) {
-    throw new Error("facilitatorUrl must be an HTTP(S) URL without credentials");
-  }
-  const facilitatorUrl = url.href;
+  const { amount, facilitatorUrl } = validatePaymentOptions(options);
   // An explicit asset amount avoids dollar-price conversion or token selection.
   const routeConfig = {
     accepts: {
@@ -50,17 +39,7 @@ export function withAgenticPayment<Args extends unknown[] = []>(
 
   return async (request, ...args) => {
     try {
-      const mandate = request.headers.get("X-AP2-Mandate");
-      const mandateHeaders: Record<string, string> = mandate ? { "X-AP2-Mandate": mandate } : {};
-      // Never share a mutable mandate/client across simultaneous buyers.
-      const facilitator = new HTTPFacilitatorClient({
-        url: facilitatorUrl,
-        createAuthHeaders: async () => ({
-          verify: mandateHeaders,
-          settle: mandateHeaders,
-          supported: {},
-        }),
-      });
+      const facilitator = requestFacilitator(request, facilitatorUrl);
       const server = new x402ResourceServer(facilitator).register(
         routeConfig.accepts.network,
         new ExactEvmScheme(),
@@ -88,4 +67,35 @@ export function withAgenticPayment<Args extends unknown[] = []>(
       );
     }
   };
+}
+
+function validatePaymentOptions(options: AgenticPaymentOptions) {
+  const amount = parseUsdcAmount(options.priceUsdc);
+  if (options.network !== "eip155:84532") {
+    throw new Error("Agentic payments currently support Base Sepolia only");
+  }
+  if (!isAddress(options.payTo) || options.payTo.toLowerCase() === zeroAddress) {
+    throw new Error("payTo must be a nonzero EVM address");
+  }
+  const url = new URL(options.facilitatorUrl);
+  if (!["https:", "http:"].includes(url.protocol) || url.username || url.password) {
+    throw new Error("facilitatorUrl must be an HTTP(S) URL without credentials");
+  }
+  const facilitatorUrl = url.href;
+  return { amount, facilitatorUrl };
+}
+
+function requestFacilitator(request: NextRequest, facilitatorUrl: string) {
+  const mandate = request.headers.get("X-AP2-Mandate");
+  const mandateHeaders: Record<string, string> = mandate ? { "X-AP2-Mandate": mandate } : {};
+  // Never share a mutable mandate/client across simultaneous buyers.
+  const facilitator = new HTTPFacilitatorClient({
+    url: facilitatorUrl,
+    createAuthHeaders: async () => ({
+      verify: mandateHeaders,
+      settle: mandateHeaders,
+      supported: {},
+    }),
+  });
+  return facilitator;
 }

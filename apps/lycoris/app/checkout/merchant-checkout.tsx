@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/card";
-import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
+import { BASE_SEPOLIA_EXPLORER, type CheckoutState } from "@settle-kit/core";
 import { useCheckout } from "@settle-kit/react";
 
 // Copyable merchant recipe: presentation belongs to the host; payment logic stays in the SDK.
@@ -17,12 +17,14 @@ export function MerchantCheckout({
   amountUsdc,
   title,
   simulated = false,
+  sponsored = false,
 }: {
   amountUsdc: string;
   title: string;
   simulated?: boolean;
+  sponsored?: boolean;
 }) {
-  const { state, begin, pay, reset, retryConfirmation, canPay, isBusy } = useCheckout();
+  const { state, payNow, pay, reset, retryConfirmation, canPay, isBusy } = useCheckout();
   const txHash = "txHash" in state ? state.txHash : undefined;
   return (
     <Card className="rounded-none border border-border shadow-sm">
@@ -45,45 +47,12 @@ export function MerchantCheckout({
             <p className="text-muted-foreground">Base Sepolia · test network</p>
           </div>
         </div>
-        <div role="status" aria-live="polite" className="space-y-2">
-          {state.status === "idle" && (
-            <>
-              <p className="font-heading text-4xl tracking-tight">{amountUsdc} USDC</p>
-              <p className="text-muted-foreground">
-                Base Sepolia. You’ll need a browser wallet with test USDC and Base Sepolia ETH for
-                network fees.
-              </p>
-            </>
-          )}
-          {state.status === "quoting" && <p>Preparing your USDC payment…</p>}
-          {state.status === "awaiting_payment" && (
-            <>
-              <p className="font-heading text-4xl tracking-tight">{state.quote.amountUsdc} USDC</p>
-              <details className="rounded-none border border-border p-3 text-xs">
-                <summary className="cursor-pointer font-medium">Payment details</summary>
-                <p className="mt-3 break-all text-muted-foreground">
-                  Recipient: {state.destination.recipient}
-                </p>
-                <p className="mt-2 text-muted-foreground">
-                  Network fees are paid separately in test ETH. Your wallet shows the fee before
-                  confirmation.
-                </p>
-              </details>
-            </>
-          )}
-          {state.status === "settling" && (
-            <p>
-              {state.txHash
-                ? "Payment submitted. Waiting for confirmation…"
-                : "Continue in your wallet…"}
-            </p>
-          )}
-          {state.status === "settled" && (
-            <p className="rounded-none border border-border bg-muted p-4">
-              Payment confirmed: {state.quote.amountUsdc} USDC.
-            </p>
-          )}
-        </div>
+        <MerchantPaymentStatus
+          state={state}
+          amountUsdc={amountUsdc}
+          simulated={simulated}
+          sponsored={sponsored}
+        />
         {state.status === "failed" && (
           <Alert className="rounded-none" variant="destructive">
             <AlertDescription>{state.error.message}</AlertDescription>
@@ -111,9 +80,9 @@ export function MerchantCheckout({
           <Button
             className="h-11 w-full rounded-none"
             disabled={isBusy}
-            onClick={() => void begin({ amountUsdc, title })}
+            onClick={() => void payNow({ amountUsdc, title })}
           >
-            Buy
+            Pay {amountUsdc} USDC
           </Button>
         )}
         {canPay && (
@@ -128,5 +97,66 @@ export function MerchantCheckout({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function MerchantPaymentStatus({
+  state,
+  amountUsdc,
+  simulated,
+  sponsored,
+}: {
+  state: CheckoutState;
+  amountUsdc: string;
+  simulated: boolean;
+  sponsored: boolean;
+}) {
+  return (
+    <div role="status" aria-live="polite" className="space-y-2">
+      {state.status === "idle" && (
+        <>
+          <p className="font-heading text-4xl tracking-tight">{amountUsdc} USDC</p>
+          <p className="text-muted-foreground">
+            {simulated
+              ? "Try a free sample. No wallet needed and no funds move."
+              : sponsored
+                ? "We cover this payment and network fees. Just click Pay."
+                : "You’ll need a browser wallet with test USDC and Base Sepolia ETH for network fees."}
+          </p>
+        </>
+      )}
+      {state.status === "quoting" && <p>Preparing your USDC payment…</p>}
+      {state.status === "awaiting_payment" && (
+        <>
+          <p className="font-heading text-4xl tracking-tight">{state.quote.amountUsdc} USDC</p>
+          <details className="rounded-none border border-border p-3 text-xs">
+            <summary className="cursor-pointer font-medium">Payment details</summary>
+            <p className="mt-3 break-all text-muted-foreground">
+              Recipient: {state.destination.recipient}
+            </p>
+            <p className="mt-2 text-muted-foreground">
+              Network fees are paid separately in test ETH. Your wallet shows the fee before
+              confirmation.
+            </p>
+          </details>
+        </>
+      )}
+      {state.status === "settling" && (
+        <p>
+          {state.txHash
+            ? "Payment submitted. Waiting for confirmation…"
+            : simulated
+              ? "Simulating payment…"
+              : sponsored
+                ? "Sending your sponsored payment…"
+                : "Continue in your wallet…"}
+        </p>
+      )}
+      {state.status === "settled" && (
+        <p className="rounded-none border border-border bg-muted p-4">
+          Payment confirmed: {state.quote.amountUsdc} USDC.
+        </p>
+      )}
+    </div>
   );
 }

@@ -8,6 +8,23 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-workspace-paper: var(--workspace-paper);
+  --color-workspace-ink: var(--workspace-ink);
+  --color-workspace-dots: var(--workspace-dots);
+  --color-workspace-note-border: var(--workspace-note-border);
+  --color-workspace-note-blue: var(--workspace-note-blue);
+  --color-workspace-note-blue-border: var(--workspace-note-blue-border);
+  --color-workspace-terminal: var(--workspace-terminal);
+  --color-warning: var(--warning);
+  --color-success: var(--success);
+  --color-canvas: var(--canvas);
+  --text-display: var(--font-display-size);
+  --text-section: var(--font-section-size);
+  --text-lead: var(--font-lead-size);
+  --text-body: var(--font-body-size);
+  --text-small: var(--font-small-size);
+  --text-meta: var(--font-meta-size);
+  --text-micro: var(--font-micro-size);
   --font-heading: "General Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-sans: "General Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -158,114 +175,23 @@
   --chart-4: #a4a097;
   --chart-5: #eee5c4;
 }
-.ui-paper-canvas {
-  background:
-    repeating-linear-gradient(
-      0deg,
-      var(--canvas-line) 0px,
-      var(--canvas-line) 1px,
-      transparent 1px,
-      transparent 5px
-    ),
-    var(--canvas);
-}
-.ui-dot-grid {
-  background-image: radial-gradient(
-    color-mix(in srgb, var(--foreground) 12%, transparent) 0.7px,
-    transparent 0.7px
-  );
-  background-size: 22px 22px;
-}
-:where(button, a, input, select, textarea, summary):focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 4px;
-}
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    /* biome-ignore lint/complexity/noImportantStyles: Reduced motion must override component animations. */
-    animation-duration: 0.01ms !important;
-    /* biome-ignore lint/complexity/noImportantStyles: Honor reduced motion across component transitions. */
-    transition-duration: 0.01ms !important;
-    /* biome-ignore lint/complexity/noImportantStyles: Avoid smooth scrolling when reduced motion is requested. */
-    scroll-behavior: auto !important;
-  }
-}
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-    font-size: var(--font-body-size);
-  }
   html {
-    @apply font-sans;
+    @apply min-h-full font-sans;
   }
-}
-
-.ui-page-heading {
-  font-size: var(--font-display-size);
-  line-height: 1.04;
-  letter-spacing: -0.03em;
-  font-weight: 500;
-}
-.ui-page-description {
-  font-size: 19px;
-  line-height: 1.6;
-}
-.ui-label {
-  font-family: var(--font-sans);
-  font-size: var(--font-micro-size);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-.ui-nav-link {
-  position: relative;
-  font-size: 16px;
-  font-weight: 500;
-}
-.ui-nav-link[aria-current="page"]::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -8px;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--primary);
-  transform: translateX(-50%);
-}
-
-/* Demo typography follows Pleurat's body / supporting / metadata scale.
-   Scope SDK overrides to the host so independent embeds keep their own styling. */
-.ui-demo-type {
-  font-size: var(--font-body-size);
-  color: var(--foreground);
-}
-.ui-demo-type .ui-label {
-  font-size: var(--font-meta-size);
-  letter-spacing: 0.12em;
-}
-.ui-demo-type button,
-.ui-demo-type select,
-.ui-demo-type .text-sm {
-  font-size: var(--font-small-size);
-}
-.ui-demo-type .sk-checkout p:not(.sk-amount),
-.ui-demo-type .sk-checkout a,
-.ui-demo-type .sk-checkout dd,
-.ui-demo-type .sk-checkout dt,
-.ui-demo-type .sk-checkout .sk-caption,
-.ui-demo-type .sk-checkout summary {
-  font-size: var(--font-small-size);
-}
-.ui-demo-type .sk-checkout h2,
-.ui-demo-type .sk-checkout .sk-merchant {
-  font-size: var(--font-body-size);
-}
-.ui-demo-type .sk-checkout .sk-badge {
-  font-size: var(--font-meta-size);
+  body {
+    @apply min-h-full bg-background text-body text-foreground;
+  }
+  :where(button, a, input, select, textarea, summary):focus-visible {
+    @apply outline-2 outline-ring outline-offset-4;
+  }
+  *,
+  *::before,
+  *::after {
+    @apply motion-reduce:duration-[0.01ms]! motion-reduce:[animation-duration:0.01ms]! motion-reduce:scroll-auto!;
+  }
 }

@@ -33,8 +33,8 @@ export function AgentSplineModel({ onLoad }: { onLoad?: () => void }) {
   return (
     <SplineStage>
       <div
-        className="absolute top-1/2 left-1/2 h-[420px] w-[220px] -translate-x-1/2 -translate-y-[43%] transition-opacity duration-700"
-        style={{ opacity: loaded ? 1 : 0 }}
+        className="absolute top-1/2 left-1/2 h-[420px] w-[220px] -translate-x-1/2 -translate-y-[43%] opacity-0 data-[loaded=true]:opacity-100 transition-opacity duration-700"
+        data-loaded={loaded}
       >
         <Spline
           scene={AGENT_SCENE_URL}

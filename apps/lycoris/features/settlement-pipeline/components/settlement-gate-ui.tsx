@@ -21,7 +21,7 @@ export function GateModule({
   const skipped = state === "skipped";
 
   const flangeClass = cn(
-    "settlement-flange absolute -right-2 -left-2 h-[5px] rounded-[2px] border transition-colors duration-300",
+    "bg-secondary absolute -right-2 -left-2 h-[5px] rounded-[2px] border transition-colors duration-300",
     running && "shadow-glow-positive border-primary",
     approved && "border-primary/50",
     blocked && "border-destructive/40",
@@ -47,19 +47,19 @@ export function GateModule({
         <div className={cn(flangeClass, "bottom-2")} />
         <div
           className={cn(
-            "settlement-gate relative flex h-14 w-9 items-center justify-center rounded-[3px] border transition-all duration-300",
+            "bg-muted relative flex h-14 w-9 items-center justify-center rounded-[3px] border transition-all duration-300",
             running &&
-              "gate-current border-primary bg-primary/50 shadow-glow-positive ring-2 ring-primary/30",
+              "animate-gate-current border-primary bg-primary/50 shadow-glow-positive ring-2 ring-primary/30",
             approved && "border-primary/40 bg-primary/20",
             blocked && "border-destructive/40 bg-destructive/10 shadow-glow-negative",
             state === "idle" && "border-border",
           )}
         >
           {running && (
-            <div className="gate-glow-positive absolute inset-0 animate-pulse rounded-[3px] opacity-60 blur-sm" />
+            <div className="bg-[color-mix(in_srgb,var(--primary)_35%,transparent)] absolute inset-0 animate-pulse rounded-[3px] opacity-60 blur-sm" />
           )}
           {blocked && (
-            <div className="gate-glow-negative absolute inset-0 rounded-[3px] opacity-40 blur-sm" />
+            <div className="bg-[color-mix(in_srgb,var(--destructive)_22%,transparent)] absolute inset-0 rounded-[3px] opacity-40 blur-sm" />
           )}
           <Icon
             className={cn(
@@ -118,13 +118,13 @@ export function MobileStepRow({
           "relative z-10 flex size-9 shrink-0 items-center justify-center rounded-full transition-all duration-300",
           isApproved && "border border-primary/40 bg-primary/25",
           isRunning &&
-            "gate-current border border-primary bg-primary/55 shadow-glow-positive ring-2 ring-primary/25",
+            "animate-gate-current border border-primary bg-primary/55 shadow-glow-positive ring-2 ring-primary/25",
           isRejected && "border border-destructive/40 bg-destructive/15",
           isDim && "border border-border bg-muted opacity-40",
         )}
       >
         {isRunning && (
-          <div className="gate-glow-positive absolute inset-0 animate-pulse rounded-full opacity-50 blur-[2px]" />
+          <div className="bg-[color-mix(in_srgb,var(--primary)_35%,transparent)] absolute inset-0 animate-pulse rounded-full opacity-50 blur-[2px]" />
         )}
         <Icon
           className={cn(

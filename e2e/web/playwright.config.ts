@@ -21,7 +21,7 @@ export default defineConfig({
     screenshot: "only-on-failure",
   },
   webServer: {
-    command: "bun run start",
+    command: `bun run start --port ${PORT}`,
     cwd: webDir,
     url: baseURL,
     reuseExistingServer: !process.env.CI,

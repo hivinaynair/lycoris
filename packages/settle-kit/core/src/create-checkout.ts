@@ -1,4 +1,6 @@
 import { parseUsdcAmount } from "./amounts";
+import { notifyCheckout } from "./checkout-observers";
+import { confirmPayment } from "./confirm-payment";
 import { assertDestination } from "./destination";
 import { invalidConfig, SettleKitError, toSettleError } from "./errors";
 import { fetchQuote, validateQuote } from "./quote-client";
@@ -24,20 +26,7 @@ export function createCheckout(config: SettleConfig, input: CreateCheckoutInput)
     const next = reduce(state, action);
     if (next === state) return;
     state = next;
-    // Observers cannot interrupt payment bookkeeping or change its outcome.
-    for (const listener of listeners) {
-      try {
-        listener();
-      } catch (error) {
-        console.error("Settle Kit subscriber failed", error);
-      }
-    }
-    try {
-      if (next.status === "settled") config.onSettled?.(next);
-      if (next.status === "failed") config.onFailed?.(next);
-    } catch (error) {
-      console.error("Settle Kit callback failed", error);
-    }
+    notifyCheckout(listeners, next, config);
   }
 
   function getAdapter(id: string): SettleAdapter {
@@ -60,30 +49,7 @@ export function createCheckout(config: SettleConfig, input: CreateCheckoutInput)
     confirming = true;
     setState({ type: "CONFIRMING" });
     try {
-      const result = await getAdapter(current.quote.method).confirm({
-        txHash,
-        quote: current.quote,
-        destination: current.destination,
-      });
-      if (result === "success") setState({ type: "SETTLED", txHash });
-      else if (result === "reverted")
-        setState({
-          type: "FAILED",
-          error: {
-            code: "transfer_failed",
-            message: "The transaction reverted. No USDC was transferred.",
-          },
-        });
-      else throw new Error("Unexpected receipt result");
-    } catch {
-      setState({
-        type: "CONFIRMATION_UNKNOWN",
-        error: {
-          code: "transfer_failed",
-          message:
-            "Confirmation is unavailable. Check this transaction again; do not send another payment.",
-        },
-      });
+      await confirmPayment(() => getAdapter(current.quote.method), current, txHash, setState);
     } finally {
       confirming = false;
     }

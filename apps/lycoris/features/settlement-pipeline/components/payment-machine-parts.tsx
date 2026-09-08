@@ -1,5 +1,5 @@
 import type { GateState } from "../lib/settlement-gates";
-import styles from "./payment-workspace.module.css";
+import styles from "./payment-workspace-styles";
 
 const labels: Record<GateState, string> = {
   idle: "WAITING",

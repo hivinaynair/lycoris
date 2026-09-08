@@ -1,16 +1,12 @@
 "use client";
 
-import {
-  type CSSProperties,
-  type ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
-import { type GateState, gateState } from "../lib/settlement-gates";
+import type { CSSProperties, ReactNode } from "react";
+import { DIAGRAM_BOUNDS } from "../lib/payment-workspace-phases";
+import { useWorkspacePhase } from "../lib/use-workspace-phase";
+import { useWorkspaceSize } from "../lib/use-workspace-size";
 import { PaymentMachine } from "./payment-machine";
-import styles from "./payment-workspace.module.css";
+import styles from "./payment-workspace-styles";
+import { WorkspaceReadout } from "./workspace-readout";
 
 type Props = {
   hasConversation: boolean;
@@ -25,40 +21,6 @@ type Props = {
   scenarioPicker: ReactNode;
 };
 
-// Reserve the full wire envelope, including preflight above and receipts below.
-const DIAGRAM_BOUNDS = { y: 28, height: 376 };
-
-const phases = [
-  [
-    "Lycoris requests a weather report.",
-    "The agents SDK requests the resource. The Weather API uses our server SDK to require payment.",
-  ],
-  [
-    "The API asks for payment.",
-    "The Weather API returns HTTP 402 with the USDC price and recipient. x402 is the protocol, not a separate service.",
-  ],
-  [
-    "Check the agent’s identity.",
-    "Lycoris first calls the facilitator’s /preclear endpoint. It checks the agent’s registered identity and mandate before signing.",
-  ],
-  [
-    "Check permission to spend.",
-    "The mandate must authorize this purchase. Preflight can stop the agent early; the facilitator enforces these checks again on the API’s payment request.",
-  ],
-  [
-    "Send USDC to the weather provider.",
-    "Lycoris retries the Weather API with a payment signature and mandate. The API calls the facilitator to verify and settle USDC from agent to merchant.",
-  ],
-  [
-    "Save evidence of the decision.",
-    "The facilitator confirms settlement and records decision evidence. The API receives the payment receipt.",
-  ],
-  [
-    "Lycoris receives the weather report.",
-    "Only after successful settlement does the Weather API return the report and receipt. Lycoris uses the report to answer you.",
-  ],
-] as const;
-
 export function PaymentWorkspace({
   hasConversation,
   chatError,
@@ -71,84 +33,17 @@ export function PaymentWorkspace({
   response,
   scenarioPicker,
 }: Props) {
-  const workspace = useRef<HTMLElement>(null);
-  useLayoutEffect(() => {
-    const element = workspace.current;
-    if (!element) return;
-    const update = () =>
-      element.style.setProperty(
-        "--workspace-offset",
-        `${Math.ceil(element.getBoundingClientRect().top + window.scrollY)}px`,
-      );
-    update();
-    window.addEventListener("resize", update);
-    let mounted = true;
-    void document.fonts.ready.then(() => {
-      if (mounted) update();
-    });
-    return () => {
-      mounted = false;
-      window.removeEventListener("resize", update);
-    };
-  }, []);
-  const stage = useRef<HTMLDivElement>(null);
-  const [canvas, setCanvas] = useState({ width: 1080, textScale: 1 });
+  const { workspace, stage, canvas } = useWorkspaceSize();
   const canvasWidth = canvas.width;
-  useEffect(() => {
-    const viewport = stage.current?.parentElement;
-    if (!viewport) return;
-    const observer = new ResizeObserver(([entry]) => {
-      if (!entry) return;
-      const { width, height } = entry.contentRect;
-      const fitted = window.matchMedia("(min-width: 1100px) and (min-height: 740px)").matches;
-      setCanvas({
-        width:
-          fitted && height > 0
-            ? Math.max(1080, Math.round((width / height) * DIAGRAM_BOUNDS.height))
-            : 1080,
-        textScale:
-          fitted && height > 0
-            ? Math.round(Math.max(1, Math.min(1.5, DIAGRAM_BOUNDS.height / height)) * 100) / 100
-            : 1,
-      });
-    });
-    observer.observe(viewport);
-    return () => observer.disconnect();
-  }, []);
-  const [previewStep, setPreviewStep] = useState(0);
-  const [reducedMotion, setReducedMotion] = useState(true);
-  const preview = !running && !hasResult && !hasConversation;
-  const chatting = !preview && !hasResult && activeStep === 0;
-  useEffect(() => {
-    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const update = () => setReducedMotion(media.matches);
-    update();
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
-  useEffect(() => {
-    if (!preview || reducedMotion) return;
-    const timer = window.setInterval(
-      () => setPreviewStep((step) => (step + 1) % phases.length),
-      4500,
-    );
-    return () => window.clearInterval(timer);
-  }, [preview, reducedMotion]);
-
-  const step = preview ? previewStep : approved ? 6 : activeStep;
-  const stopped = hasResult && !approved && !running;
-  const moving = !reducedMotion && (preview || (running && activeStep > 0));
-  const state = (gate: number): GateState =>
-    preview
-      ? step > gate
-        ? "approved"
-        : step === gate
-          ? "running"
-          : "idle"
-      : gateState(gate - 1, activeStep, approved, running, rejectedReason);
-  const delivered: GateState =
-    (preview && step === 6) || approved ? "approved" : stopped ? "skipped" : "idle";
-  const phase = phases[Math.min(Math.max(step, 0), 6)] ?? phases[0];
+  const view = useWorkspacePhase({
+    running,
+    hasResult,
+    hasConversation,
+    activeStep,
+    approved,
+    rejectedReason,
+  });
+  const { preview, chatting, stopped, moving, step, state, delivered } = view;
 
   return (
     <section
@@ -170,9 +65,14 @@ export function PaymentWorkspace({
             Weather API accept payment.
           </p>
         </div>
-        <div className={styles.requestColumn}>{response}</div>
+        <div
+          className={styles.requestColumn}
+          data-has-response={hasConversation || running || Boolean(chatError)}
+        >
+          {response}
+        </div>
       </div>
-      <div className={styles.scrollHint}>Scroll to follow the payment →</div>
+      <div className={styles.scrollHint}>Swipe to follow the payment →</div>
       <section
         className={styles.scroll}
         aria-label="Payment circuit, scroll horizontally on small screens"
@@ -204,31 +104,12 @@ export function PaymentWorkspace({
         </div>
       </section>
       <div className={styles.readout}>
-        <div className={styles.phase} aria-live={preview ? "off" : "polite"}>
-          <span className={styles.phaseNumber}>
-            {chatting ? "—" : stopped ? "×" : `0${step + 1}`}
-          </span>
-          <div>
-            <h3>
-              {chatting
-                ? running
-                  ? "Lycoris is considering your request."
-                  : chatError
-                    ? "The reply was interrupted."
-                    : "No payment was needed for this reply."
-                : stopped
-                  ? "The payment run stopped."
-                  : phase[0]}
-            </h3>
-            <p>
-              {chatting
-                ? "The payment path activates only when Lycoris calls the paid weather tool."
-                : stopped
-                  ? rejectedReason || "The run did not complete. Inspect the decision log below."
-                  : phase[1]}
-            </p>
-          </div>
-        </div>
+        <WorkspaceReadout
+          view={view}
+          running={running}
+          chatError={chatError}
+          rejectedReason={rejectedReason}
+        />
         <div className={styles.controls}>
           {scenarioPicker}
           {request}

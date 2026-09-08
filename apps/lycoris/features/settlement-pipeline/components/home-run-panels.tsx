@@ -77,7 +77,7 @@ export function HomeRunPanels({
         }
       >
         {result ? (
-          <pre className="font-mono text-xs leading-6 break-words whitespace-pre-wrap text-foreground/80">
+          <pre className="min-w-0 font-mono text-xs leading-6 wrap-anywhere whitespace-pre-wrap text-foreground/80">
             {proofBundle}
           </pre>
         ) : (

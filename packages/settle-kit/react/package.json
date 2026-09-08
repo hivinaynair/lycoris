@@ -33,8 +33,10 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@tailwindcss/cli": "4.3.3",
     "@types/react": "19.2.2",
     "react": "^19.2.0",
+    "tailwindcss": "4.3.3",
     "typescript": "^5"
   },
   "files": [
@@ -43,5 +45,18 @@
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "README.md"
-  ]
+  ],
+  "description": "React hooks and an optional checkout UI for Settle Kit.",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hivinaynair/lycoris.git",
+    "directory": "packages/settle-kit/react"
+  },
+  "bugs": {
+    "url": "https://github.com/hivinaynair/lycoris/issues"
+  }
 }

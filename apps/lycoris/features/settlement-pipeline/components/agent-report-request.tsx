@@ -4,7 +4,7 @@ import { Alert, AlertDescription } from "@repo/ui/components/alert";
 import { Button } from "@repo/ui/components/button";
 import { ArrowUpRight, Loader2 } from "lucide-react";
 import type { ChatMessage } from "../lib/use-payment-run";
-import styles from "./payment-workspace.module.css";
+import styles from "./payment-workspace-styles";
 
 export function AgentReportRequest({
   loading,

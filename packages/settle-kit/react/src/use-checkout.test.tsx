@@ -11,7 +11,7 @@ const destination = {
   recipient: "0x1111111111111111111111111111111111111111" as const,
 };
 const hash = `0x${"ab".repeat(32)}` as const;
-function setup(getSigner?: () => Promise<PaymentSigner>) {
+function setup(getSigner?: () => Promise<PaymentSigner>, skipReview = false) {
   let buyer!: UseCheckoutResult;
   let observer!: UseCheckoutResult;
   const send = mock(async () => hash);
@@ -43,7 +43,7 @@ function setup(getSigner?: () => Promise<PaymentSigner>) {
     >
       <Buyer />
       <Observer />
-      <Checkout amountUsdc="12.50" />
+      <Checkout amountUsdc="12.50" skipReview={skipReview} />
     </SettleProvider>,
   );
   return { buyer: () => buyer, observer: () => observer, send, onSettled };
@@ -277,4 +277,46 @@ it("merges Provider appearance with local overrides without resetting a checkout
   expect(card.getAttribute("data-sk-theme")).toBe("dark");
   expect(checkout.state.status).toBe("awaiting_payment");
   expect(screen.getByRole("button", { name: "Pay 4 USDC" })).toBeTruthy();
+});
+
+it("skipReview settles from one initial Pay click", async () => {
+  const f = setup(undefined, true);
+  await act(async () => {
+    fireEvent.click(screen.getByRole("button", { name: "Pay 12.50 USDC" }));
+  });
+  expect(f.observer().state.status).toBe("settled");
+  expect(f.send).toHaveBeenCalledTimes(1);
+});
+
+it("payNow ignores duplicate calls while payment is pending", async () => {
+  let resolve!: (signer: PaymentSigner) => void;
+  const f = setup(
+    () =>
+      new Promise((r) => {
+        resolve = r;
+      }),
+  );
+  let paying!: Promise<void>;
+  await act(async () => {
+    paying = f.buyer().payNow({ amountUsdc: "12.50" });
+  });
+  await act(async () => {
+    await f.buyer().payNow({ amountUsdc: "12.50" });
+    resolve({ address: destination.recipient, sendTransaction: f.send });
+    await paying;
+  });
+  expect(f.send).toHaveBeenCalledTimes(1);
+  expect(f.observer().state.status).toBe("settled");
+});
+
+it("payNow never sends after invalid input and can recover", async () => {
+  const f = setup();
+  await expect(f.buyer().payNow({ amountUsdc: "abc" })).rejects.toMatchObject({
+    code: "invalid_config",
+  });
+  expect(f.send).not.toHaveBeenCalled();
+  await act(async () => {
+    await f.buyer().payNow({ amountUsdc: "12.50" });
+  });
+  expect(f.send).toHaveBeenCalledTimes(1);
 });

@@ -81,8 +81,6 @@ export function buildTraceSteps(result: TraceRunResult, animStep: number): Trace
     return "skipped";
   }
 
-  const txShort = result.settlementTxHash ? `${result.settlementTxHash.slice(0, 10)}…` : undefined;
-
   return [
     {
       id: 0,
@@ -129,43 +127,52 @@ export function buildTraceSteps(result: TraceRunResult, animStep: number): Trace
       detail: result.agent ? `limit ${result.agent.mandateLimit}` : undefined,
       rawData: result.rawMandate ? { gate: "ap2", mandate: result.rawMandate } : undefined,
     },
-    {
-      id: 4,
-      label: "Settlement",
-      status: ok ? "approved" : "skipped",
-      detail: txShort,
-      link: result.settlementTxHash
-        ? {
-            href: explorerTx(result.settlementTxHash, result.settlementTxUrl),
-            label: "settlement tx",
-          }
-        : undefined,
-      rawData: result.settlementTxHash
-        ? {
-            gate: "settlement",
-            txHash: result.settlementTxHash,
-            txUrl: explorerTx(result.settlementTxHash, result.settlementTxUrl),
-          }
-        : undefined,
-    },
-    {
-      id: 5,
-      label: "Attestation",
-      status: result.attestationTxHash || ok ? "approved" : "skipped",
-      detail: result.attestationTxHash ? `${result.attestationTxHash.slice(0, 10)}…` : undefined,
-      attestationLink: result.attestationTxHash
-        ? {
-            href: explorerTx(result.attestationTxHash, result.attestationTxUrl),
-            label: "attestation tx",
-          }
-        : undefined,
-      rawData: result.attestationTxHash
-        ? {
-            gate: "attestation",
-            txHash: result.attestationTxHash,
-            txUrl: explorerTx(result.attestationTxHash, result.attestationTxUrl),
-          }
-        : undefined,
-    },
+    settlementStep(result, ok),
+    attestationStep(result, ok),
   ];
+}
+
+function settlementStep(result: NonNullable<TraceRunResult>, ok: boolean): TraceStep {
+  const txShort = result.settlementTxHash ? `${result.settlementTxHash.slice(0, 10)}…` : undefined;
+  return {
+    id: 4,
+    label: "Settlement",
+    status: ok ? "approved" : "skipped",
+    detail: txShort,
+    link: result.settlementTxHash
+      ? {
+          href: explorerTx(result.settlementTxHash, result.settlementTxUrl),
+          label: "settlement tx",
+        }
+      : undefined,
+    rawData: result.settlementTxHash
+      ? {
+          gate: "settlement",
+          txHash: result.settlementTxHash,
+          txUrl: explorerTx(result.settlementTxHash, result.settlementTxUrl),
+        }
+      : undefined,
+  };
+}
+
+function attestationStep(result: NonNullable<TraceRunResult>, ok: boolean): TraceStep {
+  return {
+    id: 5,
+    label: "Attestation",
+    status: result.attestationTxHash || ok ? "approved" : "skipped",
+    detail: result.attestationTxHash ? `${result.attestationTxHash.slice(0, 10)}…` : undefined,
+    attestationLink: result.attestationTxHash
+      ? {
+          href: explorerTx(result.attestationTxHash, result.attestationTxUrl),
+          label: "attestation tx",
+        }
+      : undefined,
+    rawData: result.attestationTxHash
+      ? {
+          gate: "attestation",
+          txHash: result.attestationTxHash,
+          txUrl: explorerTx(result.attestationTxHash, result.attestationTxUrl),
+        }
+      : undefined,
+  };
 }

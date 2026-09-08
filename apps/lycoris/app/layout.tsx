@@ -40,7 +40,7 @@ export default function RootLayout({
       <head>
         <DesignFonts />
       </head>
-      <body className="ui-paper-canvas">
+      <body className="bg-canvas bg-[repeating-linear-gradient(0deg,var(--canvas-line)_0px,var(--canvas-line)_1px,transparent_1px,transparent_5px)]">
         <ThemeProvider defaultTheme="dark" storageKey="lycoris-theme">
           <NuqsAdapter>
             <TooltipProvider>

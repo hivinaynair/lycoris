@@ -10,11 +10,13 @@
     "check-types": "SKIP_ENV_VALIDATION=1 next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.55.0",
     "@repo/db": "workspace:*",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
     "@settle-kit/core": "workspace:*",
     "@settle-kit/react": "workspace:*",
+    "@settle-kit/server": "workspace:*",
     "@splinetool/react-spline": "^4.1.0",
     "@splinetool/runtime": "^1.12.98",
     "@t3-oss/env-nextjs": "^0.13.11",
@@ -29,8 +31,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "viem": "^2",
-    "zod": "^4.4.3",
-    "@settle-kit/server": "workspace:*"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.3",

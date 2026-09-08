@@ -20,6 +20,7 @@ describe("weather access proof", () => {
     signer?: typeof buyer;
     age?: number;
     logs?: boolean;
+    sponsoredPayer?: Hex;
   };
   async function check(options: Options = {}) {
     const signature = await (options.signer ?? buyer).signMessage({
@@ -58,11 +59,25 @@ describe("weather access proof", () => {
       }),
       getBlock: async () => ({ timestamp: BigInt((now - (options.age ?? 0)) / 1000) }),
     } as unknown as Parameters<typeof verifyWeatherPayment>[0];
-    return verifyWeatherPayment(client, { txHash: hash, recipient: merchant, signature }, now);
+    return verifyWeatherPayment(
+      client,
+      {
+        txHash: hash,
+        recipient: merchant,
+        ...(options.sponsoredPayer ? { sponsoredPayer: options.sponsoredPayer } : { signature }),
+      },
+      now,
+    );
   }
   it("accepts a confirmed payment and allows access retry without another transfer", async () => {
     await check();
     await check();
+  });
+  it("accepts a verified sponsor without a browser signature", async () => {
+    await check({ sponsoredPayer: buyer.address });
+    await expect(check({ sponsoredPayer: other.address })).rejects.toThrow();
+    await expect(check({ sponsoredPayer: buyer.address, amount: 1n })).rejects.toThrow();
+    await expect(check({ sponsoredPayer: buyer.address, status: "reverted" })).rejects.toThrow();
   });
   it("rejects underpayment", async () => {
     await expect(check({ amount: 10000n })).rejects.toThrow();

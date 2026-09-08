@@ -1,4 +1,13 @@
-import { bigint, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  bigint,
+  integer,
+  jsonb,
+  pgTable,
+  serial,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const agents = pgTable("agents", {
   address: text("address").primaryKey(),
@@ -21,4 +30,12 @@ export const settlementAttestations = pgTable("settlement_attestations", {
   identityStatus: integer("identity_status").notNull(),
   decision: integer("decision").notNull(),
   authorizationNonce: text("authorization_nonce"),
+});
+
+export const sponsoredCheckoutPayments = pgTable("sponsored_checkout_payments", {
+  id: uuid("id").primaryKey(),
+  sponsor: text("sponsor").notNull(),
+  recipient: text("recipient").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  txHash: text("tx_hash"),
 });

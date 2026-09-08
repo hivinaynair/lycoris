@@ -18,6 +18,7 @@ export type UseCheckoutResult = {
   isBusy: boolean;
   title: string | undefined;
   begin: (input: BeginCheckoutInput) => Promise<void>;
+  payNow: (input: BeginCheckoutInput) => Promise<void>;
   selectMethod: (id: string) => Promise<void>;
   pay: () => Promise<void>;
   retryConfirmation: () => Promise<void>;
@@ -56,7 +57,8 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
     getIdle,
   );
 
-  const begin = useCallback(async (input: BeginCheckoutInput) => {
+  const startingPayment = useRef(false);
+  const beginSession = useCallback(async (input: BeginCheckoutInput) => {
     const { ctx } = latest.current;
     const manager = startCheckout(ctx.config, input, {
       onSettled: (state) => latest.current.options?.onSettled?.(state),
@@ -65,7 +67,34 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
     ctx.managerRef.current?.reset();
     ctx.setSession(manager, input.title);
     await manager.selectMethod("usdc");
+    return manager;
   }, []);
+
+  const begin = useCallback(
+    async (input: BeginCheckoutInput) => {
+      await beginSession(input);
+    },
+    [beginSession],
+  );
+
+  const payNow = useCallback(
+    async (input: BeginCheckoutInput) => {
+      if (startingPayment.current) return;
+      startingPayment.current = true;
+      try {
+        const manager = await beginSession(input);
+        // A failed quote or a replaced session must never submit a payment.
+        if (
+          latest.current.ctx.managerRef.current === manager &&
+          manager.getState().status === "awaiting_payment"
+        )
+          await manager.pay();
+      } finally {
+        startingPayment.current = false;
+      }
+    },
+    [beginSession],
+  );
 
   const selectMethod = useCallback(async (id: string) => {
     await requireManager(latest.current.ctx.managerRef.current, "selectMethod").selectMethod(id);
@@ -94,6 +123,7 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
     state,
     title: ctx.title,
     begin,
+    payNow,
     selectMethod,
     pay,
     retryConfirmation,
