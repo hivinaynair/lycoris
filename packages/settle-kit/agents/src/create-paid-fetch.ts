@@ -45,7 +45,7 @@ export function createPaidFetch(options: CreatePaidFetchOptions): PaidFetch {
           delete metadata.challenge;
           try {
             metadata.challenge = challengeFromPaymentRequired(
-              decodePaymentRequiredHeader(required) as Record<string, unknown>,
+              decodePaymentRequiredHeader(required),
             );
           } catch {
             // An undecodable challenge header leaves the terms unknown.

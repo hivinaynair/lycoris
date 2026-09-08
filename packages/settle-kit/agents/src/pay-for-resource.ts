@@ -1,5 +1,6 @@
 import { decodePaymentRequiredHeader, decodePaymentResponseHeader } from "@x402/core/http";
 import type { PaidFetch, PaidFetchFn } from "./create-paid-fetch";
+import { asRecord, asString } from "./decode";
 import { explorerUrl } from "./quote-resource";
 import type { AgentPaymentResult } from "./types";
 
@@ -45,8 +46,8 @@ export async function payForResource(input: {
   let txHash: string | undefined;
   let paymentRequiredError: string | undefined;
   if (paymentHeader) {
-    const decoded = decodePaymentResponseHeader(paymentHeader) as Record<string, unknown>;
-    txHash = (decoded.transaction as string | undefined) ?? (decoded.txHash as string | undefined);
+    const decoded = asRecord(decodePaymentResponseHeader(paymentHeader));
+    txHash = asString(decoded?.transaction) ?? asString(decoded?.txHash);
   }
   if (paymentRequiredHeader) {
     const decoded = decodePaymentRequiredHeader(paymentRequiredHeader);

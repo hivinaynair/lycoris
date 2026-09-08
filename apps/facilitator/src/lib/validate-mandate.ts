@@ -19,9 +19,6 @@ export type ValidateMandateResult =
   | { ok: true; mandateEntry: MandateHeaderValue }
   | { ok: false; abort: true; reason: string };
 
-export { recordRejection } from "./record-rejection.js";
-export { buildVerifyRejectionPaymentHash } from "./rejection-payment-hash.js";
-
 export async function validateMandateForPayment(
   {
     payer,
@@ -42,7 +39,7 @@ export async function validateMandateForPayment(
   const reject = async (
     reason: string,
     identityStatus: IdentityStatus,
-    extra?: { agentId?: bigint | undefined; mandateEntry?: MandateHeaderValue | undefined },
+    mandateEntry?: MandateHeaderValue | undefined,
   ): Promise<ValidateMandateResult> => {
     await recordRejection({
       amountAtomic,
@@ -51,7 +48,7 @@ export async function validateMandateForPayment(
       payer,
       reason,
       resource,
-      ...extra,
+      mandateEntry,
     });
     return { ok: false, abort: true, reason };
   };
@@ -65,25 +62,25 @@ export async function validateMandateForPayment(
   const { mandate, agentId } = mandateEntry;
   const isValidSig = await deps.verifyMandateSignature(mandate);
   if (!isValidSig || mandate.payload.agent.toLowerCase() !== payer.toLowerCase()) {
-    return reject("mandate_invalid", IdentityStatus.NotFound, { agentId, mandateEntry });
+    return reject("mandate_invalid", IdentityStatus.NotFound, mandateEntry);
   }
 
   // Enter ERC-8004 gate: on-chain identity must match the payer wallet.
   reportPipelineGate(payer, GATE_STEP.IDENTITY_CHECK);
   const profile = await deps.lookupIdentity(agentId, deps.registryAddress, deps.client);
   if (!profile || profile.wallet.toLowerCase() !== payer.toLowerCase()) {
-    return reject("identity_not_found", IdentityStatus.NotFound, { agentId, mandateEntry });
+    return reject("identity_not_found", IdentityStatus.NotFound, mandateEntry);
   }
 
   // Back on AP2 for expiry + spend ceiling.
   reportPipelineGate(payer, GATE_STEP.MANDATE_CHECK);
   if (mandate.payload.expiry < BigInt(Math.floor(Date.now() / 1000))) {
-    return reject("mandate_expired", IdentityStatus.Verified, { agentId, mandateEntry });
+    return reject("mandate_expired", IdentityStatus.Verified, mandateEntry);
   }
 
   const mandateMaxAtomic = mandate.payload.maxAmountUsdc * USDC_ATOMIC_FACTOR;
   if (amountAtomic > mandateMaxAtomic) {
-    return reject("mandate_amount_exceeded", IdentityStatus.Verified, { agentId, mandateEntry });
+    return reject("mandate_amount_exceeded", IdentityStatus.Verified, mandateEntry);
   }
 
   return { ok: true, mandateEntry };

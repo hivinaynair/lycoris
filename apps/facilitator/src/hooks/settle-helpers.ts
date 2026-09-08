@@ -1,9 +1,7 @@
 import { parseMandateHeader } from "@repo/shared/mandate-header";
-import { type Decision, IdentityStatus } from "@repo/shared/types";
+import { IdentityStatus } from "@repo/shared/types";
 import type { FacilitatorSettleResultContext } from "@x402/core/facilitator";
-import { publishAttestation } from "../lib/attest.js";
-import { extractAuthNonce, getPayerAddress, mandateMaxAtomic } from "../lib/mandate.js";
-import { recordSettledPayment } from "../lib/persist-attestation.js";
+import { extractAuthNonce, getPayerAddress } from "../lib/mandate.js";
 import { requestCtx } from "../lib/request-context.js";
 
 export const SETTLEMENT_TX_FAILED_REASON = "settlement_transaction_failed";
@@ -22,44 +20,5 @@ export function settlementContext(
     mandateEntry,
     identityStatus: mandateEntry ? IdentityStatus.Verified : IdentityStatus.NotFound,
     resource: paymentPayload.resource,
-    mandateMaxAtomic: mandateMaxAtomic(mandateEntry),
   };
-}
-
-export async function publishAndRecord(args: {
-  payer: string;
-  amountUsdc: bigint;
-  paymentHash: `0x${string}`;
-  mandateMaxAtomic: bigint;
-  identityStatus: IdentityStatus;
-  decision: Decision;
-  authorizationNonce: string | null;
-  mandateEntry?: ReturnType<typeof parseMandateHeader> | undefined;
-  resource?: unknown;
-  rejectionReason?: string | undefined;
-  settlementTx?: `0x${string}` | null | undefined;
-}) {
-  const published = await publishAttestation({
-    amountUsdc: args.amountUsdc,
-    decision: args.decision,
-    identityStatus: args.identityStatus,
-    payer: args.payer,
-    paymentHash: args.paymentHash,
-    mandateMaxAmountUsdc: args.mandateMaxAtomic,
-    rejectionReason: args.rejectionReason,
-  });
-  await recordSettledPayment({
-    paymentHash: args.paymentHash,
-    settlementTx: args.settlementTx ?? null,
-    published,
-    payer: args.payer,
-    amountUsdc: args.amountUsdc,
-    identityStatus: args.identityStatus,
-    decision: args.decision,
-    authorizationNonce: args.authorizationNonce,
-    mandateEntry: args.mandateEntry,
-    resource: args.resource,
-    rejectionReason: args.rejectionReason,
-  });
-  return published;
 }

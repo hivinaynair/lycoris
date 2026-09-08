@@ -1,6 +1,7 @@
 import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
 import { decodePaymentRequiredHeader } from "@x402/core/http";
 import { isAddress } from "viem";
+import { asAmount, asRecord, asString } from "./decode";
 import type { ResourceQuote } from "./types";
 import { BASE_SEPOLIA_CAIP2, challengeFromPaymentRequired } from "./x402-decode";
 
@@ -14,27 +15,23 @@ export async function quoteResource(
     response.headers.get("PAYMENT-REQUIRED") ?? response.headers.get("X-PAYMENT-REQUIRED");
   if (!header) return undefined;
 
-  const decoded = decodePaymentRequiredHeader(header) as {
-    accepts?: Array<{ network?: string; amount?: string; payTo?: string }>;
-    scheme?: string;
-    network?: string;
-    maxAmountRequired?: string;
-    resource?: unknown;
-    description?: string;
-  };
+  const decoded = asRecord(decodePaymentRequiredHeader(header));
+  if (!decoded) return undefined;
 
+  const accepts = Array.isArray(decoded.accepts) ? decoded.accepts.map(asRecord) : [];
   const terms =
-    (decoded.accepts ?? []).find((item) => item.network === BASE_SEPOLIA_CAIP2) ??
-    (decoded.network === BASE_SEPOLIA_CAIP2 ? decoded : undefined);
-  const amount = terms && "amount" in terms ? terms.amount : decoded.maxAmountRequired;
-  const payTo = terms && "payTo" in terms ? terms.payTo : undefined;
+    accepts.find((item) => asString(item?.network) === BASE_SEPOLIA_CAIP2) ??
+    (asString(decoded.network) === BASE_SEPOLIA_CAIP2 ? decoded : undefined);
+
+  const amount = asAmount(terms?.amount) ?? asAmount(decoded.maxAmountRequired);
   if (!amount) return undefined;
 
   // A third-party challenge is decoded, not asserted: accept any well-formed address.
+  const payTo = asString(terms?.payTo);
   return {
     amountAtomic: amount,
-    ...(typeof payTo === "string" && isAddress(payTo, { strict: false }) ? { payTo } : {}),
-    challenge: challengeFromPaymentRequired(decoded as Record<string, unknown>),
+    ...(payTo && isAddress(payTo, { strict: false }) ? { payTo } : {}),
+    challenge: challengeFromPaymentRequired(decoded),
   };
 }
 

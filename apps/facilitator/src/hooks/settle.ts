@@ -14,9 +14,10 @@ import { getDb } from "../lib/db.js";
 import { verifyDeps } from "../lib/deps.js";
 import { extractAuthNonce, getPayerAddress } from "../lib/mandate.js";
 import { GATE_STEP, reportPipelineGate } from "../lib/pipeline-progress.js";
-import { recordRejection, validateMandateForPayment } from "../lib/validate-mandate.js";
+import { recordOutcome } from "../lib/record-outcome.js";
+import { recordRejection } from "../lib/record-rejection.js";
+import { validateMandateForPayment } from "../lib/validate-mandate.js";
 import {
-  publishAndRecord,
   SETTLEMENT_RECEIPT_UNCONFIRMED_REASON,
   SETTLEMENT_TX_FAILED_REASON,
   settlementContext,
@@ -56,7 +57,6 @@ export async function onBeforeSettle({
   console.log(`[onBeforeSettle] payer=${payer} balance=${balance} required=${paymentAmountAtomic}`);
   if (balance < paymentAmountAtomic) {
     await recordRejection({
-      agentId: mandateResult.mandateEntry.agentId,
       amountAtomic: paymentAmountAtomic,
       authorizationNonce,
       identityStatus: IdentityStatus.Verified,
@@ -78,11 +78,15 @@ async function recordFailedSettlement(
   const paymentHash = keccak256(
     `0x${Buffer.from(`failed:${ctx.authorizationNonce ?? ctx.payer}`).toString("hex")}` as `0x${string}`,
   );
-  await publishAndRecord({
-    ...ctx,
+  await recordOutcome({
     payer: ctx.payer,
+    amountAtomic: ctx.amountUsdc,
     paymentHash,
     decision: Decision.Rejected,
+    identityStatus: ctx.identityStatus,
+    mandateEntry: ctx.mandateEntry,
+    authorizationNonce: ctx.authorizationNonce,
+    resource: ctx.resource,
     rejectionReason,
   });
 }
@@ -98,11 +102,15 @@ async function recordSuccessfulSettlement(
 
   const paymentHash = keccak256(settlementTx);
   const record = (decision: Decision, rejectionReason?: string) =>
-    publishAndRecord({
-      ...ctx,
+    recordOutcome({
       payer,
+      amountAtomic: ctx.amountUsdc,
       paymentHash,
       decision,
+      identityStatus: ctx.identityStatus,
+      mandateEntry: ctx.mandateEntry,
+      authorizationNonce: ctx.authorizationNonce,
+      resource: ctx.resource,
       rejectionReason,
       settlementTx,
     });
