@@ -64,7 +64,7 @@ export function validateQuote(value: unknown, amountUsdc: string, requested?: De
 
 export async function fetchQuote(
   quoteUrl: string,
-  input: { amountUsdc: string; destination: Destination; method: "usdc" },
+  input: { amountUsdc: string; destination?: Destination; method: "usdc" },
 ): Promise<Quote> {
   const response = await fetch(quoteUrl, {
     method: "POST",
@@ -72,5 +72,5 @@ export async function fetchQuote(
     body: JSON.stringify(input),
   });
   if (!response.ok) throw new Error(`Quote request failed (${response.status})`);
-  return validateQuote(await response.json(), input.amountUsdc);
+  return validateQuote(await response.json(), input.amountUsdc, input.destination);
 }
