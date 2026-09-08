@@ -3,7 +3,7 @@ const styles = {
   workspace:
     "min-h-0 min-w-0 max-[1023px]:flex max-[1023px]:flex-col border border-border bg-card text-foreground data-[moving=false]:[&_svg_*]:[animation-play-state:paused] motion-reduce:[&_svg_*]:animate-none! motion-reduce:[&_svg_*]:transition-none! machine-fit:grid machine-fit:h-[calc(100svh-var(--workspace-offset,86px))] machine-fit:grid-rows-[auto_minmax(0,1fr)_auto_auto]",
   intro:
-    "max-[1023px]:order-1 grid grid-cols-2 gap-10 px-8 pt-[35px] [&_h1]:mt-0 [&_h1]:text-[clamp(26px,3vw,39px)] [&_h1]:font-medium [&_h1]:leading-[1.12] [&_h1]:tracking-[-0.045em] [&_h1_span]:text-muted-foreground max-[1023px]:grid-cols-1 max-[1023px]:gap-6 max-[1023px]:px-5 max-[1023px]:pt-[25px] machine-fit:gap-[30px] machine-fit:px-6 machine-fit:pt-[18px] machine-fit:[&_h1]:text-[clamp(26px,2.5vw,39px)]",
+    "max-[1023px]:order-1 grid grid-cols-2 gap-10 px-8 pt-[35px] [&_h1]:mt-0 [&_h1]:text-[clamp(26px,3vw,39px)] [&_h1]:font-medium [&_h1]:leading-[1.12] [&_h1]:tracking-[-0.045em] [&_h1_span]:text-muted-foreground max-[1023px]:grid-cols-1 max-[1023px]:gap-6 max-[1023px]:px-5 max-[1023px]:pt-[25px] machine-fit:gap-[30px] machine-fit:px-6 machine-fit:pt-9 machine-fit:[&_h1]:text-[clamp(26px,2.5vw,39px)]",
   scroll:
     "min-w-0 max-w-full max-[1023px]:order-4 overflow-x-auto overscroll-x-contain [scrollbar-width:thin] [scrollbar-color:var(--border)_transparent] focus-visible:outline-2 focus-visible:outline-ring focus-visible:-outline-offset-3 machine-fit:flex machine-fit:min-h-0 machine-fit:items-center machine-fit:overflow-hidden",
   stage: "relative min-w-[900px] machine-fit:min-w-0 machine-fit:w-full machine-fit:shrink-0",
