@@ -6,6 +6,7 @@ import {
   createCheckout,
   createSettleConfig,
   createUsdcMethod,
+  type Destination,
 } from "@settle-kit/core";
 import { type ReactNode, useMemo, useRef, useState } from "react";
 import type { CheckoutAppearance } from "./appearance";
@@ -45,7 +46,7 @@ export function SettleProvider({
 
 export function startCheckout(
   config: SettleAppConfig,
-  input: { amountUsdc: string; destination?: typeof config.destination },
+  input: { amountUsdc: string; destination?: Destination },
   hooks?: {
     onSettled?: (state: Extract<CheckoutState, { status: "settled" }>) => void;
     onFailed?: (state: Extract<CheckoutState, { status: "failed" }>) => void;

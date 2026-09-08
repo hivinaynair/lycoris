@@ -7,7 +7,8 @@ import type { CheckoutAppearance } from "./appearance";
 export type SettleAppConfig = {
   appName: string;
   getSigner: () => Promise<PaymentSigner>;
-  destination: Destination;
+  /** Optional default. `begin`/`payNow` input or the quote server may supply it instead. */
+  destination?: Destination;
   methods?: SettleAdapter[];
   quoteUrl?: string;
 };

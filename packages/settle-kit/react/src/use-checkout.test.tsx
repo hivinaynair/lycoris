@@ -320,3 +320,40 @@ it("payNow never sends after invalid input and can recover", async () => {
   });
   expect(f.send).toHaveBeenCalledTimes(1);
 });
+
+it("takes the recipient from the purchase when the Provider configures none", async () => {
+  const perResource = {
+    ...destination,
+    recipient: "0x3333333333333333333333333333333333333333" as const,
+  };
+  let buyer!: UseCheckoutResult;
+  function Buyer() {
+    buyer = useCheckout();
+    return null;
+  }
+  render(
+    <SettleProvider
+      config={{
+        appName: "Marketplace",
+        getSigner: async () => ({
+          address: destination.recipient,
+          sendTransaction: async () => hash,
+        }),
+        methods: [
+          createUsdcMethod({
+            client: { readContract: async () => 100000000n },
+            receiptClient: {
+              waitForTransactionReceipt: async () => ({ status: "success", transactionHash: hash }),
+            },
+          }),
+        ],
+      }}
+    >
+      <Buyer />
+    </SettleProvider>,
+  );
+  await act(async () => {
+    await buyer.begin({ amountUsdc: "12.50", destination: perResource });
+  });
+  expect(buyer.state).toMatchObject({ status: "awaiting_payment", destination: perResource });
+});
