@@ -118,6 +118,10 @@ export function Store({ getSigner }: { getSigner: () => Promise<PaymentSigner> }
 
 `getSigner` supplies an address, `sendTransaction`, and preferably `getChainId`.
 See the [wallet adapter example](https://lycoris.vinaynair.dev/docs#wallet).
+`destination` is an optional default. When the recipient belongs to the resource
+rather than the app, pass it per purchase with `begin({ amountUsdc, destination })`,
+or return `destination` from your `quoteUrl` response so the server decides where
+funds go and a tampered client cannot redirect them.
 `skipReview` gives the checkout one initial Pay button; approval still follows
 the supplied wallet's rules. The public demo's popup-free experience comes from
 its [server-sponsored adapter](docs/sponsored-checkout.md).
