@@ -29,7 +29,7 @@ export function createSponsoredPayment(recipient: HexAddress) {
         purchase = { id: crypto.randomUUID() };
         localStorage.setItem(storageKey, JSON.stringify(purchase));
       }
-      if (input.amountUsdc !== WEATHER_PRICE_USDC || input.destination.recipient !== recipient)
+      if (input.amountUsdc !== WEATHER_PRICE_USDC || input.destination?.recipient !== recipient)
         throw new SettleKitError("invalid_config", "Only the demo weather report is sponsored.");
       const quote = await method.quote(input);
       return { ...quote, requestId: purchase.id };
