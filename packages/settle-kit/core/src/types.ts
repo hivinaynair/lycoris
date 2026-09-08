@@ -40,6 +40,8 @@ export type Quote = {
   amountAtomic: string;
   expiresAt: number;
   method: "usdc";
+  /** Set by the quote server when the recipient belongs to the resource, not the app. */
+  destination?: Destination;
 };
 
 export type CheckoutState =
@@ -64,7 +66,7 @@ export type CheckoutState =
 
 export type SettleAdapter = {
   id: "usdc";
-  quote: (input: { amountUsdc: string; destination: Destination }) => Promise<Quote>;
+  quote: (input: { amountUsdc: string; destination?: Destination }) => Promise<Quote>;
   settle: (input: {
     quote: Quote;
     destination: Destination;
@@ -79,7 +81,8 @@ export type SettleAdapter = {
 };
 
 export type SettleConfig = {
-  destination: Destination;
+  /** Optional default. Per-checkout input or the quote may supply it instead. */
+  destination?: Destination;
   getSigner: () => Promise<PaymentSigner>;
   methods: SettleAdapter[];
   quoteUrl?: string;
