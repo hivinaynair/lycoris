@@ -3,8 +3,14 @@ import { invalidConfig } from "./errors";
 import { createUsdcMethod } from "./methods/usdc";
 import type { SettleConfig } from "./types";
 
-export type CreateSettleConfigInput = Omit<SettleConfig, "methods"> & {
-  methods?: SettleConfig["methods"];
+/** An option bag, not a stored object: callers build it from optional data. */
+export type CreateSettleConfigInput = {
+  destination?: SettleConfig["destination"] | undefined;
+  getSigner: SettleConfig["getSigner"];
+  methods?: SettleConfig["methods"] | undefined;
+  quoteUrl?: string | undefined;
+  onSettled?: SettleConfig["onSettled"] | undefined;
+  onFailed?: SettleConfig["onFailed"] | undefined;
 };
 
 export function createSettleConfig(input: CreateSettleConfigInput): SettleConfig {

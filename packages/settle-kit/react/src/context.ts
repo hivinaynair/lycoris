@@ -15,8 +15,8 @@ export type SettleAppConfig = {
 
 export type BeginCheckoutInput = {
   amountUsdc: string;
-  destination?: Destination;
-  title?: string;
+  destination?: Destination | undefined;
+  title?: string | undefined;
 };
 
 export type SettleContextValue = {

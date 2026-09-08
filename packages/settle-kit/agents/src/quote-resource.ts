@@ -1,7 +1,6 @@
 import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
 import { decodePaymentRequiredHeader } from "@x402/core/http";
-import { isAddress } from "viem";
-import { asAmount, asRecord, asString } from "./decode";
+import { asAddress, asAmount, asRecord, asString } from "./decode";
 import type { ResourceQuote } from "./types";
 import { BASE_SEPOLIA_CAIP2, challengeFromPaymentRequired } from "./x402-decode";
 
@@ -18,19 +17,18 @@ export async function quoteResource(
   const decoded = asRecord(decodePaymentRequiredHeader(header));
   if (!decoded) return undefined;
 
-  const accepts = Array.isArray(decoded.accepts) ? decoded.accepts.map(asRecord) : [];
+  const accepts: unknown[] = Array.isArray(decoded.accepts) ? decoded.accepts : [];
   const terms =
-    accepts.find((item) => asString(item?.network) === BASE_SEPOLIA_CAIP2) ??
+    accepts.map(asRecord).find((item) => asString(item?.network) === BASE_SEPOLIA_CAIP2) ??
     (asString(decoded.network) === BASE_SEPOLIA_CAIP2 ? decoded : undefined);
 
   const amount = asAmount(terms?.amount) ?? asAmount(decoded.maxAmountRequired);
   if (!amount) return undefined;
 
-  // A third-party challenge is decoded, not asserted: accept any well-formed address.
-  const payTo = asString(terms?.payTo);
+  const payTo = asAddress(terms?.payTo);
   return {
     amountAtomic: amount,
-    ...(payTo && isAddress(payTo, { strict: false }) ? { payTo } : {}),
+    ...(payTo ? { payTo } : {}),
     challenge: challengeFromPaymentRequired(decoded),
   };
 }

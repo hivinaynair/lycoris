@@ -2,7 +2,7 @@ import { encodeFunctionData } from "viem";
 import { parseUsdcAmount } from "../amounts";
 import { assertDestination } from "../destination";
 import { SettleKitError } from "../errors";
-import { assertQuoteBinding } from "../quote-client";
+import { validateQuote } from "../quote-client";
 import {
   DEFAULT_QUOTE_TTL_MS,
   type HexAddress,
@@ -74,7 +74,9 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
     },
     async settle({ quote, destination, signer }) {
       assertDestination(destination);
-      assertQuoteBinding(quote, destination);
+      // At the settle seam the quote is the only input: check it against its own
+      // stated amount, and that it still binds to the destination we were handed.
+      validateQuote(quote, quote.amountUsdc, destination);
       if (signer.getChainId) {
         const chainId = await signer.getChainId();
         if (chainId !== destination.targetChain) {

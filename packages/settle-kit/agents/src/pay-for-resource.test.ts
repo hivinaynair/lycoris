@@ -14,7 +14,7 @@ describe("payForResource", () => {
     });
     expect(result.httpStatus).toBe(200);
     expect(result.body).toEqual({ rain: true });
-    expect(result.paymentRequiredError).toBeUndefined();
+    expect(result.error).toBeUndefined();
   });
 
   it("maps a 402 JSON error body", async () => {

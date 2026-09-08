@@ -66,8 +66,9 @@ export function reduce(state: CheckoutState, action: CheckoutAction): CheckoutSt
       return {
         status: "failed",
         error: action.error,
-        ...("quote" in state ? { quote: state.quote } : {}),
-        ...("destination" in state ? { destination: state.destination } : {}),
+        ...(state.status === "quoting"
+          ? {}
+          : { quote: state.quote, destination: state.destination }),
         ...("txHash" in state && state.txHash ? { txHash: state.txHash } : {}),
       };
     default:

@@ -3,6 +3,7 @@ import type { PaidFetch, PaidFetchFn } from "./create-paid-fetch";
 import { asRecord, asString } from "./decode";
 import { explorerUrl } from "./quote-resource";
 import type { AgentPaymentResult } from "./types";
+import { challengeFromPaymentRequired } from "./x402-decode";
 
 function summarizeNonJsonResponse(url: string, response: Response, text: string) {
   const contentType = response.headers.get("content-type") ?? "unknown content type";
@@ -28,10 +29,11 @@ function summarizeNonJsonResponse(url: string, response: Response, text: string)
 }
 
 /** The error this exchange reported, from the challenge or the upstream body. */
-function wireError(status: number, body: unknown, paymentRequiredError?: string) {
-  if (paymentRequiredError) return paymentRequiredError;
-  if (status < 400 || !body || typeof body !== "object" || !("error" in body)) return undefined;
-  return body.error === undefined || body.error === null ? undefined : String(body.error);
+function wireError(status: number, body: unknown, challengeError?: string) {
+  if (challengeError) return challengeError;
+  if (status < 400) return undefined;
+  const error = asRecord(body)?.error;
+  return error === undefined || error === null ? undefined : String(error);
 }
 
 export async function payForResource(input: {
@@ -44,14 +46,9 @@ export async function payForResource(input: {
     response.headers.get("PAYMENT-REQUIRED") ?? response.headers.get("X-PAYMENT-REQUIRED");
 
   let txHash: string | undefined;
-  let paymentRequiredError: string | undefined;
   if (paymentHeader) {
     const decoded = asRecord(decodePaymentResponseHeader(paymentHeader));
     txHash = asString(decoded?.transaction) ?? asString(decoded?.txHash);
-  }
-  if (paymentRequiredHeader) {
-    const decoded = decodePaymentRequiredHeader(paymentRequiredHeader);
-    paymentRequiredError = decoded.error;
   }
 
   let body: unknown;
@@ -67,15 +64,19 @@ export async function payForResource(input: {
     "getPaymentMetadata" in input.paidFetch
       ? input.paidFetch.getPaymentMetadata(response)
       : undefined;
+  const challenge =
+    metadata?.challenge ??
+    (paymentRequiredHeader
+      ? challengeFromPaymentRequired(decodePaymentRequiredHeader(paymentRequiredHeader))
+      : undefined);
 
   return {
     httpStatus: response.status,
     body,
     txHash,
     authorizationNonce: metadata?.authorizationNonce,
-    error: wireError(response.status, body, paymentRequiredError),
-    paymentRequiredError,
+    error: wireError(response.status, body, challenge?.error),
     basescan: explorerUrl(txHash),
-    challenge: metadata?.challenge,
+    challenge,
   };
 }

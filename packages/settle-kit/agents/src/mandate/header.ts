@@ -1,5 +1,5 @@
-import { isAddress, isHex } from "viem";
-import { asBigInt, asRecord, asString } from "../decode";
+import { isHex } from "viem";
+import { asAddress, asBigInt, asRecord, asString } from "../decode";
 import type { MandatePayload, SignedMandate } from "./eip712";
 
 export type MandateHeaderValue = {
@@ -49,17 +49,16 @@ export function parseMandateHeader(json: string): MandateHeaderValue | undefined
   const body = asRecord(value?.payload);
   const agentId = asBigInt(value?.agentId);
   const signature = asString(value?.signature);
-  const agent = asString(body?.agent);
-  const delegator = asString(body?.delegator);
+  const agent = asAddress(body?.agent);
+  const delegator = asAddress(body?.delegator);
   const maxAmountUsdc = asBigInt(body?.maxAmountUsdc);
   const expiry = asBigInt(body?.expiry);
   const nonce = asBigInt(body?.nonce);
 
   if (agentId === undefined || maxAmountUsdc === undefined) return undefined;
   if (expiry === undefined || nonce === undefined) return undefined;
-  if (!signature || !isHex(signature)) return undefined;
-  if (!agent || !isAddress(agent, { strict: false })) return undefined;
-  if (!delegator || !isAddress(delegator, { strict: false })) return undefined;
+  if (agent === undefined || delegator === undefined) return undefined;
+  if (!isHex(signature)) return undefined;
 
   const payload: MandatePayload = { agent, delegator, maxAmountUsdc, expiry, nonce };
   return { agentId, mandate: { payload, signature } };

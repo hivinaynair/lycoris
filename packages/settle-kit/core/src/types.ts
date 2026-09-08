@@ -66,7 +66,7 @@ export type CheckoutState =
 
 export type SettleAdapter = {
   id: "usdc";
-  quote: (input: { amountUsdc: string; destination?: Destination }) => Promise<Quote>;
+  quote: (input: { amountUsdc: string; destination?: Destination | undefined }) => Promise<Quote>;
   settle: (input: {
     quote: Quote;
     destination: Destination;
@@ -92,7 +92,7 @@ export type SettleConfig = {
 
 export type CreateCheckoutInput = {
   amountUsdc: string;
-  destination?: Destination;
+  destination?: Destination | undefined;
 };
 
 export type CheckoutManager = {
