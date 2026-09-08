@@ -1,5 +1,39 @@
 import { parseUsdcAmount } from "./amounts";
+import { SettleKitError } from "./errors";
 import type { Destination, Quote } from "./types";
+
+/** Quotes are external data. Bind the display and transfer to the purchase request. */
+export function validateQuote(value: unknown, amountUsdc: string): Quote {
+  const invalid = () =>
+    new SettleKitError("transfer_failed", "Quote does not match the requested USDC amount");
+  if (!value || typeof value !== "object") throw invalid();
+  const body = value as Partial<Quote>;
+  if (
+    typeof body.requestId !== "string" ||
+    !body.requestId.trim() ||
+    typeof body.amountUsdc !== "string" ||
+    typeof body.amountAtomic !== "string" ||
+    !/^[1-9]\d*$/.test(body.amountAtomic) ||
+    !Number.isSafeInteger(body.expiresAt) ||
+    (body.expiresAt ?? 0) <= 0 ||
+    body.method !== "usdc"
+  )
+    throw invalid();
+  try {
+    const expected = parseUsdcAmount(amountUsdc);
+    if (parseUsdcAmount(body.amountUsdc) !== expected || body.amountAtomic !== expected)
+      throw invalid();
+  } catch {
+    throw invalid();
+  }
+  return Object.freeze({
+    requestId: body.requestId,
+    amountUsdc: body.amountUsdc,
+    amountAtomic: body.amountAtomic,
+    expiresAt: body.expiresAt as number,
+    method: "usdc",
+  });
+}
 
 export async function fetchQuote(
   quoteUrl: string,
@@ -10,25 +44,6 @@ export async function fetchQuote(
     headers: { "content-type": "application/json" },
     body: JSON.stringify(input),
   });
-  if (!response.ok) {
-    throw new Error(`Quote request failed (${response.status})`);
-  }
-  const body = (await response.json()) as Partial<Quote>;
-  if (
-    typeof body.requestId !== "string" ||
-    typeof body.amountUsdc !== "string" ||
-    typeof body.amountAtomic !== "string" ||
-    typeof body.expiresAt !== "number" ||
-    body.method !== "usdc"
-  ) {
-    throw new Error("Quote response is missing required fields");
-  }
-  parseUsdcAmount(body.amountUsdc);
-  return {
-    requestId: body.requestId,
-    amountUsdc: body.amountUsdc,
-    amountAtomic: body.amountAtomic,
-    expiresAt: body.expiresAt,
-    method: "usdc",
-  };
+  if (!response.ok) throw new Error(`Quote request failed (${response.status})`);
+  return validateQuote(await response.json(), input.amountUsdc);
 }

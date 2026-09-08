@@ -1,3 +1,4 @@
+export type { PaidFetch, PaidFetchFn, PaymentMetadata } from "./create-paid-fetch";
 export { createPaidFetch } from "./create-paid-fetch";
 export type { MandatePayload, SignedMandate } from "./mandate/eip712";
 export { serializeMandateHeader, signMandate, verifyMandateLocal } from "./mandate/index";

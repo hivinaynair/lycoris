@@ -1,5 +1,7 @@
 # Settle Kit SDK design
 
+**Implementation refinement (September 8):** [Review follow-up](2026-09-08-settle-kit-review-follow-up.md) adds receipt confirmation, in-flight reset guards, validated quotes/destinations, automatic USDC selection in React `begin`, and request-scoped paid-fetch metadata. These refine the lifecycle examples below.
+
 Implementation spec for the Fun.xyz-shaped Checkout SDK. Cloud and local agents
 should follow this before writing packages.
 

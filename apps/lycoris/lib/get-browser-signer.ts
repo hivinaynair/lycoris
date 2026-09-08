@@ -1,4 +1,4 @@
-import { BASE_SEPOLIA_CHAIN_ID, type PaymentSigner } from "@settle-kit/core";
+import { BASE_SEPOLIA_CHAIN_ID, type PaymentSigner, SettleKitError } from "@settle-kit/core";
 import { createWalletClient, custom, getAddress, type Hex } from "viem";
 import { baseSepolia } from "viem/chains";
 
@@ -14,13 +14,16 @@ function getEthereum(): EthereumProvider | undefined {
 export async function getBrowserSigner(): Promise<PaymentSigner> {
   const ethereum = getEthereum();
   if (!ethereum) {
-    throw new Error("Connect a browser wallet on Base Sepolia to pay.");
+    throw new SettleKitError(
+      "wallet_unavailable",
+      "Open this checkout in a browser with a wallet extension, then try again.",
+    );
   }
 
   const accounts = (await ethereum.request({ method: "eth_requestAccounts" })) as string[];
   const account = getAddress(accounts[0] ?? "");
   const chainIdHex = (await ethereum.request({ method: "eth_chainId" })) as string;
-  let chainId = Number(chainIdHex);
+  const chainId = Number(chainIdHex);
 
   if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
     try {
@@ -28,7 +31,6 @@ export async function getBrowserSigner(): Promise<PaymentSigner> {
         method: "wallet_switchEthereumChain",
         params: [{ chainId: `0x${BASE_SEPOLIA_CHAIN_ID.toString(16)}` }],
       });
-      chainId = BASE_SEPOLIA_CHAIN_ID;
     } catch {
       /* core maps a remaining mismatch to wrong_network */
     }

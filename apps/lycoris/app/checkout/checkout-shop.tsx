@@ -35,11 +35,11 @@ export function CheckoutShop({ recipient }: { recipient: HexAddress }) {
           <p className="text-[11px] uppercase tracking-[0.14em] text-muted-foreground">SKU</p>
           <h2 className="mt-2 font-heading text-2xl tracking-tight">{SKU.title}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            {SKU.amountUsdc} USDC. The merchant named Base Sepolia, Circle USDC, and this recipient.
-            Checkout transfers to the USDC contract; the recipient is inside{" "}
-            <code className="font-mono text-xs">transfer</code>.
+            {SKU.amountUsdc} USDC · Base Sepolia test purchase. A sample item to try wallet
+            checkout.
           </p>
-          <p className="mt-4 break-all font-mono text-xs text-muted-foreground">{recipient}</p>
+          <p className="mt-4 text-xs text-muted-foreground">Merchant wallet</p>
+          <p className="mt-1 break-all font-mono text-xs text-muted-foreground">{recipient}</p>
         </article>
         <Checkout amountUsdc={SKU.amountUsdc} title={`Buy ${SKU.title}`} />
       </div>

@@ -10,14 +10,31 @@ export default function CheckoutPage() {
       <PageHead
         eyebrow="Settle Kit"
         title="Pay the merchant in USDC"
-        question="Base Sepolia only. USDC → USDC. No cards, no KYC. ERC-8004 is agent identity, not a human check. An agent paying a 402 resource is a different package — see Demo."
+        question="A sample storefront powered by Settle Kit. Pay with test USDC on Base Sepolia. No physical item is shipped."
       />
       <CheckoutShop recipient={env.PAY_TO_ADDRESS as HexAddress} />
-      <p className="max-w-2xl text-sm text-muted-foreground">
-        Destination asset is Circle USDC{" "}
-        <span className="font-mono">{BASE_SEPOLIA_USDC_ADDRESS}</span>. Insufficient balance fails
-        before the wallet is asked to send a doomed transfer.
-      </p>
+      <details className="max-w-2xl text-sm text-muted-foreground">
+        <summary className="cursor-pointer">Developer details and demo limits</summary>
+        <div className="mt-3 space-y-3">
+          <p>
+            Circle USDC <span className="break-all font-mono">{BASE_SEPOLIA_USDC_ADDRESS}</span> on
+            Base Sepolia (84532). USDC → USDC only. No cards, KYC, fiat onramp, DEX or bridge.
+          </p>
+          <p>
+            The transaction targets the USDC contract. The merchant recipient is encoded in
+            transfer(recipient, amount). The SDK checks balance before sending and waits for a
+            successful receipt before confirming payment.
+          </p>
+          <p>
+            The agent demo separately pays the x402 resource payee, not this storefront recipient.
+            ERC-8004 is agent identity, not KYC; preclear checks mandate and identity, not balance.
+          </p>
+          <p>
+            Keep this page open until confirmation. Sessions are in memory; if you close it after
+            submitting, inspect your wallet and Basescan before trying another payment.
+          </p>
+        </div>
+      </details>
     </PageFrame>
   );
 }

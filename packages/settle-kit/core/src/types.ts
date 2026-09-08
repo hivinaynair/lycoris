@@ -18,6 +18,7 @@ export type SettleErrorCode =
   | "insufficient_usdc"
   | "quote_expired"
   | "wallet_rejected"
+  | "wallet_unavailable"
   | "wrong_network"
   | "transfer_failed"
   | "invalid_config";
@@ -45,13 +46,20 @@ export type CheckoutState =
   | { status: "idle" }
   | { status: "quoting"; amountUsdc: string }
   | { status: "awaiting_payment"; quote: Quote; destination: Destination }
-  | { status: "settling"; quote: Quote; destination: Destination }
+  | {
+      status: "settling";
+      quote: Quote;
+      destination: Destination;
+      txHash?: TxHash;
+      confirmationError?: SettleError;
+    }
   | { status: "settled"; quote: Quote; destination: Destination; txHash: TxHash }
   | {
       status: "failed";
       error: SettleError;
       quote?: Quote;
       destination?: Destination;
+      txHash?: TxHash;
     };
 
 export type SettleAdapter = {
@@ -62,6 +70,12 @@ export type SettleAdapter = {
     destination: Destination;
     signer: PaymentSigner;
   }) => Promise<TxHash>;
+  /** Confirm the submitted hash. Throws mean unknown outcome, never permission to resend. */
+  confirm: (input: {
+    txHash: TxHash;
+    quote: Quote;
+    destination: Destination;
+  }) => Promise<"success" | "reverted">;
 };
 
 export type SettleConfig = {
@@ -83,5 +97,6 @@ export type CheckoutManager = {
   subscribe: (listener: () => void) => () => void;
   selectMethod: (id: string) => Promise<void>;
   pay: () => Promise<void>;
+  retryConfirmation: () => Promise<void>;
   reset: () => void;
 };

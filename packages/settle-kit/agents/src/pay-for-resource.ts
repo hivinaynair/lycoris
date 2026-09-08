@@ -55,15 +55,18 @@ export async function payForResource(input: {
     body = { error: summarizeNonJsonResponse(input.url, response, text) };
   }
 
-  const paid = input.paidFetch as { lastAuthorizationNonce?: string; lastChallenge?: unknown };
+  const metadata =
+    "getPaymentMetadata" in input.paidFetch
+      ? input.paidFetch.getPaymentMetadata(response)
+      : undefined;
 
   return {
     httpStatus: response.status,
     body,
     txHash,
-    authorizationNonce: paid.lastAuthorizationNonce,
+    authorizationNonce: metadata?.authorizationNonce,
     paymentRequiredError,
     basescan: explorerUrl(txHash),
-    challenge: paid.lastChallenge as AgentPaymentResult["challenge"],
+    challenge: metadata?.challenge,
   };
 }

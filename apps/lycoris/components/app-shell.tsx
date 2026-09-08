@@ -51,14 +51,19 @@ export function AppShell({ children }: { children: ReactNode }) {
                 className={cn(
                   "group flex items-center gap-[11px] rounded-md px-3 py-2.5 text-left transition-colors",
                   active
-                    ? "bg-primary text-foreground"
+                    ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 <Icon className="size-[17px] shrink-0" />
                 <span className="min-w-0">
                   <span className="block text-sm font-medium">{item.label}</span>
-                  <span className="block truncate text-[11px] text-muted-foreground">
+                  <span
+                    className={cn(
+                      "block truncate text-[11px]",
+                      active ? "text-primary-foreground/80" : "text-muted-foreground",
+                    )}
+                  >
                     {item.sub}
                   </span>
                 </span>

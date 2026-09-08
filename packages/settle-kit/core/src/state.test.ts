@@ -28,6 +28,7 @@ const quote: Quote = {
 function adapter(overrides: Partial<SettleAdapter> = {}): SettleAdapter {
   return {
     id: "usdc",
+    confirm: async () => "success",
     quote: async () => quote,
     settle: async () => "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
     ...overrides,

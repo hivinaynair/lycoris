@@ -7,6 +7,7 @@ const ERROR_COPY: Record<string, string> = {
   insufficient_usdc: "Not enough USDC to complete this payment.",
   quote_expired: "The quote expired. Start again.",
   wallet_rejected: "The wallet rejected the transfer.",
+  wallet_unavailable: "Open this checkout in a browser with a wallet extension, then try again.",
   wrong_network: "Switch the wallet to Base Sepolia.",
   transfer_failed: "The USDC transfer failed.",
 };
@@ -24,7 +25,6 @@ export function Checkout({
 
   async function onBuy() {
     await checkout.begin({ amountUsdc, title: heading });
-    await checkout.selectMethod("usdc");
   }
 
   return (
@@ -71,6 +71,7 @@ export function Checkout({
       {state.status === "idle" ? (
         <>
           <p>{amountUsdc} USDC on Base Sepolia</p>
+          <p>You’ll need a browser wallet with test USDC and Base Sepolia ETH for network fees.</p>
           <button type="button" onClick={() => void onBuy()}>
             Buy
           </button>
@@ -79,16 +80,42 @@ export function Checkout({
       {state.status === "quoting" ? <p>Locking {state.amountUsdc} USDC…</p> : null}
       {state.status === "awaiting_payment" ? (
         <>
-          <p>Pay {state.quote.amountUsdc} USDC to the merchant destination.</p>
+          <p>Pay {state.quote.amountUsdc} USDC on Base Sepolia.</p>
+          <p style={{ overflowWrap: "anywhere" }}>Recipient: {state.destination.recipient}</p>
           <button type="button" onClick={() => void checkout.pay()}>
             Pay USDC
           </button>
         </>
       ) : null}
-      {state.status === "settling" ? <p>Waiting for the transfer…</p> : null}
+      {state.status === "settling" ? (
+        <>
+          <p>
+            {state.txHash
+              ? "Payment submitted. Waiting for confirmation…"
+              : "Continue in your wallet…"}
+          </p>
+          {state.txHash ? (
+            <a
+              href={`${BASE_SEPOLIA_EXPLORER}/tx/${state.txHash}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View transaction
+            </a>
+          ) : null}
+          {state.confirmationError ? (
+            <>
+              <p className="sk-error">{state.confirmationError.message}</p>
+              <button type="button" onClick={() => void checkout.retryConfirmation()}>
+                Check payment status
+              </button>
+            </>
+          ) : null}
+        </>
+      ) : null}
       {state.status === "settled" ? (
         <>
-          <p>Settled {state.quote.amountUsdc} USDC.</p>
+          <p>Payment confirmed: {state.quote.amountUsdc} USDC.</p>
           <a href={`${BASE_SEPOLIA_EXPLORER}/tx/${state.txHash}`} target="_blank" rel="noreferrer">
             View on Basescan
           </a>
@@ -100,6 +127,15 @@ export function Checkout({
       {state.status === "failed" ? (
         <>
           <p className="sk-error">{ERROR_COPY[state.error.code] ?? state.error.message}</p>
+          {state.txHash ? (
+            <a
+              href={`${BASE_SEPOLIA_EXPLORER}/tx/${state.txHash}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              View failed transaction
+            </a>
+          ) : null}
           <button type="button" onClick={checkout.reset}>
             Reset
           </button>

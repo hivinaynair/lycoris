@@ -4,6 +4,7 @@ import { USDC_DECIMALS } from "./types";
 const AMOUNT_PATTERN = /^(0|[1-9]\d*)(?:\.(\d+))?$/;
 
 export function parseUsdcAmount(amountUsdc: string): string {
+  if (typeof amountUsdc !== "string") invalidConfig("amountUsdc must be a string");
   const trimmed = amountUsdc.trim();
   const match = AMOUNT_PATTERN.exec(trimmed);
   if (!match) {
@@ -20,6 +21,7 @@ export function parseUsdcAmount(amountUsdc: string): string {
   if (atomic === "0") {
     invalidConfig("USDC amount must be greater than zero");
   }
+  if (BigInt(atomic) > (1n << 256n) - 1n) invalidConfig("USDC amount exceeds uint256");
   return atomic;
 }
 

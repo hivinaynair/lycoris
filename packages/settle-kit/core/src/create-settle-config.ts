@@ -13,8 +13,14 @@ export function createSettleConfig(input: CreateSettleConfigInput): SettleConfig
   }
   const destination = assertDestination(input.destination);
   const methods = input.methods ?? [createUsdcMethod()];
-  if (methods.length === 0) {
-    invalidConfig("At least one payment method is required");
+  if (
+    methods.length !== 1 ||
+    methods[0]?.id !== "usdc" ||
+    typeof methods[0].quote !== "function" ||
+    typeof methods[0].settle !== "function" ||
+    typeof methods[0].confirm !== "function"
+  ) {
+    invalidConfig("Provide one USDC method with quote, settle, and confirm");
   }
   return {
     destination,

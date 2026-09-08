@@ -1,7 +1,15 @@
 import { encodeFunctionData } from "viem";
 import { parseUsdcAmount } from "../amounts";
+import { assertDestination } from "../destination";
 import { SettleKitError } from "../errors";
-import { DEFAULT_QUOTE_TTL_MS, type HexAddress, type Quote, type SettleAdapter } from "../types";
+import { validateQuote } from "../quote-client";
+import {
+  DEFAULT_QUOTE_TTL_MS,
+  type HexAddress,
+  type Quote,
+  type SettleAdapter,
+  type TxHash,
+} from "../types";
 
 const ERC20_ABI = [
   {
@@ -28,12 +36,19 @@ export type BalanceClient = {
     address: HexAddress;
     abi: typeof ERC20_ABI;
     functionName: "balanceOf";
-    args: [HexAddress];
+    args: readonly [HexAddress];
   }) => Promise<bigint>;
 };
 
 export type UsdcMethodOptions = {
   client?: BalanceClient;
+  receiptClient?: {
+    waitForTransactionReceipt: (args: {
+      hash: TxHash;
+      confirmations: number;
+      timeout: number;
+    }) => Promise<{ status: "success" | "reverted"; transactionHash: TxHash }>;
+  };
   quoteTtlMs?: number;
   now?: () => number;
   requestId?: () => string;
@@ -58,6 +73,8 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
       return quote;
     },
     async settle({ quote, destination, signer }) {
+      assertDestination(destination);
+      validateQuote(quote, quote.amountUsdc);
       if (signer.getChainId) {
         const chainId = await signer.getChainId();
         if (chainId !== destination.targetChain) {
@@ -69,13 +86,15 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
       }
 
       const required = BigInt(quote.amountAtomic);
-      const client = options.client ?? (await importPublicClient(destination.targetChain));
-      const balance = await client.readContract({
+      const request = {
         address: destination.targetAsset,
         abi: ERC20_ABI,
         functionName: "balanceOf",
         args: [signer.address],
-      });
+      } as const;
+      const balance = options.client
+        ? await options.client.readContract(request)
+        : await (await importPublicClient(destination.targetChain)).readContract(request);
 
       if (balance < required) {
         throw new SettleKitError(
@@ -90,15 +109,30 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
         args: [destination.recipient, required],
       });
 
+      if (quote.expiresAt <= now())
+        throw new SettleKitError("quote_expired", "Quote expired before sending the transfer");
+
       return signer.sendTransaction({
         to: destination.targetAsset,
         data,
       });
     },
+    async confirm({ txHash, destination }) {
+      const client = options.receiptClient ?? (await importPublicClient(destination.targetChain));
+      const receipt = await client.waitForTransactionReceipt({
+        hash: txHash,
+        confirmations: 1,
+        timeout: 60_000,
+      });
+      // A replaced transaction may have different calldata. Never claim it paid this purchase.
+      if (receipt.transactionHash.toLowerCase() !== txHash.toLowerCase())
+        throw new Error("Transaction was replaced; inspect the original hash on the explorer");
+      return receipt.status;
+    },
   };
 }
 
-async function importPublicClient(chainId: number): Promise<BalanceClient> {
+async function importPublicClient(chainId: number) {
   const { createPublicClient, http } = await import("viem");
   const { baseSepolia } = await import("viem/chains");
   if (chainId !== baseSepolia.id) {
@@ -107,5 +141,5 @@ async function importPublicClient(chainId: number): Promise<BalanceClient> {
   return createPublicClient({
     chain: baseSepolia,
     transport: http(),
-  }) as unknown as BalanceClient;
+  });
 }

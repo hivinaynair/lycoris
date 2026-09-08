@@ -14,6 +14,7 @@ export const USER_ERROR_CODES: readonly SettleErrorCode[] = [
   "insufficient_usdc",
   "quote_expired",
   "wallet_rejected",
+  "wallet_unavailable",
   "wrong_network",
   "transfer_failed",
 ];
@@ -31,6 +32,7 @@ export function toSettleError(
   }
   if (error && typeof error === "object" && "code" in error) {
     const code = String((error as { code: unknown }).code);
+    if (code === "4001") return { code: "wallet_rejected", message: "Wallet request declined." };
     const message =
       "message" in error && typeof (error as { message: unknown }).message === "string"
         ? (error as { message: string }).message
