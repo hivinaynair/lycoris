@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, spyOn } from "bun:test";
+import { afterAll, beforeEach, describe, expect, it, spyOn } from "bun:test";
 import type { SignedMandate } from "@repo/shared/mandate";
 import { Decision, IdentityStatus } from "@repo/shared/types";
 import * as attest from "./attest.js";
@@ -13,6 +13,13 @@ const publishAttestation = spyOn(attest, "publishAttestation");
 const persistAttestationRow = spyOn(persist, "persistAttestationRow").mockImplementation(
   async () => {},
 );
+
+// Spies mutate the shared module namespace for the whole test process; without this
+// every file that runs later would see the mock instead of the real implementation.
+afterAll(() => {
+  publishAttestation.mockRestore();
+  persistAttestationRow.mockRestore();
+});
 
 const PUBLISHED = {
   attestationTx: "0xattesttx",
