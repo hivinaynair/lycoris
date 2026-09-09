@@ -4,7 +4,7 @@ import { type VerifyDeps, validateMandateForPayment } from "./validate-mandate.j
 export type PreclearInput = {
   amountAtomic: bigint;
   payer: string;
-  resource?: string;
+  resource?: string | undefined;
 };
 
 export type PreclearResult = { ok: true } | { ok: false; reason: string };

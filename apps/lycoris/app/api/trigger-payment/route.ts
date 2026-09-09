@@ -15,7 +15,16 @@ export async function POST(request: Request) {
       { error: "Enter a message of 1–2,000 characters and choose a valid scenario." },
       { status: 400 },
     );
-  const { scenarioIndex, message, session: savedSession } = parsed.data;
+  const { scenarioIndex, message, session: parsedSession } = parsed.data;
+  const savedSession = parsedSession
+    ? {
+        sessionId: parsedSession.sessionId,
+        streamIndex: parsedSession.streamIndex,
+        ...(parsedSession.continuationToken !== undefined
+          ? { continuationToken: parsedSession.continuationToken }
+          : {}),
+      }
+    : undefined;
   const agentName = DEMO_SCENARIO_AGENTS[scenarioIndex]!;
   const route = getDemoReportRoute(DEMO_AGENT_ROUTE[agentName]);
   const targetUrl = `${new URL(request.url).origin}${route.path}`;

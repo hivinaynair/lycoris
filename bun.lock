@@ -208,6 +208,19 @@
         "next": ">=16.2.6 <17",
       },
     },
+    "packages/settle-kit/type-tests": {
+      "name": "@settle-kit/type-tests",
+      "version": "0.0.0",
+      "devDependencies": {
+        "@repo/typescript-config": "workspace:*",
+        "@settle-kit/agents": "workspace:*",
+        "@settle-kit/core": "workspace:*",
+        "@settle-kit/react": "workspace:*",
+        "@settle-kit/server": "workspace:*",
+        "react": "^19.2.0",
+        "viem": "^2",
+      },
+    },
     "packages/shared": {
       "name": "@repo/shared",
       "version": "0.0.1",
@@ -782,6 +795,8 @@
     "@settle-kit/react": ["@settle-kit/react@workspace:packages/settle-kit/react"],
 
     "@settle-kit/server": ["@settle-kit/server@workspace:packages/settle-kit/server"],
+
+    "@settle-kit/type-tests": ["@settle-kit/type-tests@workspace:packages/settle-kit/type-tests"],
 
     "@shadcn/react": ["@shadcn/react@0.3.1", "", { "peerDependencies": { "@types/react": ">=19", "react": ">=19" }, "optionalPeers": ["@types/react", "react"] }, "sha512-2gOR0HDMtWeRsCZfNDaU0YDFdgH3zsDQ6lz67Fv/y/qjY9y+R8kJqAn6q56phqv7/zHi0wqURjntrNO9zL7vnQ=="],
 

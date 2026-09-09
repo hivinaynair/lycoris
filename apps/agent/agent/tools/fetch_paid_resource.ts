@@ -69,12 +69,6 @@ export default defineTool({
       getMandateHeader: () => credential.header,
     });
     const paid = await payForResource({ url, paidFetch });
-    const error =
-      paid.paymentRequiredError ??
-      (paid.httpStatus >= 400 && paid.body && typeof paid.body === "object" && "error" in paid.body
-        ? String((paid.body as { error?: unknown }).error)
-        : undefined);
-
     const decisionRecord = await getDecisionRecord({
       authorizationNonce: paid.authorizationNonce,
       payer: account.address,
@@ -90,7 +84,7 @@ export default defineTool({
       txHash: paid.txHash,
       authorizationNonce: paid.authorizationNonce,
       x402Challenge: paid.challenge,
-      error: error ?? decisionRecord?.rejectionReason,
+      error: paid.error ?? decisionRecord?.rejectionReason,
       decisionRecord,
       rawMandate: toRawMandate(credential.entry),
     };

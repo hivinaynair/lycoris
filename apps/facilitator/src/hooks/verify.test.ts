@@ -14,9 +14,10 @@ afterAll(() => {
   mockPublishAttestation.mockRestore();
 });
 
-const { buildVerifyRejectionPaymentHash, onBeforeVerify } = await import("./verify.js");
+const { buildVerifyRejectionPaymentHash } = await import("../lib/rejection-payment-hash.js");
+const { onBeforeVerify } = await import("./verify.js");
 
-import type { VerifyDeps } from "./verify.js";
+import type { VerifyDeps } from "../lib/validate-mandate.js";
 
 const PAYER = "0xe9F97E2F7c6DCB8FCdBCDFBA074334D22a6c3117" as `0x${string}`;
 const DELEGATOR = "0xAa870A9C6FEd34B8aC01Da17d675d748f238a420" as `0x${string}`;

@@ -4,7 +4,7 @@ import {
   type SignedMandate,
 } from "@repo/shared/mandate";
 import type { MandateHeaderValue } from "@repo/shared/mandate-header";
-import { verifyTypedData } from "viem";
+import { isAddress, verifyTypedData } from "viem";
 
 // USDC has 6 decimals — multiply whole-unit amounts by this to get atomic units
 export const USDC_ATOMIC_FACTOR = 1_000_000n;
@@ -14,16 +14,23 @@ export function mandateMaxAtomic(mandateEntry?: MandateHeaderValue): bigint {
   return mandateEntry.mandate.payload.maxAmountUsdc * USDC_ATOMIC_FACTOR;
 }
 
+/** The one place an untrusted payload is treated as indexable. */
+function record(value: unknown): Record<string, unknown> | undefined {
+  return value !== null && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : undefined;
+}
+
 export function extractAuthNonce(payload: unknown): string | undefined {
-  const p = payload as Record<string, unknown>;
-  const auth = p.authorization as Record<string, unknown> | undefined;
-  return typeof auth?.nonce === "string" ? auth.nonce : undefined;
+  const nonce = record(record(payload)?.authorization)?.nonce;
+  return typeof nonce === "string" ? nonce : undefined;
 }
 
 export function getPayerAddress(payload: unknown): `0x${string}` | undefined {
-  const p = payload as Record<string, unknown>;
-  const auth = p.authorization as Record<string, unknown> | undefined;
-  return (auth?.from ?? p.from) as `0x${string}` | undefined;
+  const p = record(payload);
+  const from = record(p?.authorization)?.from ?? p?.from;
+  // A payload is third-party data: an address-shaped string, or nothing.
+  return typeof from === "string" && isAddress(from, { strict: false }) ? from : undefined;
 }
 
 // Verifies the delegator's EIP-712 signature over a SignedMandate.

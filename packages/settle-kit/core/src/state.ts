@@ -46,9 +46,12 @@ export function reduce(state: CheckoutState, action: CheckoutAction): CheckoutSt
     case "SUBMITTED":
       if (state.status !== "settling") return state;
       return { ...state, txHash: action.txHash };
-    case "CONFIRMING":
+    case "CONFIRMING": {
       if (state.status !== "settling") return state;
-      return { ...state, confirmationError: undefined };
+      // Clearing the error drops the key; it never stores undefined.
+      const { confirmationError: _cleared, ...confirming } = state;
+      return confirming;
+    }
     case "CONFIRMATION_UNKNOWN":
       if (state.status !== "settling" || !state.txHash) return state;
       return { ...state, confirmationError: action.error };
@@ -63,9 +66,10 @@ export function reduce(state: CheckoutState, action: CheckoutAction): CheckoutSt
       return {
         status: "failed",
         error: action.error,
-        quote: "quote" in state ? state.quote : undefined,
-        destination: "destination" in state ? state.destination : undefined,
-        txHash: "txHash" in state ? state.txHash : undefined,
+        ...(state.status === "quoting"
+          ? {}
+          : { quote: state.quote, destination: state.destination }),
+        ...("txHash" in state && state.txHash ? { txHash: state.txHash } : {}),
       };
     default:
       return state;

@@ -28,12 +28,13 @@ export function createPaidFetch(options: CreatePaidFetchOptions): PaidFetch {
       const retry = new Request(retryInput, retryInit);
       const signature = retry.headers.get("PAYMENT-SIGNATURE") ?? retry.headers.get("X-PAYMENT");
       if (signature) {
+        // Each attempt replaces the last observation rather than accumulating.
+        delete metadata.authorizationNonce;
         try {
-          metadata.authorizationNonce = extractAuthorizationNonce(
-            decodePaymentSignatureHeader(signature),
-          );
+          const nonce = extractAuthorizationNonce(decodePaymentSignatureHeader(signature));
+          if (nonce !== undefined) metadata.authorizationNonce = nonce;
         } catch {
-          metadata.authorizationNonce = undefined;
+          // An undecodable signature header leaves the nonce unknown.
         }
       }
       const response = await baseFetch(retry);
@@ -41,12 +42,13 @@ export function createPaidFetch(options: CreatePaidFetchOptions): PaidFetch {
         const required =
           response.headers.get("PAYMENT-REQUIRED") ?? response.headers.get("X-PAYMENT-REQUIRED");
         if (required) {
+          delete metadata.challenge;
           try {
             metadata.challenge = challengeFromPaymentRequired(
-              decodePaymentRequiredHeader(required) as Record<string, unknown>,
+              decodePaymentRequiredHeader(required),
             );
           } catch {
-            metadata.challenge = undefined;
+            // An undecodable challenge header leaves the terms unknown.
           }
         }
       }
@@ -57,7 +59,9 @@ export function createPaidFetch(options: CreatePaidFetchOptions): PaidFetch {
         {
           network: options.scheme.network as `${string}:${string}`,
           client: options.scheme.client as never,
-          x402Version: options.scheme.x402Version,
+          ...(options.scheme.x402Version !== undefined
+            ? { x402Version: options.scheme.x402Version }
+            : {}),
         },
       ],
     });

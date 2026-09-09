@@ -38,18 +38,18 @@ export function buildDecisionRecord({
   attestationTxHash,
   authorizationNonce,
 }: {
-  agentId?: bigint | string;
+  agentId?: bigint | string | undefined;
   amountAtomic: bigint;
   decision: Decision;
   identityStatus: IdentityStatus;
-  mandate?: SignedMandate;
-  payer?: string;
-  paymentHash?: string;
+  mandate?: SignedMandate | undefined;
+  payer?: string | undefined;
+  paymentHash?: string | undefined;
   resource?: unknown;
-  rejectionReason?: string;
-  settlementTxHash?: string;
-  attestationTxHash?: string | null;
-  authorizationNonce?: string | null;
+  rejectionReason?: string | undefined;
+  settlementTxHash?: string | undefined;
+  attestationTxHash?: string | null | undefined;
+  authorizationNonce?: string | null | undefined;
 }): DecisionRecord {
   const rejected = decision === Decision.Rejected;
   return {

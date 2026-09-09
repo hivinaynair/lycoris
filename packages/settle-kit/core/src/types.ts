@@ -1,5 +1,14 @@
-export type HexAddress = `0x${string}`;
-export type TxHash = `0x${string}`;
+declare const brand: unique symbol;
+/**
+ * The brand is **optional**, which is the whole trick: anything structurally
+ * `0x${string}` — a viem `Address`, a `Hash`, a literal — still flows in and out
+ * unchanged, so the SDK stays interoperable with the library it is built on. But a
+ * value already carrying one brand cannot satisfy the other, so a transaction hash
+ * can never land in a payee position. See `@settle-kit/type-tests`.
+ */
+export type HexAddress = `0x${string}` & { readonly [brand]?: "HexAddress" };
+export type TxHash = `0x${string}` & { readonly [brand]?: "TxHash" };
+/** Deliberately unbranded: arbitrary calldata, not an identity. */
 export type Hex = `0x${string}`;
 
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
@@ -41,7 +50,7 @@ export type Quote = {
   expiresAt: number;
   method: "usdc";
   /** Set by the quote server when the recipient belongs to the resource, not the app. */
-  destination?: Destination;
+  destination?: Destination | undefined;
 };
 
 export type CheckoutState =
@@ -66,7 +75,7 @@ export type CheckoutState =
 
 export type SettleAdapter = {
   id: "usdc";
-  quote: (input: { amountUsdc: string; destination?: Destination }) => Promise<Quote>;
+  quote: (input: { amountUsdc: string; destination?: Destination | undefined }) => Promise<Quote>;
   settle: (input: {
     quote: Quote;
     destination: Destination;
@@ -92,7 +101,7 @@ export type SettleConfig = {
 
 export type CreateCheckoutInput = {
   amountUsdc: string;
-  destination?: Destination;
+  destination?: Destination | undefined;
 };
 
 export type CheckoutManager = {

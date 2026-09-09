@@ -3,8 +3,14 @@ import { invalidConfig } from "./errors";
 import { createUsdcMethod } from "./methods/usdc";
 import type { SettleConfig } from "./types";
 
-export type CreateSettleConfigInput = Omit<SettleConfig, "methods"> & {
-  methods?: SettleConfig["methods"];
+/** An option bag, not a stored object: callers build it from optional data. */
+export type CreateSettleConfigInput = {
+  destination?: SettleConfig["destination"] | undefined;
+  getSigner: SettleConfig["getSigner"];
+  methods?: SettleConfig["methods"] | undefined;
+  quoteUrl?: string | undefined;
+  onSettled?: SettleConfig["onSettled"] | undefined;
+  onFailed?: SettleConfig["onFailed"] | undefined;
 };
 
 export function createSettleConfig(input: CreateSettleConfigInput): SettleConfig {
@@ -23,11 +29,11 @@ export function createSettleConfig(input: CreateSettleConfigInput): SettleConfig
     invalidConfig("Provide one USDC method with quote, settle, and confirm");
   }
   return {
-    destination,
+    ...(destination ? { destination } : {}),
     getSigner: input.getSigner,
     methods,
-    quoteUrl: input.quoteUrl,
-    onSettled: input.onSettled,
-    onFailed: input.onFailed,
+    ...(input.quoteUrl !== undefined ? { quoteUrl: input.quoteUrl } : {}),
+    ...(input.onSettled ? { onSettled: input.onSettled } : {}),
+    ...(input.onFailed ? { onFailed: input.onFailed } : {}),
   };
 }

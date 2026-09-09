@@ -82,7 +82,7 @@ export function DisclosedFeedRow({
 }: {
   row: Extract<AttestationRow, { role: "auditor" | "institution" }>;
   index: number;
-  agentName?: string;
+  agentName?: string | undefined;
   onSelect: (row: AttestationRow) => void;
 }) {
   const approved = row.decision === Decision.Approved;

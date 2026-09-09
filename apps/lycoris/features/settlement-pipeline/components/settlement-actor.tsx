@@ -4,7 +4,7 @@ import { useState } from "react";
 import { latestAgentReasoning } from "../lib/settlement-gates";
 import { AgentSplineModel } from "./agent-spline-model";
 
-export function AgentActor({ reasoning }: { reasoning?: string }) {
+export function AgentActor({ reasoning }: { reasoning?: string | undefined }) {
   const [robotLoaded, setRobotLoaded] = useState(false);
   const latestReasoning = latestAgentReasoning(reasoning);
 

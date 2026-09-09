@@ -17,7 +17,7 @@ export function useWorkspacePhase({
   hasConversation: boolean;
   activeStep: number;
   approved: boolean;
-  rejectedReason?: string;
+  rejectedReason?: string | undefined;
 }) {
   const [previewStep, setPreviewStep] = useState(0);
   const [reducedMotion, setReducedMotion] = useState(true);

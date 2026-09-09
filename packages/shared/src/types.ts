@@ -39,11 +39,12 @@ export type SignedMandate = {
   signature: `0x${string}`;
 };
 
+/** Serialized to JSON at rest, where an absent key and an undefined value are the same fact. */
 export type DecisionProof = {
   agentId: string;
-  payer?: string;
-  paymentHash?: string;
-  authorizationNonce?: string;
+  payer?: string | undefined;
+  paymentHash?: string | undefined;
+  authorizationNonce?: string | undefined;
   route: { path: string; price: string };
   mandate: {
     source: "x-ap2-mandate-header";
@@ -51,10 +52,10 @@ export type DecisionProof = {
     maxAmountUsdc: string;
     valid: boolean;
   };
-  failureGate?: "identity" | "mandate" | "settlement" | "attestation";
-  rejectionReason?: string;
-  settlementTxHash?: string;
-  attestationTxHash?: string;
+  failureGate?: "identity" | "mandate" | "settlement" | "attestation" | undefined;
+  rejectionReason?: string | undefined;
+  settlementTxHash?: string | undefined;
+  attestationTxHash?: string | undefined;
 };
 
 export type DecisionRecord = DecisionProof & {

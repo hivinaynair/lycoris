@@ -41,17 +41,19 @@ export type BalanceClient = {
 };
 
 export type UsdcMethodOptions = {
-  client?: BalanceClient;
-  receiptClient?: {
-    waitForTransactionReceipt: (args: {
-      hash: TxHash;
-      confirmations: number;
-      timeout: number;
-    }) => Promise<{ status: "success" | "reverted"; transactionHash: TxHash }>;
-  };
-  quoteTtlMs?: number;
-  now?: () => number;
-  requestId?: () => string;
+  client?: BalanceClient | undefined;
+  receiptClient?:
+    | {
+        waitForTransactionReceipt: (args: {
+          hash: TxHash;
+          confirmations: number;
+          timeout: number;
+        }) => Promise<{ status: "success" | "reverted"; transactionHash: TxHash }>;
+      }
+    | undefined;
+  quoteTtlMs?: number | undefined;
+  now?: (() => number) | undefined;
+  requestId?: (() => string) | undefined;
 };
 
 export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter {
@@ -74,6 +76,8 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
     },
     async settle({ quote, destination, signer }) {
       assertDestination(destination);
+      // At the settle seam the quote is the only input: check it against its own
+      // stated amount, and that it still binds to the destination we were handed.
       validateQuote(quote, quote.amountUsdc, destination);
       if (signer.getChainId) {
         const chainId = await signer.getChainId();

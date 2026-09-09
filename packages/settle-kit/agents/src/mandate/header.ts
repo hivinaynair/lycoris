@@ -1,4 +1,5 @@
-import type { HexAddress } from "@settle-kit/core";
+import { isHex } from "viem";
+import { asAddress, asBigInt, asRecord, asString } from "../decode";
 import type { MandatePayload, SignedMandate } from "./eip712";
 
 export type MandateHeaderValue = {
@@ -32,29 +33,33 @@ export function serializeMandateHeader(value: MandateHeaderValue): string {
   } satisfies SerializedMandateHeader);
 }
 
+/**
+ * A mandate header is presented by whoever made the request. Every field is checked:
+ * a verifier checks the signature against `delegator`, so a malformed one must not pass.
+ */
 export function parseMandateHeader(json: string): MandateHeaderValue | undefined {
+  let parsed: unknown;
   try {
-    const value = JSON.parse(json) as SerializedMandateHeader;
-    if (
-      typeof value.agentId !== "string" ||
-      typeof value.signature !== "string" ||
-      !value.payload ||
-      typeof value.payload.agent !== "string"
-    ) {
-      return undefined;
-    }
-    const payload: MandatePayload = {
-      agent: value.payload.agent as HexAddress,
-      delegator: value.payload.delegator as HexAddress,
-      maxAmountUsdc: BigInt(value.payload.maxAmountUsdc),
-      expiry: BigInt(value.payload.expiry),
-      nonce: BigInt(value.payload.nonce),
-    };
-    return {
-      agentId: BigInt(value.agentId),
-      mandate: { payload, signature: value.signature as HexAddress },
-    };
+    parsed = JSON.parse(json);
   } catch {
     return undefined;
   }
+
+  const value = asRecord(parsed);
+  const body = asRecord(value?.payload);
+  const agentId = asBigInt(value?.agentId);
+  const signature = asString(value?.signature);
+  const agent = asAddress(body?.agent);
+  const delegator = asAddress(body?.delegator);
+  const maxAmountUsdc = asBigInt(body?.maxAmountUsdc);
+  const expiry = asBigInt(body?.expiry);
+  const nonce = asBigInt(body?.nonce);
+
+  if (agentId === undefined || maxAmountUsdc === undefined) return undefined;
+  if (expiry === undefined || nonce === undefined) return undefined;
+  if (agent === undefined || delegator === undefined) return undefined;
+  if (!isHex(signature)) return undefined;
+
+  const payload: MandatePayload = { agent, delegator, maxAmountUsdc, expiry, nonce };
+  return { agentId, mandate: { payload, signature } };
 }

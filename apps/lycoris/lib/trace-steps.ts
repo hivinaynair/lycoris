@@ -7,7 +7,12 @@ export type StepStatus = "pending" | "running" | "approved" | "rejected" | "skip
 export type GateRawData =
   | { gate: "agent"; address: string; uri: string; capabilities: string[] }
   | { gate: "x402"; challenge: X402Challenge }
-  | { gate: "erc8004"; address: string; agentId?: string; identityStatus?: number }
+  | {
+      gate: "erc8004";
+      address: string;
+      agentId?: string | undefined;
+      identityStatus?: number | undefined;
+    }
   | { gate: "ap2"; mandate: RawMandate }
   | { gate: "settlement"; txHash: string; txUrl: string }
   | { gate: "attestation"; txHash: string; txUrl: string };
@@ -16,10 +21,10 @@ export type TraceStep = {
   id: number;
   label: string;
   status: StepStatus;
-  detail?: string;
-  link?: { href: string; label: string };
-  attestationLink?: { href: string; label: string };
-  rawData?: GateRawData;
+  detail?: string | undefined;
+  link?: { href: string; label: string } | undefined;
+  attestationLink?: { href: string; label: string } | undefined;
+  rawData?: GateRawData | undefined;
 };
 
 export type TraceRunResult = {

@@ -8,20 +8,20 @@ export type SettleAppConfig = {
   appName: string;
   getSigner: () => Promise<PaymentSigner>;
   /** Optional default. `begin`/`payNow` input or the quote server may supply it instead. */
-  destination?: Destination;
-  methods?: SettleAdapter[];
-  quoteUrl?: string;
+  destination?: Destination | undefined;
+  methods?: SettleAdapter[] | undefined;
+  quoteUrl?: string | undefined;
 };
 
 export type BeginCheckoutInput = {
   amountUsdc: string;
-  destination?: Destination;
-  title?: string;
+  destination?: Destination | undefined;
+  title?: string | undefined;
 };
 
 export type SettleContextValue = {
   config: SettleAppConfig;
-  appearance?: CheckoutAppearance;
+  appearance?: CheckoutAppearance | undefined;
   manager: CheckoutManager | null;
   managerRef: { current: CheckoutManager | null };
   title: string | undefined;

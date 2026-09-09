@@ -8,6 +8,7 @@ export type {
   CheckoutState,
   CreateCheckoutInput,
   Destination,
+  Hex,
   HexAddress,
   PaymentSigner,
   Quote,

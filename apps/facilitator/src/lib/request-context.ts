@@ -1,7 +1,7 @@
 import { AsyncLocalStorage } from "node:async_hooks";
 
 export type RequestContext = {
-  mandateJson?: string;
+  mandateJson?: string | undefined;
 };
 
 const storage = new AsyncLocalStorage<RequestContext>();

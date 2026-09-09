@@ -79,3 +79,29 @@ describe("commitment", () => {
     );
   });
 });
+
+describe("committedRecordFrom input validation", () => {
+  const valid = {
+    paymentHash: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    payer: "0x1111111111111111111111111111111111111111",
+    amountUsdc: 200_000n,
+    mandateMaxAmountUsdc: 2_000_000n,
+    identityStatus: 1,
+    decision: 0,
+  };
+
+  it("refuses a payment hash that is not 32 bytes of hex", () => {
+    // A commitment is published on chain; binding a malformed field must fail loudly.
+    for (const paymentHash of ["0xabc", "not-hex", `0x${"a".repeat(63)}`, `0x${"a".repeat(65)}`]) {
+      expect(() => committedRecordFrom({ ...valid, paymentHash })).toThrow();
+    }
+  });
+
+  it("refuses a malformed payer, as it already did", () => {
+    expect(() => committedRecordFrom({ ...valid, payer: "0xnope" })).toThrow();
+  });
+
+  it("accepts a well-formed record", () => {
+    expect(committedRecordFrom(valid).paymentHash).toBe(valid.paymentHash);
+  });
+});

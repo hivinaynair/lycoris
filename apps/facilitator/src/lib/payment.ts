@@ -3,6 +3,9 @@ import type { PaymentPayload, PaymentRequirements } from "@x402/core/types";
 import type { Context } from "hono";
 import { isRecord, parseBigIntField, readJsonObject } from "./http.js";
 
+/** A request body that already parsed; `readPaymentBody` returns a Response instead when it did not. */
+export type PaymentBody = Exclude<Awaited<ReturnType<typeof readPaymentBody>>, Response>;
+
 export async function readPaymentBody(c: Context) {
   const body = await readJsonObject(c);
   if (body instanceof Response) return body;

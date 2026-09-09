@@ -23,7 +23,7 @@ export async function publishAttestation({
   payer: string;
   paymentHash: `0x${string}`;
   mandateMaxAmountUsdc: bigint;
-  rejectionReason?: string;
+  rejectionReason?: string | undefined;
 }): Promise<PublishedAttestation | null> {
   const salt = randomSalt();
   const commitment = buildCommitment(

@@ -17,12 +17,12 @@ export function DesktopSettlementScene({
   packetLabelClass,
   horizontalBarClass,
 }: {
-  agentReasoning?: string;
+  agentReasoning?: string | undefined;
   amountLabel: string;
   activeStep: number;
   running: boolean;
   approved: boolean;
-  rejectedReason?: string;
+  rejectedReason?: string | undefined;
   packetClass: string;
   packetLabelClass: string;
   horizontalBarClass: string;

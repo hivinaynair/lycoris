@@ -1,4 +1,4 @@
-import { keccak256 } from "viem";
+import { keccak256, toBytes } from "viem";
 
 export function buildVerifyRejectionPaymentHash({
   amountAtomic,
@@ -8,7 +8,7 @@ export function buildVerifyRejectionPaymentHash({
   resource,
 }: {
   amountAtomic: bigint;
-  authorizationNonce?: string;
+  authorizationNonce?: string | undefined;
   payer: string;
   reason: string;
   resource?: unknown;
@@ -16,5 +16,5 @@ export function buildVerifyRejectionPaymentHash({
   const hashSeed = authorizationNonce
     ? `${payer}-${amountAtomic}-${authorizationNonce}-${reason}`
     : `${payer}-${amountAtomic}-${reason}-${String(resource ?? "")}`;
-  return keccak256(new TextEncoder().encode(hashSeed) as unknown as `0x${string}`);
+  return keccak256(toBytes(hashSeed));
 }

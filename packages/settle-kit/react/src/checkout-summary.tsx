@@ -52,7 +52,7 @@ export function PaymentDetails({
   recoveryDescription,
 }: {
   visual: Visual;
-  recipient?: string;
+  recipient?: string | undefined;
   networkFee: string;
   recoveryDescription: string;
 }) {

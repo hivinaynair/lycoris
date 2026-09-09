@@ -42,8 +42,8 @@ export function DecisionLog({
   activeStep: number;
   selectedAgent: DemoAgent;
   selectedScenario: DemoScenario;
-  traceSteps?: TraceStep[];
-  onStepClick?: (step: TraceStep) => void;
+  traceSteps?: TraceStep[] | undefined;
+  onStepClick?: ((step: TraceStep) => void) | undefined;
 }) {
   const rows = decisionRows(result, selectedAgent, selectedScenario);
   const rejectedReason = cleanRejectionReason(result?.body?.error);
@@ -135,9 +135,9 @@ function DecisionRow({
   activeStep: number;
   result: TriggerResult | null;
   running: boolean;
-  traceSteps?: TraceStep[];
-  onStepClick?: (step: TraceStep) => void;
-  rejectedReason?: string | null;
+  traceSteps?: TraceStep[] | undefined;
+  onStepClick?: ((step: TraceStep) => void) | undefined;
+  rejectedReason?: string | null | undefined;
 }) {
   const status = decisionStatus(row.step, activeStep, result, running);
   const approved = status === "approved";
