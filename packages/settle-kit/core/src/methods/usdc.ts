@@ -41,17 +41,19 @@ export type BalanceClient = {
 };
 
 export type UsdcMethodOptions = {
-  client?: BalanceClient;
-  receiptClient?: {
-    waitForTransactionReceipt: (args: {
-      hash: TxHash;
-      confirmations: number;
-      timeout: number;
-    }) => Promise<{ status: "success" | "reverted"; transactionHash: TxHash }>;
-  };
-  quoteTtlMs?: number;
-  now?: () => number;
-  requestId?: () => string;
+  client?: BalanceClient | undefined;
+  receiptClient?:
+    | {
+        waitForTransactionReceipt: (args: {
+          hash: TxHash;
+          confirmations: number;
+          timeout: number;
+        }) => Promise<{ status: "success" | "reverted"; transactionHash: TxHash }>;
+      }
+    | undefined;
+  quoteTtlMs?: number | undefined;
+  now?: (() => number) | undefined;
+  requestId?: (() => string) | undefined;
 };
 
 export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter {

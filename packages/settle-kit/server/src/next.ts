@@ -13,7 +13,7 @@ export type AgenticPaymentOptions = {
   payTo: string;
   /** Use a facilitator that enforces ERC-8004, AP2 mandates, and balance checks. */
   facilitatorUrl: string;
-  description?: string;
+  description?: string | undefined;
 };
 
 /**

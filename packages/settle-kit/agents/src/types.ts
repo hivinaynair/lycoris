@@ -31,5 +31,5 @@ export type AgentPaymentResult = {
 export type PaidFetchScheme = {
   network: string;
   client: unknown;
-  x402Version?: number;
+  x402Version?: number | undefined;
 };

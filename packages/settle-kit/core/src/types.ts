@@ -41,7 +41,7 @@ export type Quote = {
   expiresAt: number;
   method: "usdc";
   /** Set by the quote server when the recipient belongs to the resource, not the app. */
-  destination?: Destination;
+  destination?: Destination | undefined;
 };
 
 export type CheckoutState =

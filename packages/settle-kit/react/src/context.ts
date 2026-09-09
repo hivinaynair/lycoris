@@ -8,9 +8,9 @@ export type SettleAppConfig = {
   appName: string;
   getSigner: () => Promise<PaymentSigner>;
   /** Optional default. `begin`/`payNow` input or the quote server may supply it instead. */
-  destination?: Destination;
-  methods?: SettleAdapter[];
-  quoteUrl?: string;
+  destination?: Destination | undefined;
+  methods?: SettleAdapter[] | undefined;
+  quoteUrl?: string | undefined;
 };
 
 export type BeginCheckoutInput = {
