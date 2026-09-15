@@ -1,5 +1,6 @@
 import type { PaidFetchScheme } from "@settle-kit/agents";
 import {
+  type CheckoutManager,
   type CheckoutState,
   createCheckout,
   createSettleConfig,
@@ -9,9 +10,12 @@ import {
   type Quote,
   type SettleAdapter,
   type SettleConfig,
+  type SettleErrorCode,
+  type TxHash,
 } from "@settle-kit/core";
 import type { BeginCheckoutInput, CheckoutCallbacks, SettleAppConfig } from "@settle-kit/react";
 import type { AgenticPaymentOptions } from "@settle-kit/server/next";
+import type { Equal, Expect } from "./type-assertions";
 
 declare const getSigner: () => Promise<PaymentSigner>;
 declare const maybeDestination: Destination | undefined;
@@ -102,3 +106,72 @@ export function narrowing(state: CheckoutState) {
   }
   return undefined;
 }
+
+// ── Everything above is an assignability check, which cannot catch a public type
+// ── widening or collapsing to `any`. The rest of this file is identity, and is
+// ── deliberately limited to the surfaces a consumer branches on. See
+// ── `type-assertions.ts` for why the two kinds are not interchangeable.
+
+// ── Adding a status is a breaking change for anyone with an exhaustive switch.
+// ── It should cost a line here, so it is never accidental.
+export type _Statuses = Expect<
+  Equal<
+    CheckoutState["status"],
+    "idle" | "quoting" | "awaiting_payment" | "settling" | "settled" | "failed"
+  >
+>;
+
+// ── Same argument, for the code a consumer maps to a user-facing sentence.
+export type _ErrorCodes = Expect<
+  Equal<
+    SettleErrorCode,
+    | "insufficient_usdc"
+    | "quote_expired"
+    | "wallet_rejected"
+    | "wallet_unavailable"
+    | "wrong_network"
+    | "transfer_failed"
+    | "invalid_config"
+  >
+>;
+
+// ── The guarantee the narrowing test above relies on, stated exactly: in this
+// ── state both fields are present and neither is optional. An assignment would
+// ── still pass if `quote` gained `| undefined`.
+export type _AwaitingPayment = Expect<
+  Equal<
+    Extract<CheckoutState, { status: "awaiting_payment" }>,
+    { status: "awaiting_payment"; quote: Quote; destination: Destination }
+  >
+>;
+
+// ── A settled checkout always has a hash, and it stays branded through
+// ── declaration emit. If this became `string`, `0x${string}` or `any`, the
+// ── brand tests would still pass and consumers would silently lose the
+// ── guarantee that a hash cannot land in a payee position.
+export type _SettledHash = Expect<
+  Equal<Extract<CheckoutState, { status: "settled" }>["txHash"], TxHash>
+>;
+
+// ── Third parties implement this. Adding a required member breaks every
+// ── existing adapter, so it is worth a deliberate edit.
+export type _AdapterSurface = Expect<
+  Equal<keyof SettleAdapter, "id" | "quote" | "settle" | "confirm">
+>;
+
+// ── The object a host holds for the life of a checkout. Removing a member here
+// ── breaks call sites that no type test would otherwise visit.
+export type _ManagerSurface = Expect<
+  Equal<
+    keyof CheckoutManager,
+    "getState" | "subscribe" | "selectMethod" | "pay" | "retryConfirmation" | "reset"
+  >
+>;
+
+// ── The signer is the one interface a host must satisfy to use the SDK at all.
+// ── It is also the narrowest part of the design: `{ to, data }` is EVM calldata
+// ── and does not survive a UTXO or instruction-based chain. Pinning the shape
+// ── keeps that limitation explicit rather than letting it drift.
+export type _SignerSurface = Expect<
+  Equal<keyof PaymentSigner, "address" | "sendTransaction" | "getChainId">
+>;
