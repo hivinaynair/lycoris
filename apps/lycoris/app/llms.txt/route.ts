@@ -17,6 +17,7 @@ const body = `# Lycoris · Settle Kit
 - @settle-kit/react: SettleProvider, useCheckout, and an optional checkout UI. React 19 and viem 2.
 - @settle-kit/agents: x402 paid fetch and AP2 mandate helpers.
 - @settle-kit/server: a Next.js paid-route wrapper.
+- @settle-kit/mcp: a local stdio MCP server that buys x402-gated resources. Modern-only (2026-07-28). bunx @settle-kit/mcp does not work yet; nothing is published.
 
 ## Paying for a resource here
 

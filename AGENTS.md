@@ -32,7 +32,8 @@ bun run check-types && bun run check-boundaries && bun run check-tokens && bun t
 
 ## Settle Kit
 
-Packages: `@settle-kit/core`, `@settle-kit/react`, `@settle-kit/agents`.
+Packages: `@settle-kit/core`, `@settle-kit/react`, `@settle-kit/agents`,
+`@settle-kit/server`, `@settle-kit/mcp`.
 Host demo: Lycoris `/checkout`. Spec:
 [docs/plans/2026-09-07-settle-kit-design.md](docs/plans/2026-09-07-settle-kit-design.md).
 Do not skip the package split, USDC-only path, or balance preflight.

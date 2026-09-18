@@ -56,6 +56,7 @@ preview does not send a request; the button starts the live run.
 | `@settle-kit/react` | `SettleProvider`, `useCheckout`, and optional checkout UI with compiled CSS. | [React](packages/settle-kit/react/README.md) |
 | `@settle-kit/agents` | x402 paid fetch and AP2 mandate helpers, independent of React or Eve. | [Agents](packages/settle-kit/agents/README.md) |
 | `@settle-kit/server` | A Next.js paid-route wrapper with request-scoped mandate forwarding. | [Server](packages/settle-kit/server/README.md) |
+| `@settle-kit/mcp` | A local stdio MCP server that buys x402-gated resources. Modern-only (2026-07-28). | [MCP](packages/settle-kit/mcp/README.md) |
 
 The React package requires React 19 and viem 2. The optional UI has no wagmi,
 Zustand, shadcn, or consumer Tailwind requirement. Packages ship ESM and TypeScript
@@ -144,6 +145,7 @@ semantics and error codes; they differ only in who renders and who decides price
 | Let your server set price and recipient | any of the above, plus `quoteUrl` | Your API |
 | Charge AI agents for an API | `@settle-kit/server` | Next.js route |
 | Have your agent pay for a resource | `@settle-kit/agents` | Your agent |
+| Let an MCP client pay for a resource | `@settle-kit/mcp` | Local stdio process |
 | Pay from an ERC-4337 smart account | `@settle-kit/core` — a signer, not a new package | Browser or server |
 
 ### Pay from a smart account (ERC-4337)
