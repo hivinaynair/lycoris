@@ -178,9 +178,13 @@ Because the hash a smart account returns is a userOpHash rather than a
 transaction hash, the type that carries it is named `SettlementHash`, and the
 React UI takes `transactionUrl` so the host points at a userOp explorer.
 
-**Status:** the signer seam and `SettlementHash` are in place; the sponsored
-demo still pays from a server wallet. Design and staging:
-[ERC-4337 design](docs/plans/2026-09-18-erc-4337-design.md).
+The public checkout runs on this path: the visitor gets a smart account in their
+browser, a faucet funds it, and the account pays the merchant while a paymaster
+covers gas. No wallet connection, no signup.
+
+Worked adapters — wagmi, a bare viem client, a CDP server wallet, and a 4337
+smart account — are in [Writing a `PaymentSigner`](docs/writing-a-payment-signer.md).
+Design and staging: [ERC-4337 design](docs/plans/2026-09-18-erc-4337-design.md).
 
 ### Build your own checkout UI
 
