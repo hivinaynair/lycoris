@@ -15,18 +15,15 @@ import { baseSepolia } from "viem/chains";
 import { loadOrCreateBurnerKey } from "./burner-key";
 import { toPaymentSigner } from "./burner-signer";
 import { setSettlePhase } from "./settle-phase";
+import {
+  beginSponsoredPurchase,
+  readSponsoredPurchase,
+  SPONSORED_PURCHASE_STORAGE_KEY,
+  writeSponsoredPurchase,
+} from "./sponsored-purchase";
 
-const storageKey = "lycoris-sponsored-purchase";
-type StoredPurchase = { id: string; txHash?: string; confirmed?: boolean };
-function readPurchase(): StoredPurchase | undefined {
-  try {
-    return JSON.parse(localStorage.getItem(storageKey) ?? "null") ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
 export function sponsoredPurchaseId(txHash: string) {
-  return localStorage.getItem(`${storageKey}:${txHash}`);
+  return localStorage.getItem(`${SPONSORED_PURCHASE_STORAGE_KEY}:${txHash}`);
 }
 
 const chain = createPublicClient({ chain: baseSepolia, transport: http() });
@@ -66,11 +63,10 @@ async function burnerAccount() {
 /**
  * Waits until this browser can see the funding the server already confirmed.
  *
- * The faucet route waits for its own receipt, so the transfer really is mined by
- * the time it answers — but it waited on *its* RPC node, and the SDK's balance
- * preflight reads from whichever node this browser is load-balanced onto. That
- * node can be a block or two behind, which failed the first payment with
- * "insufficient USDC" for money that was already there.
+ * The faucet route waits for its own receipt on the server's RPC. Preflight
+ * used to read `balanceOf` on a fresh `http()` client — a different node — and
+ * fail with insufficient USDC for money that was already there. It now uses
+ * this same `chain` instance (passed into `createUsdcMethod`).
  */
 async function waitForFunding(payer: HexAddress, required: bigint) {
   for (let attempt = 0; attempt < 15; attempt++) {
@@ -90,6 +86,10 @@ export function createSponsoredPayment(recipient: HexAddress) {
   const method = createUsdcMethod({
     // A second method, so `methods` and `selectMethod` finally mean something.
     id: "usdc-4337",
+    // Same client waitForFunding polls. A second `http()` is a different
+    // load-balanced node, and preflight then fails with insufficient USDC for a
+    // faucet transfer this browser already watched land.
+    client: chain,
     // Confirmation must read the operation's own outcome. A userOp can revert
     // inside a bundle whose transaction succeeded; the transaction receipt would
     // call that unpaid purchase settled.
@@ -109,11 +109,7 @@ export function createSponsoredPayment(recipient: HexAddress) {
   const adapter: SettleAdapter = {
     ...method,
     async quote(input) {
-      let purchase = readPurchase();
-      if (!purchase || purchase.confirmed) {
-        purchase = { id: crypto.randomUUID() };
-        localStorage.setItem(storageKey, JSON.stringify(purchase));
-      }
+      const purchase = beginSponsoredPurchase(localStorage);
       if (input.amountUsdc !== WEATHER_PRICE_USDC || input.destination?.recipient !== recipient)
         throw new SettleKitError("invalid_config", "Only the demo weather report is sponsored.");
       const quote = await method.quote(input);
@@ -139,11 +135,16 @@ export function createSponsoredPayment(recipient: HexAddress) {
 
         setSettlePhase("submitting");
         const userOpHash = await method.settle(input);
+        const previous = readSponsoredPurchase(localStorage);
+        writeSponsoredPurchase(localStorage, {
+          ...(previous ?? { id: input.quote.requestId }),
+          id: input.quote.requestId,
+          txHash: userOpHash,
+        });
         localStorage.setItem(
-          storageKey,
-          JSON.stringify({ id: input.quote.requestId, txHash: userOpHash }),
+          `${SPONSORED_PURCHASE_STORAGE_KEY}:${userOpHash}`,
+          input.quote.requestId,
         );
-        localStorage.setItem(`${storageKey}:${userOpHash}`, input.quote.requestId);
         return userOpHash;
       } finally {
         // Confirmation is its own wait and the SDK already names it.
@@ -152,9 +153,9 @@ export function createSponsoredPayment(recipient: HexAddress) {
     },
     async confirm(input) {
       const result = await method.confirm(input);
-      const purchase = readPurchase();
+      const purchase = readSponsoredPurchase(localStorage);
       if (purchase?.txHash === input.txHash) {
-        localStorage.setItem(storageKey, JSON.stringify({ ...purchase, confirmed: true }));
+        writeSponsoredPurchase(localStorage, { ...purchase, confirmed: true });
       }
       return result;
     },
