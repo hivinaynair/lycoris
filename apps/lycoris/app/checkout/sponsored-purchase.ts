@@ -57,7 +57,9 @@ export function beginSponsoredPurchase(
   randomId = () => crypto.randomUUID(),
 ): StoredPurchase {
   const existing = readSponsoredPurchase(storage);
-  if (existing && !isStalePurchase(existing, now)) return existing;
+  // Confirmed purchases are finished: the next Pay is a new faucet reservation.
+  // Submitted hashes stay so confirmation can retry without sending again.
+  if (existing && !existing.confirmed && !isStalePurchase(existing, now)) return existing;
   const purchase: StoredPurchase = { id: randomId(), createdAt: now };
   writeSponsoredPurchase(storage, purchase);
   return purchase;

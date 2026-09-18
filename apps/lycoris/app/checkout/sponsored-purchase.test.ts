@@ -2,10 +2,10 @@ import { describe, expect, test } from "bun:test";
 import {
   beginSponsoredPurchase,
   isStalePurchase,
+  type PurchaseStorage,
   readSponsoredPurchase,
   SPONSORED_PURCHASE_STORAGE_KEY,
   STALE_PURCHASE_MS,
-  type PurchaseStorage,
   type StoredPurchase,
   writeSponsoredPurchase,
 } from "./sponsored-purchase";
