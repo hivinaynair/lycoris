@@ -1,5 +1,30 @@
 import type { SettlementHash } from "@settle-kit/core";
 
+export type UserOpReceipt = {
+  success: boolean;
+  receipt: { transactionHash: SettlementHash };
+};
+
+/** The name viem gives the error it throws for an operation that is not yet mined. */
+const RECEIPT_NOT_FOUND = "UserOperationReceiptNotFoundError";
+
+export type UserOpReceiptSource = {
+  /**
+   * Both shapes are accepted for a user operation that has not been mined yet:
+   * return `null`, or throw an error named `UserOperationReceiptNotFoundError`.
+   * viem's `getUserOperationReceipt` does the latter — it never returns `null` —
+   * so a loop that only understood `null` would give up on its first poll.
+   * Any other rejection is a real failure and is passed straight through.
+   */
+  getUserOperationReceipt: (args: { hash: SettlementHash }) => Promise<UserOpReceipt | null>;
+};
+
+export type UserOpReceiptClientOptions = {
+  pollMs?: number | undefined;
+};
+
+const DEFAULT_POLL_MS = 1000;
+
 /**
  * A `receiptClient` for `createUsdcMethod` that reads ERC-4337 user operations.
  *
@@ -13,22 +38,6 @@ import type { SettlementHash } from "@settle-kit/core";
  * The operation's own outcome lives in `UserOperationEvent.success`, which is what
  * `eth_getUserOperationReceipt` returns. That is the only field worth trusting here.
  */
-
-export type UserOpReceipt = {
-  success: boolean;
-  receipt: { transactionHash: SettlementHash };
-};
-
-export type UserOpReceiptSource = {
-  getUserOperationReceipt: (args: { hash: SettlementHash }) => Promise<UserOpReceipt | null>;
-};
-
-export type UserOpReceiptClientOptions = {
-  pollMs?: number | undefined;
-};
-
-const DEFAULT_POLL_MS = 1000;
-
 export function createUserOpReceiptClient(
   source: UserOpReceiptSource,
   options: UserOpReceiptClientOptions = {},
@@ -49,7 +58,7 @@ export function createUserOpReceiptClient(
       const deadline = Date.now() + timeout;
 
       for (;;) {
-        const userOpReceipt = await source.getUserOperationReceipt({ hash });
+        const userOpReceipt = await pollOnce(source, hash);
         if (userOpReceipt) {
           return {
             status: userOpReceipt.success ? "success" : "reverted",
@@ -62,13 +71,33 @@ export function createUserOpReceiptClient(
         }
 
         const remaining = deadline - Date.now();
-        // No receipt and no time left: say so rather than guess at an outcome.
+        // No receipt and no time left. SettleAdapter's contract (core types.ts) reads
+        // "Throws mean unknown outcome, never permission to resend" — which is exactly
+        // the situation here, so throwing is the correct answer rather than a guess.
         if (remaining <= 0)
           throw new Error(`Timed out waiting for user operation ${hash} after ${timeout}ms`);
         await sleep(Math.min(pollMs, remaining));
       }
     },
   };
+}
+
+/**
+ * One poll, normalising "not mined yet" to `null`.
+ *
+ * Only the not-found error means keep waiting. Everything else — a dead bundler, a
+ * malformed reply — is rethrown on the spot: swallowing it into the loop would
+ * re-diagnose a real failure as a timeout, and a wrong diagnosis is worse than a slow
+ * one. Matched by `name` rather than `instanceof` on viem's error class, so this file
+ * stays free of a `viem/account-abstraction` import.
+ */
+async function pollOnce(source: UserOpReceiptSource, hash: SettlementHash) {
+  try {
+    return await source.getUserOperationReceipt({ hash });
+  } catch (error) {
+    if ((error as { name?: string })?.name === RECEIPT_NOT_FOUND) return null;
+    throw error;
+  }
 }
 
 function sleep(ms: number) {
