@@ -1,7 +1,7 @@
 import { assertDestination } from "./destination";
 import { invalidConfig } from "./errors";
 import { createUsdcMethod } from "./methods/usdc";
-import type { SettleConfig } from "./types";
+import { SETTLE_METHOD_IDS, type SettleConfig } from "./types";
 
 /** An option bag, not a stored object: callers build it from optional data. */
 export type CreateSettleConfigInput = {
@@ -19,14 +19,23 @@ export function createSettleConfig(input: CreateSettleConfigInput): SettleConfig
   }
   const destination = input.destination ? assertDestination(input.destination) : undefined;
   const methods = input.methods ?? [createUsdcMethod()];
-  if (
-    methods.length !== 1 ||
-    methods[0]?.id !== "usdc" ||
-    typeof methods[0].quote !== "function" ||
-    typeof methods[0].settle !== "function" ||
-    typeof methods[0].confirm !== "function"
-  ) {
-    invalidConfig("Provide one USDC method with quote, settle, and confirm");
+  // One method per id, each complete. This used to demand exactly one method
+  // called "usdc", which made `methods` an array that could hold a single
+  // hard-coded thing and `selectMethod` a function with nothing to select.
+  if (methods.length === 0) invalidConfig("Provide at least one payment method");
+  const seen = new Set<string>();
+  for (const method of methods) {
+    if (!method || !(SETTLE_METHOD_IDS as readonly string[]).includes(method.id))
+      invalidConfig(`Unknown payment method: ${method?.id}`);
+    if (
+      typeof method.quote !== "function" ||
+      typeof method.settle !== "function" ||
+      typeof method.confirm !== "function"
+    )
+      invalidConfig(`Method ${method.id} needs quote, settle, and confirm`);
+    // Two adapters under one id would make selectMethod's choice arbitrary.
+    if (seen.has(method.id)) invalidConfig(`Duplicate payment method: ${method.id}`);
+    seen.add(method.id);
   }
   return {
     ...(destination ? { destination } : {}),
