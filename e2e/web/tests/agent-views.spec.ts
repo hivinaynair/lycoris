@@ -244,6 +244,38 @@ for (const outcome of [
   });
 }
 
+test("settlement tx hashes in the reply are truncated BaseScan links", async ({ page }) => {
+  const hash = "0xc736c8f80e9645e897c2b373ecf88439a6b87cf6c1e9a9308dae02f4f03fc1c0";
+  await page.route("**/api/trigger-payment", async (route) => {
+    const text = `Done. Melbourne at 1 PM: it won't rain. Settlement confirmed on Base Sepolia at ${hash}.`;
+    await route.fulfill({
+      contentType: "text/event-stream",
+      body: [
+        { type: "token", text },
+        {
+          type: "done",
+          result: {
+            httpStatus: 200,
+            route: { id: "basic", path: "/api/weather/public", price: "0.1 USDC" },
+            agent: null,
+            settlementTxHash: hash,
+            settlementTxUrl: `https://sepolia.basescan.org/tx/${hash}`,
+            body: { willRainAt1Pm: false },
+          },
+        },
+      ]
+        .map((event) => `data: ${JSON.stringify(event)}\n\n`)
+        .join(""),
+    });
+  });
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Get me the report", exact: true }).click();
+  const link = page.getByRole("link", { name: "0x...c1c0", exact: true });
+  await expect(link).toBeVisible();
+  await expect(link).toHaveAttribute("href", `https://sepolia.basescan.org/tx/${hash}`);
+  await expect(page.getByRole("status")).not.toContainText(hash);
+});
+
 test("report requests send the prompt, preserve the session, and show only the latest reply", async ({
   page,
 }) => {

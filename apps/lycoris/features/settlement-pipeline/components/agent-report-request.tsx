@@ -3,6 +3,8 @@
 import { Alert, AlertDescription } from "@repo/ui/components/alert";
 import { Button } from "@repo/ui/components/button";
 import { ArrowUpRight, Loader2 } from "lucide-react";
+import { Fragment } from "react";
+import { replyPartsWithTxLinks } from "@/lib/tx-hash-display";
 import type { ChatMessage } from "../lib/use-payment-run";
 import styles from "./payment-workspace-styles";
 
@@ -46,7 +48,15 @@ export function AgentReportResponse({
         <>
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Lycoris</p>
           <div className={styles.reportReply}>
-            <p role="status">{reply || (loading ? "Finding your weather report…" : "")}</p>
+            <p role="status">
+              {reply ? (
+                <ReplyWithTxLinks text={reply} />
+              ) : loading ? (
+                "Finding your weather report…"
+              ) : (
+                ""
+              )}
+            </p>
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -56,5 +66,23 @@ export function AgentReportResponse({
         </>
       )}
     </section>
+  );
+}
+
+function ReplyWithTxLinks({ text }: { text: string }) {
+  return replyPartsWithTxLinks(text).map((part) =>
+    part.type === "tx" ? (
+      <a
+        key={part.id}
+        href={part.href}
+        target="_blank"
+        rel="noreferrer"
+        className="font-mono text-primary underline underline-offset-4"
+      >
+        {part.label}
+      </a>
+    ) : (
+      <Fragment key={part.id}>{part.value}</Fragment>
+    ),
   );
 }
