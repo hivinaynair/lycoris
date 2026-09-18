@@ -1,9 +1,15 @@
 "use client";
 
-import type { resolveAppearance } from "./appearance";
+import type { ResolvedAppearance } from "./appearance";
 import { styles } from "./checkout-styles";
 
-type Visual = ReturnType<typeof resolveAppearance>;
+type PaymentSummaryProps = {
+  visual: ResolvedAppearance;
+  appName: string;
+  heading: string;
+  amount: string;
+  paymentMethod: string;
+};
 
 export function PaymentSummary({
   visual,
@@ -11,13 +17,7 @@ export function PaymentSummary({
   heading,
   amount,
   paymentMethod,
-}: {
-  visual: Visual;
-  appName: string;
-  heading: string;
-  amount: string;
-  paymentMethod: string;
-}) {
+}: PaymentSummaryProps) {
   return (
     <>
       <header className={visual.classFor("header", `sk-header ${styles.header}`)}>
@@ -45,17 +45,19 @@ export function PaymentSummary({
   );
 }
 
+type PaymentDetailsProps = {
+  visual: ResolvedAppearance;
+  recipient?: string | undefined;
+  networkFee: string;
+  recoveryDescription: string;
+};
+
 export function PaymentDetails({
   visual,
   recipient,
   networkFee,
   recoveryDescription,
-}: {
-  visual: Visual;
-  recipient?: string | undefined;
-  networkFee: string;
-  recoveryDescription: string;
-}) {
+}: PaymentDetailsProps) {
   return (
     <details className={visual.classFor("details", `sk-details ${styles.details}`)}>
       <summary>Payment details</summary>

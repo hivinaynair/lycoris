@@ -54,16 +54,15 @@ export function Checkout({
   const config = context?.config;
   const visual = resolveAppearance(context?.appearance, appearance);
   const { state } = checkout;
-  const amount =
-    "quote" in state
-      ? (state.quote?.amountUsdc ?? amountUsdc)
-      : "amountUsdc" in state
-        ? state.amountUsdc
-        : amountUsdc;
+  let amount = amountUsdc;
+  if ("quote" in state) {
+    amount = state.quote?.amountUsdc ?? amountUsdc;
+  } else if ("amountUsdc" in state) {
+    amount = state.amountUsdc;
+  }
   const recipient =
-    "destination" in state
-      ? (state.destination?.recipient ?? (destination ?? config?.destination)?.recipient)
-      : (destination ?? config?.destination)?.recipient;
+    ("destination" in state ? state.destination?.recipient : undefined) ??
+    (destination ?? config?.destination)?.recipient;
   const copy = {
     buy: skipReview ? `Pay ${amount} USDC` : "Buy",
     pay: `Pay ${amount} USDC`,
@@ -83,8 +82,12 @@ export function Checkout({
   const heading = checkout.title ?? title;
 
   async function onBuy() {
-    const start = skipReview ? checkout.payNow : checkout.begin;
-    await start({ amountUsdc, title, destination });
+    const input = { amountUsdc, title, destination };
+    if (skipReview) {
+      await checkout.payNow(input);
+    } else {
+      await checkout.begin(input);
+    }
   }
 
   return (

@@ -77,19 +77,23 @@ export async function getDecisionRecord(
   const baseUrl = input.facilitatorUrl.replace(/\/+$/, "");
   if (!baseUrl) return undefined;
 
+  let path: string;
+  if (input.settlementTxHash) {
+    path = `/decision-records/by-settlement/${input.settlementTxHash}`;
+  } else if (input.authorizationNonce) {
+    path = `/decision-records/by-auth-nonce/${encodeURIComponent(input.authorizationNonce)}`;
+  } else {
+    path = `/decision-records/latest?payer=${encodeURIComponent(input.payer.toLowerCase())}`;
+  }
+
   for (let i = 0; i < retries; i++) {
-    const path = input.settlementTxHash
-      ? `/decision-records/by-settlement/${input.settlementTxHash}`
-      : input.authorizationNonce
-        ? `/decision-records/by-auth-nonce/${encodeURIComponent(input.authorizationNonce)}`
-        : `/decision-records/latest?payer=${encodeURIComponent(input.payer.toLowerCase())}`;
     const response = await fetchImpl(`${baseUrl}${path}`).catch(() => undefined);
-    const body = response?.ok
-      ? ((await response.json().catch(() => undefined)) as
-          | { decisionRecord?: DecisionRecord | null }
-          | undefined)
-      : undefined;
-    if (body?.decisionRecord) return body.decisionRecord;
+    if (response?.ok) {
+      const body = (await response.json().catch(() => undefined)) as
+        | { decisionRecord?: DecisionRecord | null }
+        | undefined;
+      if (body?.decisionRecord) return body.decisionRecord;
+    }
     if (i < retries - 1) await new Promise((r) => setTimeout(r, 800));
   }
   return undefined;

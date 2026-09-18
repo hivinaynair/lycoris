@@ -55,7 +55,7 @@ export function reduce(state: CheckoutState, action: CheckoutAction): CheckoutSt
     case "CONFIRMATION_UNKNOWN":
       if (state.status !== "settling" || !state.txHash) return state;
       return { ...state, confirmationError: action.error };
-    case "FAILED":
+    case "FAILED": {
       if (
         state.status !== "quoting" &&
         state.status !== "awaiting_payment" &&
@@ -63,14 +63,18 @@ export function reduce(state: CheckoutState, action: CheckoutAction): CheckoutSt
       ) {
         return state;
       }
-      return {
+      if (state.status === "quoting") {
+        return { status: "failed", error: action.error };
+      }
+      const failed: Extract<CheckoutState, { status: "failed" }> = {
         status: "failed",
         error: action.error,
-        ...(state.status === "quoting"
-          ? {}
-          : { quote: state.quote, destination: state.destination }),
-        ...("txHash" in state && state.txHash ? { txHash: state.txHash } : {}),
+        quote: state.quote,
+        destination: state.destination,
       };
+      if ("txHash" in state && state.txHash) failed.txHash = state.txHash;
+      return failed;
+    }
     default:
       return state;
   }

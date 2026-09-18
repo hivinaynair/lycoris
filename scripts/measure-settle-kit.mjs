@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const root = join(import.meta.dirname, "..");
-const require = createRequire(join(root, "e2e/web/package.json"));
+const require = createRequire(join(root, "package.json"));
 const { build } = require("esbuild");
 const imports = {
   core: 'export { createCheckout, createSettleConfig } from "./packages/settle-kit/core/dist/index.js";',

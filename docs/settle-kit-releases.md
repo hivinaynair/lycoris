@@ -35,7 +35,7 @@ bun run check-tokens
 bun test
 bun run pack:settle-kit
 bun run check:settle-kit-package
-bun run --cwd e2e/web e2e:install
+bun run playwright:install
 bun run smoke:settle-kit "$PWD/dist/settle-kit"
 ```
 

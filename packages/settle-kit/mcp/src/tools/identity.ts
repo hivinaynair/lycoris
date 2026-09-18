@@ -11,10 +11,10 @@ export async function getAgentIdentity(options: SettleMcpOptions) {
   const [signer, mandateHeader] = await Promise.all([options.getSigner(), options.getMandate()]);
   const parsed = parseMandateHeader(mandateHeader);
   const agentId = parsed?.agentId ?? 0n;
-  const registered = await (
+  const lookup =
     options.ports?.lookupRegistered ??
-    ((input: { agentId: bigint; address: HexAddress }) => lookupRegistered(input, options))
-  )({
+    ((input: { agentId: bigint; address: HexAddress }) => lookupRegistered(input, options));
+  const registered = await lookup({
     agentId,
     address: signer.address,
   });
@@ -44,8 +44,8 @@ export async function getMandate(options: SettleMcpOptions, store: PaymentStore)
     agent: parsed.mandate.payload.agent,
     merchant: parsed.mandate.payload.payTo,
     cap,
-    spent: toMoney(spentAtomic.toString() === "0" ? "0" : spentAtomic.toString()),
-    remaining: toMoney(remainingAtomic.toString() === "0" ? "0" : remainingAtomic.toString()),
+    spent: toMoney(spentAtomic.toString()),
+    remaining: toMoney(remainingAtomic.toString()),
     expiry: parsed.mandate.payload.expiry.toString(),
     expired,
     valid: local.ok,
@@ -55,9 +55,9 @@ export async function getMandate(options: SettleMcpOptions, store: PaymentStore)
 
 export async function getBalance(options: SettleMcpOptions) {
   const signer = await options.getSigner();
-  const atomic = await (
-    options.ports?.readUsdcBalance ?? ((address: HexAddress) => readUsdcBalance(address, options))
-  )(signer.address);
+  const readBalance =
+    options.ports?.readUsdcBalance ?? ((address: HexAddress) => readUsdcBalance(address, options));
+  const atomic = await readBalance(signer.address);
   return jsonResult({
     address: signer.address,
     balance: toMoney(atomic.toString()),

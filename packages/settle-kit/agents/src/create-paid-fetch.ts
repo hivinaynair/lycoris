@@ -1,7 +1,11 @@
 import { decodePaymentRequiredHeader, decodePaymentSignatureHeader } from "@x402/core/http";
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
 import type { PaidFetchScheme, ResourceChallenge } from "./types";
-import { challengeFromPaymentRequired, extractAuthorizationNonce } from "./x402-decode";
+import {
+  challengeFromPaymentRequired,
+  extractAuthorizationNonce,
+  paymentRequiredHeader,
+} from "./x402-decode";
 
 export type PaidFetchFn = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 export type PaymentMetadata = { authorizationNonce?: string; challenge?: ResourceChallenge };
@@ -38,32 +42,30 @@ export function createPaidFetch(options: CreatePaidFetchOptions): PaidFetch {
         }
       }
       const response = await baseFetch(retry);
-      if (response.status === 402) {
-        const required =
-          response.headers.get("PAYMENT-REQUIRED") ?? response.headers.get("X-PAYMENT-REQUIRED");
-        if (required) {
-          delete metadata.challenge;
-          try {
-            metadata.challenge = challengeFromPaymentRequired(
-              decodePaymentRequiredHeader(required),
-            );
-          } catch {
-            // An undecodable challenge header leaves the terms unknown.
-          }
-        }
+      if (response.status !== 402) return response;
+      const required = paymentRequiredHeader(response.headers);
+      if (!required) return response;
+      delete metadata.challenge;
+      try {
+        metadata.challenge = challengeFromPaymentRequired(decodePaymentRequiredHeader(required));
+      } catch {
+        // An undecodable challenge header leaves the terms unknown.
       }
       return response;
     };
+    const scheme: {
+      network: `${string}:${string}`;
+      client: never;
+      x402Version?: number;
+    } = {
+      network: options.scheme.network as `${string}:${string}`,
+      client: options.scheme.client as never,
+    };
+    if (options.scheme.x402Version !== undefined) {
+      scheme.x402Version = options.scheme.x402Version;
+    }
     const wrapped = wrapFetchWithPaymentFromConfig(observingFetch as typeof fetch, {
-      schemes: [
-        {
-          network: options.scheme.network as `${string}:${string}`,
-          client: options.scheme.client as never,
-          ...(options.scheme.x402Version !== undefined
-            ? { x402Version: options.scheme.x402Version }
-            : {}),
-        },
-      ],
+      schemes: [scheme],
     });
     const response = await wrapped(request);
     metadataByResponse.set(response, Object.freeze(metadata));

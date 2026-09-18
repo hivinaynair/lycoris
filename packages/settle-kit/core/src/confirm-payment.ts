@@ -13,16 +13,22 @@ export async function confirmPayment(
       quote: current.quote,
       destination: current.destination,
     });
-    if (result === "success") setState({ type: "SETTLED", txHash });
-    else if (result === "reverted")
-      setState({
-        type: "FAILED",
-        error: {
-          code: "transfer_failed",
-          message: "The transaction reverted. No USDC was transferred.",
-        },
-      });
-    else throw new Error("Unexpected receipt result");
+    switch (result) {
+      case "success":
+        setState({ type: "SETTLED", txHash });
+        return;
+      case "reverted":
+        setState({
+          type: "FAILED",
+          error: {
+            code: "transfer_failed",
+            message: "The transaction reverted. No USDC was transferred.",
+          },
+        });
+        return;
+      default:
+        throw new Error("Unexpected receipt result");
+    }
   } catch {
     setState({
       type: "CONFIRMATION_UNKNOWN",

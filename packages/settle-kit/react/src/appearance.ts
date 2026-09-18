@@ -1,5 +1,16 @@
 import type { CSSProperties } from "react";
 
+type AppearanceElement =
+  | "card"
+  | "header"
+  | "amount"
+  | "paymentMethod"
+  | "primaryButton"
+  | "status"
+  | "details"
+  | "footer"
+  | "error";
+
 export type CheckoutAppearance = {
   theme?: "inherit" | "light" | "dark";
   variables?: Partial<{
@@ -15,20 +26,13 @@ export type CheckoutAppearance = {
     borderRadius: string;
     controlBorderRadius: string;
   }>;
-  elements?: Partial<
-    Record<
-      | "card"
-      | "header"
-      | "amount"
-      | "paymentMethod"
-      | "primaryButton"
-      | "status"
-      | "details"
-      | "footer"
-      | "error",
-      string
-    >
-  >;
+  elements?: Partial<Record<AppearanceElement, string>>;
+};
+
+export type ResolvedAppearance = {
+  theme: NonNullable<CheckoutAppearance["theme"]>;
+  style: (CSSProperties & Record<string, string>) | undefined;
+  classFor: (element: AppearanceElement, base: string) => string;
 };
 
 const variableNames = {
@@ -45,7 +49,10 @@ const variableNames = {
   controlBorderRadius: "--sk-control-radius",
 } as const;
 
-export function resolveAppearance(global?: CheckoutAppearance, local?: CheckoutAppearance) {
+export function resolveAppearance(
+  global?: CheckoutAppearance,
+  local?: CheckoutAppearance,
+): ResolvedAppearance {
   const variables = { ...global?.variables, ...local?.variables };
   const style: CSSProperties & Record<string, string> = {};
   for (const key of Object.keys(variableNames) as (keyof typeof variableNames)[]) {
@@ -56,7 +63,6 @@ export function resolveAppearance(global?: CheckoutAppearance, local?: CheckoutA
   return {
     theme: local?.theme ?? global?.theme ?? "inherit",
     style: Object.keys(style).length ? style : undefined,
-    classFor: (element: keyof NonNullable<CheckoutAppearance["elements"]>, base: string) =>
-      [base, elements[element]].filter(Boolean).join(" "),
+    classFor: (element, base) => [base, elements[element]].filter(Boolean).join(" "),
   };
 }

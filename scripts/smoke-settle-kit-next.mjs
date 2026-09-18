@@ -11,7 +11,7 @@ async function run(command, cwd = host) {
   const child = Bun.spawn(command, { cwd, stdout: "inherit", stderr: "inherit" });
   if ((await child.exited) !== 0) throw new Error(`Failed: ${command.join(" ")}`);
 }
-await cp(join(root, "e2e/fixtures/settle-kit-next"), host, { recursive: true });
+await cp(join(root, "scripts/fixtures/settle-kit-next"), host, { recursive: true });
 // @settle-kit/mcp is a stdio process, not a Next.js consumer — leave it out.
 for (const name of ["core", "react", "agents", "server"]) {
   if (artifacts) {
@@ -84,8 +84,8 @@ try {
     await Bun.sleep(500);
   }
   if (!ready) throw new Error("Independent Next host did not start");
-  const requireE2e = createRequire(join(root, "e2e/web/package.json"));
-  const { chromium } = await import(requireE2e.resolve("@playwright/test"));
+  const requireRoot = createRequire(join(root, "package.json"));
+  const { chromium } = await import(requireRoot.resolve("@playwright/test"));
   browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1000, height: 800 } });
   const errors = [];
