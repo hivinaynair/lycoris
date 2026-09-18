@@ -10,6 +10,8 @@ const allowed = {
     "@settle-kit/core",
     "@settle-kit/agents",
     "@modelcontextprotocol/server",
+    "@x402/evm",
+    "@coinbase/cdp-sdk",
     "viem",
     "zod",
     "node:crypto",

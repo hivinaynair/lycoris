@@ -21,14 +21,17 @@
     "prepack": "bun run build"
   },
   "dependencies": {
+    "@coinbase/cdp-sdk": "^1.51.2",
     "@modelcontextprotocol/server": "2.0.0",
     "@settle-kit/agents": "workspace:*",
     "@settle-kit/core": "workspace:*",
+    "@x402/evm": "^2.17.0",
     "viem": "^2",
     "zod": "^4"
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.0.0",
+    "@modelcontextprotocol/conformance": "0.1.16",
     "@repo/typescript-config": "workspace:*",
     "typescript": "^5"
   },
