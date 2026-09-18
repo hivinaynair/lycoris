@@ -75,10 +75,10 @@ export function createCheckout(config: SettleConfig, input: CreateCheckoutInput)
       setState({ type: "QUOTING", amountUsdc });
       try {
         const value = config.quoteUrl
-          ? await fetchQuote(config.quoteUrl, { amountUsdc, destination, method: "usdc" })
+          ? await fetchQuote(config.quoteUrl, { amountUsdc, destination, method: adapter.id })
           : await adapter.quote({ amountUsdc, destination });
         if (token !== generation) return;
-        const quote = validateQuote(value, amountUsdc, destination);
+        const quote = validateQuote(value, amountUsdc, destination, adapter.id);
         const settleTo = quote.destination ?? destination;
         if (!settleTo) {
           invalidConfig(

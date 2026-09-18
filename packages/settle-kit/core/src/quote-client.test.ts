@@ -99,3 +99,28 @@ describe("validateQuote destination binding", () => {
     }
   });
 });
+
+describe("validateQuote method binding", () => {
+  it("accepts a smart-account quote and keeps its id", () => {
+    // This rejected every ERC-4337 quote: the check was pinned to the literal
+    // "usdc", so checkout failed in selectMethod, long before pay().
+    const quote = validateQuote(body({ method: "usdc-4337" }), "12.50");
+    expect(quote.method).toBe("usdc-4337");
+  });
+
+  it("does not rename a quote to the default method", () => {
+    expect(
+      validateQuote(body({ method: "usdc-4337" }), "12.50", undefined, "usdc-4337").method,
+    ).toBe("usdc-4337");
+  });
+
+  it("refuses a quote issued by a different method than the one settling it", () => {
+    expect(() =>
+      validateQuote(body({ method: "usdc" }), "12.50", undefined, "usdc-4337"),
+    ).toThrow();
+  });
+
+  it("refuses a method id the SDK does not know", () => {
+    expect(() => validateQuote(body({ method: "paypal" }), "12.50")).toThrow();
+  });
+});
