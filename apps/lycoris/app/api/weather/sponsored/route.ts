@@ -7,10 +7,13 @@ export async function POST(request: Request) {
   try {
     const id = await readSponsoredRequest(request);
     const purchase = await getSponsoredPurchase(id);
-    if (!purchase?.tx_hash)
+    if (!purchase?.funding_tx_hash)
       return Response.json({ error: "Payment has not been submitted." }, { status: 403 });
+    // TODO(task-8b): funding_tx_hash is the faucet transfer that funds the burner,
+    // not the payment to the merchant. Gating on it verifies the wrong transfer;
+    // task 8b rewrites this route to check the payment user operation instead.
     await verifyWeatherPayment(sponsorChain, {
-      txHash: purchase.tx_hash,
+      txHash: purchase.funding_tx_hash,
       recipient: purchase.recipient,
       sponsoredPayer: purchase.sponsor,
     });

@@ -17,7 +17,7 @@ type Purchase = {
   sponsor: Hex;
   recipient: Hex;
   created_at: string;
-  tx_hash: Hex | null;
+  funding_tx_hash: Hex | null;
 };
 
 function configuration() {
@@ -44,7 +44,7 @@ export async function paySponsored(id: string) {
   const previous = await getSponsoredPurchase(id);
   if (previous && (previous.sponsor !== address || previous.recipient !== recipient))
     throw new Error("Purchase configuration changed.");
-  if (previous?.tx_hash) return { txHash: previous.tx_hash };
+  if (previous?.funding_tx_hash) return { txHash: previous.funding_tx_hash };
   if (!previous) {
     const balance = await sponsorChain.readContract({
       address: BASE_SEPOLIA_USDC_ADDRESS,
@@ -62,7 +62,7 @@ export async function paySponsored(id: string) {
   // Never replay an uncertain submission outside the provider's idempotency window.
   if (Date.now() - new Date(purchase.created_at).getTime() > 60 * 60 * 1000)
     throw new Error("This purchase needs operator review. Do not start another payment.");
-  if (purchase.tx_hash) return { txHash: purchase.tx_hash };
+  if (purchase.funding_tx_hash) return { txHash: purchase.funding_tx_hash };
   const cdp = new CdpClient({
     ...(env.CDP_API_KEY_ID ? { apiKeyId: env.CDP_API_KEY_ID } : {}),
     ...(env.CDP_API_KEY_SECRET ? { apiKeySecret: env.CDP_API_KEY_SECRET } : {}),
@@ -83,7 +83,7 @@ export async function paySponsored(id: string) {
     },
   });
   await db.execute(
-    sql`UPDATE sponsored_checkout_payments SET tx_hash = ${transactionHash} WHERE id = ${id}::uuid`,
+    sql`UPDATE sponsored_checkout_payments SET funding_tx_hash = ${transactionHash} WHERE id = ${id}::uuid`,
   );
   return { txHash: transactionHash };
 }
