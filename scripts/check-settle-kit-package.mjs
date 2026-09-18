@@ -47,6 +47,7 @@ const imports = [
   "@settle-kit/react/ui",
   "@settle-kit/agents",
   "@settle-kit/server/next",
+  "@settle-kit/mcp",
 ];
 await writeFile(
   join(host, "consumer.mjs"),
@@ -81,4 +82,4 @@ await run(
   ],
   host,
 );
-console.log(`All four SDK packages passed independent import and declaration checks: ${host}`);
+console.log(`All five SDK packages passed independent import and declaration checks: ${host}`);

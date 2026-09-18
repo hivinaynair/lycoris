@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
 const name = process.argv[2];
-if (!["core", "react", "agents", "server"].includes(name))
+if (!["core", "react", "agents", "server", "mcp"].includes(name))
   throw new Error("Expected SDK package name");
 const cwd = join(import.meta.dirname, "../packages/settle-kit", name);
 // Emit modules rather than bundling: this preserves React client boundaries and

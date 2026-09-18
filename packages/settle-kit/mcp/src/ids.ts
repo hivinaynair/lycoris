@@ -1,0 +1,33 @@
+import { createHash } from "node:crypto";
+
+export type PaymentEvent = {
+  agent: string;
+  resource: string;
+  amountAtomic: string;
+  quoteNonce: string;
+};
+
+function digest(parts: string[]): string {
+  return createHash("sha256").update(parts.join("\0")).digest("hex").slice(0, 32);
+}
+
+export function derivePaymentId(event: PaymentEvent): string {
+  return `pay_${digest([
+    event.agent.toLowerCase(),
+    event.resource,
+    event.amountAtomic,
+    event.quoteNonce,
+  ])}`;
+}
+
+export function prefixedId(prefix: "agt" | "mdt" | "qte", value: string): string {
+  return `${prefix}_${digest([value])}`;
+}
+
+export function quoteNonceFor(input: {
+  amountAtomic: string;
+  payTo?: string | undefined;
+  url: string;
+}): string {
+  return digest([input.amountAtomic, input.payTo ?? "", input.url]);
+}

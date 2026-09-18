@@ -1,18 +1,18 @@
 # Releasing Settle Kit to npm
 
-The four packages release together: `@settle-kit/core`, `@settle-kit/react`,
-`@settle-kit/agents`, and `@settle-kit/server`. Releases use Bun to build, pack,
+The five packages release together: `@settle-kit/core`, `@settle-kit/react`,
+`@settle-kit/agents`, `@settle-kit/server`, and `@settle-kit/mcp`. Releases use Bun to build, pack,
 and publish. Consumers receive ESM, declarations, source for Bun's export
 condition, and compiled CSS for the optional React UI.
 
 ## First release setup
 
 - Confirm ownership of the `@settle-kit` npm organization/scope. If it is not
-  available, rename all four packages and their imports before the first release.
+  available, rename all five packages and their imports before the first release.
 - Choose a public license and put its LICENSE file in each SDK package, with
   matching `license` metadata. License approval is still pending; none is assumed.
 - Create the GitHub environment `npm`. Add `NPM_TOKEN` as an environment secret:
-  a granular npm token with publish access to the four packages and permission
+  a granular npm token with publish access to the five packages and permission
   to bypass interactive 2FA for CI. Set its expiration and rotate it when needed. See the
   [npm token documentation](https://docs.npmjs.com/creating-and-viewing-access-tokens/).
 - Restrict that environment to release tags. Optional required reviewers can
@@ -46,7 +46,7 @@ checks as part of the regular Check workflow.
 Artifact checks verify public export targets, declarations, portable runtime
 dependencies, and exclusion of tests/environment files. A temporary consumer
 outside the workspace loads core, React and agents under Node and Bun, and
-checks all four declaration entry points. The Next production fixture compiles
+checks all five declaration entry points. The Next production fixture compiles
 the server adapter in an App Router route. Its browser test completes two
 simulated purchases under one provider, checks styles and mobile overflow, and
 fails on browser errors. No money moves and no real facilitator is called.
@@ -57,7 +57,7 @@ fails on browser errors. No money moves and no real facilitator is called.
 bun run version:settle-kit 0.0.2-beta.0
 ```
 
-Review and commit the four manifests and `bun.lock`. Merge the release commit
+Review and commit the five manifests and `bun.lock`. Merge the release commit
 into `main`, then create and push its release tag:
 
 ```sh
@@ -74,7 +74,7 @@ publishes those exact artifacts in dependency order (core first). Numbered
 npm publication is not atomic across packages. A rerun skips versions already
 present only when their registry integrity matches the checked tarball and continues with the remaining packages. Do not change code under an
 existing version/tag. Fixes require a new version; never move a release tag.
-Check all four package pages and install them in a fresh consumer after the
+Check all five package pages and install them in a fresh consumer after the
 first actual publication. Local tarball checks are not evidence of a live npm
 release.
 
@@ -85,6 +85,7 @@ bun add @settle-kit/react viem react
 # Headless: bun add @settle-kit/core viem
 # Agents: bun add @settle-kit/agents
 # Next server: bun add @settle-kit/server next react react-dom
+# MCP: bun add @settle-kit/mcp
 ```
 
 Use `@settle-kit/react` for Provider/hooks, `@settle-kit/react/ui` for `Checkout`,

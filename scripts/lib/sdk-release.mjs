@@ -1,7 +1,7 @@
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export const sdkPackages = ["core", "react", "agents", "server"];
+export const sdkPackages = ["core", "react", "agents", "server", "mcp"];
 export const root = join(import.meta.dirname, "../..");
 export const registry = "https://registry.npmjs.org";
 
