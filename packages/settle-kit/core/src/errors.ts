@@ -1,11 +1,14 @@
+import { BaseError } from "viem";
 import type { SettleError, SettleErrorCode } from "./types";
 
-export class SettleKitError extends Error {
+export class SettleKitError extends BaseError {
   readonly code: SettleErrorCode;
 
-  constructor(code: SettleErrorCode, message: string) {
-    super(message);
-    this.name = "SettleKitError";
+  constructor(code: SettleErrorCode, message: string, options: { docsPath?: string } = {}) {
+    super(message, {
+      name: "SettleKitError",
+      ...(options.docsPath ? { docsPath: options.docsPath } : {}),
+    });
     this.code = code;
   }
 }
