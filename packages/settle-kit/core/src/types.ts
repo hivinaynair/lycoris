@@ -27,7 +27,8 @@ export const DEFAULT_QUOTE_TTL_MS = 5 * 60 * 1000;
  * needs its own adapter — a different receipt client, a hash that is not a
  * transaction hash — so the literal had to go.
  */
-export type SettleMethodId = "usdc" | "usdc-4337";
+export const SETTLE_METHOD_IDS = ["usdc", "usdc-4337"] as const;
+export type SettleMethodId = (typeof SETTLE_METHOD_IDS)[number];
 
 /**
  * What a settlement is identified by, once a payer might be a smart account.
