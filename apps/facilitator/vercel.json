@@ -1,5 +1,5 @@
 {
   "bunVersion": "1.4.x",
   "buildCommand": "cd ../.. && bunx bun@1.4.2 run --bun build --filter=facilitator --env-mode=loose",
-  "installCommand": "cd ../.. && env -u npm_config_user_agent bunx bun@1.4.2 install --frozen-lockfile"
+  "installCommand": "cd ../.. && env -u npm_config_user_agent bun install --frozen-lockfile"
 }
