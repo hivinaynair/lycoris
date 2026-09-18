@@ -8,7 +8,7 @@ import {
   type PaymentSigner,
   type Quote,
   type SettleAdapter,
-  type TxHash,
+  type SettlementHash,
 } from "./types";
 
 const destination = {
@@ -16,7 +16,7 @@ const destination = {
   targetAsset: BASE_SEPOLIA_USDC_ADDRESS,
   recipient: "0x1111111111111111111111111111111111111111" as const,
 };
-const hash: TxHash = `0x${"ab".repeat(32)}`;
+const hash: SettlementHash = `0x${"ab".repeat(32)}`;
 const makeQuote = (): Quote => ({
   requestId: "q",
   amountUsdc: "12.50",

@@ -144,6 +144,47 @@ semantics and error codes; they differ only in who renders and who decides price
 | Let your server set price and recipient | any of the above, plus `quoteUrl` | Your API |
 | Charge AI agents for an API | `@settle-kit/server` | Next.js route |
 | Have your agent pay for a resource | `@settle-kit/agents` | Your agent |
+| Pay from an ERC-4337 smart account | `@settle-kit/core` — a signer, not a new package | Browser or server |
+
+### Pay from a smart account (ERC-4337)
+
+Account abstraction is a **signer**, not a payment method. `PaymentSigner` is
+three fields, so a smart account satisfies it without the SDK learning what a
+user operation is:
+
+```ts
+import { toCoinbaseSmartAccount } from "viem/account-abstraction";
+
+const signer: PaymentSigner = {
+  address: account.address,
+  sendTransaction: ({ to, data }) =>
+    bundler.sendUserOperation({ account, calls: [{ to, value: 0n, data }] }),
+  getChainId: async () => baseSepolia.id,
+};
+```
+
+There is one trap, and it is the reason this needs saying out loud. **A user
+operation bundled into a transaction that succeeded can still have reverted.**
+The EntryPoint records the outcome in `UserOperationEvent.success`, not in the
+transaction receipt's status — so confirming a userOp by reading
+`receipt.status` marks unpaid purchases as settled.
+
+`createUsdcMethod` takes a `receiptClient` for exactly this reason. Supply one
+that reads `eth_getUserOperationReceipt` and returns `"reverted"` when the
+operation failed, and a reverted userOp then walks the same state path as a
+reverted ERC-20 transfer: `settling` → `failed`, with the hash intact.
+
+Because the hash a smart account returns is a userOpHash rather than a
+transaction hash, the type that carries it is named `SettlementHash`, and the
+React UI takes `transactionUrl` so the host points at a userOp explorer.
+
+The public checkout runs on this path: the visitor gets a smart account in their
+browser, a faucet funds it, and the account pays the merchant while a paymaster
+covers gas. No wallet connection, no signup.
+
+Worked adapters — wagmi, a bare viem client, a CDP server wallet, and a 4337
+smart account — are in [Writing a `PaymentSigner`](docs/writing-a-payment-signer.md).
+Design and staging: [ERC-4337 design](docs/plans/2026-09-18-erc-4337-design.md).
 
 ### Build your own checkout UI
 
@@ -464,7 +505,10 @@ mainnet, cards, fiat onramps, swaps, or bridges. Balance preflight is not a bala
 lock, and one confirmation is demo evidence rather than irreversible finality.
 
 Core sessions live in memory. The sponsored host adds database idempotency and
-browser purchase recovery; other hosts need their own persistence. Transaction
+browser purchase recovery; other hosts need their own persistence. ERC-4337 is
+supported at the signer seam rather than as a bundled account stack: the SDK
+ships no bundler, paymaster or account implementation, and a host that wants one
+brings its own. Transaction
 replacement reconciliation remains outside this demo. The anonymous sponsor has
 a small fixed budget and no automatic refill; broader use needs an explicit abuse
 control and funding policy.

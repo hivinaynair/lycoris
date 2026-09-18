@@ -16,7 +16,9 @@ export type {
   SettleConfig,
   SettleError,
   SettleErrorCode,
-  TxHash,
+  SettleMethodId,
+  Settlement,
+  SettlementHash,
 } from "./types";
 export {
   BASE_SEPOLIA_CHAIN_ID,

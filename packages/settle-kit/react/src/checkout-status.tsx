@@ -1,6 +1,6 @@
 "use client";
 
-import type { CheckoutState, TxHash } from "@settle-kit/core";
+import type { CheckoutState, SettlementHash } from "@settle-kit/core";
 import type { resolveAppearance } from "./appearance";
 import type { CheckoutLabels } from "./checkout";
 import { styles } from "./checkout-styles";
@@ -21,7 +21,7 @@ type StatusProps = {
   copy: CheckoutLabels;
   act: (action: () => void | Promise<void>) => void;
   onBuy: () => Promise<void>;
-  transactionUrl: (hash: TxHash) => string | undefined;
+  transactionUrl: (hash: SettlementHash) => string | undefined;
 };
 
 export function CheckoutStatus(props: StatusProps) {

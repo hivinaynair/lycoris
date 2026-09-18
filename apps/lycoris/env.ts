@@ -10,6 +10,10 @@ export const env = createEnv({
     CDP_API_KEY_ID: z.string().optional(),
     CDP_API_KEY_SECRET: z.string().optional(),
     CDP_WALLET_SECRET: z.string().optional(),
+    // Paymaster and bundler share one CDP endpoint, and its path carries the API
+    // key — so it is server-only. The browser reaches pm_* through /api/paymaster,
+    // which refuses anything but the exact sponsored transfer.
+    CDP_PAYMASTER_URL: z.string().url().optional(),
     PAY_TO_ADDRESS: z.string().startsWith("0x"),
     FACILITATOR_URL: z.string().url(),
     AGENT_URL: z.string().url(),
@@ -24,6 +28,7 @@ export const env = createEnv({
     CDP_API_KEY_ID: process.env.CDP_API_KEY_ID,
     CDP_API_KEY_SECRET: process.env.CDP_API_KEY_SECRET,
     CDP_WALLET_SECRET: process.env.CDP_WALLET_SECRET,
+    CDP_PAYMASTER_URL: process.env.CDP_PAYMASTER_URL,
     PAY_TO_ADDRESS: process.env.PAY_TO_ADDRESS,
     FACILITATOR_URL: process.env.FACILITATOR_URL,
     AGENT_URL: process.env.AGENT_URL,

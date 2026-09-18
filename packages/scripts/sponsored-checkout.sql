@@ -3,7 +3,11 @@ CREATE TABLE IF NOT EXISTS sponsored_checkout_payments (
   sponsor text NOT NULL,
   recipient text NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
-  tx_hash text
+  -- The faucet transfer that funds the burner and the user operation that pays
+  -- the merchant are different events, so each gets its own column.
+  funding_tx_hash text,
+  user_op_hash text,
+  payer text
 );
 
 -- Serialize budget reservations across server instances. Failures retain their slot:
