@@ -4,10 +4,13 @@ import type { MandatePayload } from "./eip712";
 import { signMandate } from "./sign";
 import { verifyMandateLocal } from "./verify";
 
+const MERCHANT = "0x9999999999999999999999999999999999999999" as const;
+
 function payload(overrides: Partial<MandatePayload> = {}): MandatePayload {
   return {
     agent: "0x1111111111111111111111111111111111111111",
     delegator: "0x2222222222222222222222222222222222222222",
+    payTo: MERCHANT,
     maxAmountUsdc: 12_500_000n,
     expiry: BigInt(Math.floor(Date.now() / 1000) + 3600),
     nonce: 1n,
@@ -42,6 +45,7 @@ describe("verifyMandateLocal", () => {
     const account = privateKeyToAccount(generatePrivateKey());
     const next = payload({
       delegator: account.address,
+      payTo: MERCHANT,
       agent: account.address,
     });
     const signature = await signMandate(account, next);

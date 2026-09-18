@@ -12,6 +12,7 @@ export const MANDATE_EIP712_TYPES = {
   MandatePayload: [
     { name: "agent", type: "address" },
     { name: "delegator", type: "address" },
+    { name: "payTo", type: "address" },
     { name: "maxAmountUsdc", type: "uint256" },
     { name: "expiry", type: "uint256" },
     { name: "nonce", type: "uint256" },
@@ -21,6 +22,8 @@ export const MANDATE_EIP712_TYPES = {
 export type MandatePayload = {
   agent: HexAddress;
   delegator: HexAddress;
+  /** The merchant this authority is for. A mandate without one is valid anywhere. */
+  payTo: HexAddress;
   maxAmountUsdc: bigint;
   expiry: bigint;
   nonce: bigint;

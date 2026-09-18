@@ -6,6 +6,8 @@ import * as attest from "./attest.js";
 import { requestCtx } from "./request-context.js";
 import type { VerifyDeps } from "./validate-mandate.js";
 
+const MERCHANT = "0x9999999999999999999999999999999999999999" as const;
+
 process.env.DATABASE_URL = "postgresql://fake";
 process.env.FACILITATOR_PRIVATE_KEY =
   "0x0000000000000000000000000000000000000000000000000000000000000001";
@@ -35,6 +37,7 @@ const VALID_MANDATE: SignedMandate = {
   payload: {
     agent: PAYER,
     delegator: DELEGATOR,
+    payTo: MERCHANT,
     maxAmountUsdc: 10n,
     expiry: 9999999999n,
     nonce: 0n,

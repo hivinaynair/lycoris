@@ -7,6 +7,8 @@ import {
   toSerializedMandateHeader,
 } from "./mandate-header";
 
+const MERCHANT = "0x9999999999999999999999999999999999999999" as const;
+
 const AGENT = "0x1111111111111111111111111111111111111111" as const;
 const DELEGATOR = "0x2222222222222222222222222222222222222222" as const;
 const SIGNATURE = `0x${"e".repeat(130)}` as const;
@@ -14,7 +16,14 @@ const SIGNATURE = `0x${"e".repeat(130)}` as const;
 const value: MandateHeaderValue = {
   agentId: 7n,
   mandate: {
-    payload: { agent: AGENT, delegator: DELEGATOR, maxAmountUsdc: 100n, expiry: 999n, nonce: 1n },
+    payload: {
+      agent: AGENT,
+      delegator: DELEGATOR,
+      payTo: MERCHANT,
+      maxAmountUsdc: 100n,
+      expiry: 999n,
+      nonce: 1n,
+    },
     signature: SIGNATURE,
   },
 };

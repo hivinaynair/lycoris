@@ -43,6 +43,7 @@ export function verifyMandateSignature(mandate: SignedMandate): Promise<boolean>
     message: {
       agent: mandate.payload.agent,
       delegator: mandate.payload.delegator,
+      payTo: mandate.payload.payTo,
       maxAmountUsdc: mandate.payload.maxAmountUsdc,
       expiry: mandate.payload.expiry,
       nonce: mandate.payload.nonce,

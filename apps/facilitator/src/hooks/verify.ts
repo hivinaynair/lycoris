@@ -27,6 +27,7 @@ export async function onBeforeVerify(
       amountAtomic: paymentAmountAtomic,
       authorizationNonce,
       resource: paymentPayload.resource,
+      payTo: requirements.payTo,
     },
     deps,
   );

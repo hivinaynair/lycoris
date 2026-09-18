@@ -16,6 +16,7 @@ export const MANDATE_EIP712_TYPES = {
   MandatePayload: [
     { name: "agent", type: "address" },
     { name: "delegator", type: "address" },
+    { name: "payTo", type: "address" },
     { name: "maxAmountUsdc", type: "uint256" },
     { name: "expiry", type: "uint256" },
     { name: "nonce", type: "uint256" },

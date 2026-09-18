@@ -6,6 +6,8 @@ import { Decision } from "@repo/shared/types";
 import * as attest from "../lib/attest.js";
 import { requestCtx } from "../lib/request-context.js";
 
+const MERCHANT = "0x9999999999999999999999999999999999999999" as const;
+
 // ── Provide DATABASE_URL so getDb() lazy init doesn't throw ────────────────
 process.env.DATABASE_URL = "postgresql://fake";
 process.env.FACILITATOR_PRIVATE_KEY =
@@ -57,6 +59,7 @@ const VALID_MANDATE: SignedMandate = {
   payload: {
     agent: PAYER,
     delegator: DELEGATOR,
+    payTo: MERCHANT,
     maxAmountUsdc: 100n,
     expiry: 9999999999n,
     nonce: 0n,
@@ -114,7 +117,7 @@ function makePayload(nonce?: string) {
       network: NETWORK,
       scheme: "exact",
       asset: "usdc",
-      payTo: PAYER,
+      payTo: MERCHANT,
       maxTimeoutSeconds: 60,
     },
   };
@@ -126,7 +129,7 @@ function makeRequirements(amount = "10000000") {
     network: NETWORK,
     scheme: "exact",
     asset: "usdc",
-    payTo: PAYER,
+    payTo: MERCHANT,
     maxTimeoutSeconds: 60,
   };
 }

@@ -1,5 +1,5 @@
 import { DemoAgentName } from "@repo/shared/types";
-import type { Hex } from "viem";
+import type { Address, Hex } from "viem";
 
 function requireEnv(name: string): string {
   const val = process.env[name];
@@ -11,6 +11,9 @@ export const AGENT_URL = requireEnv("AGENT_URL");
 export const BOOTSTRAP_SECRET = process.env.BOOTSTRAP_SECRET;
 export const FACILITATOR_URL = requireEnv("FACILITATOR_URL");
 export const DELEGATOR_KEY = requireEnv("DELEGATOR_PRIVATE_KEY") as Hex;
+// Mandates are bound to the merchant they authorize. Signing one without a
+// recipient would make it spendable anywhere, so this is required, not optional.
+export const PAY_TO_ADDRESS = requireEnv("PAY_TO_ADDRESS") as Address;
 
 // Unix timestamp year ~2286: effectively non-expiring for this demo.
 export const MANDATE_FAR_FUTURE_EXPIRY = 9999999999n;
