@@ -67,7 +67,11 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
     });
     ctx.managerRef.current?.reset();
     ctx.setSession(manager, input.title);
-    await manager.selectMethod("usdc");
+    // The configured method, not a hard-coded id. A host that supplies a
+    // smart-account adapter has no method called "usdc", and hard-coding one
+    // made `methods` an array whose first element was the only one reachable.
+    const [method] = ctx.config.methods ?? [];
+    await manager.selectMethod(method?.id ?? "usdc");
     return manager;
   }, []);
 

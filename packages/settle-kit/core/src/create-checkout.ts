@@ -32,7 +32,10 @@ export function createCheckout(config: SettleConfig, input: CreateCheckoutInput)
 
   function getAdapter(id: string): SettleAdapter {
     const adapter = config.methods.find((method) => method.id === id);
-    if (!adapter) invalidConfig(`Unknown payment method: ${id}`);
+    if (!adapter)
+      invalidConfig(
+        `No configured method has id ${id}; this session has ${config.methods.map((m) => m.id).join(", ")}`,
+      );
     return adapter;
   }
 
