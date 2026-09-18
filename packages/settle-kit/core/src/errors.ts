@@ -31,7 +31,9 @@ export function toSettleError(
   fallback: SettleErrorCode = "transfer_failed",
 ): SettleError {
   if (error instanceof SettleKitError) {
-    return { code: error.code, message: error.message };
+    // BaseError composes `message` with a trailing "Version: viem@x.y.z" block.
+    // Hosts render this straight to the buyer, so prefer the copy we passed in.
+    return { code: error.code, message: error.shortMessage || error.message };
   }
   if (error && typeof error === "object" && "code" in error) {
     const code = String((error as { code: unknown }).code);
