@@ -1,5 +1,5 @@
 {
   "bunVersion": "1.4.x",
-  "buildCommand": "cd ../.. && bun run --bun build --filter=lycoris --env-mode=loose",
-  "installCommand": "cd ../.. && env -u npm_config_user_agent bun install --frozen-lockfile"
+  "installCommand": "cd ../.. && bun install --frozen-lockfile",
+  "buildCommand": "cd ../.. && bun run build --filter=lycoris"
 }

@@ -21,7 +21,7 @@
     "lycoris:fund-wallet": "bun --env-file=packages/scripts/.env.local packages/scripts/fund-wallet.ts",
     "lycoris:refresh-mandates": "bun --env-file=packages/scripts/.env.local packages/scripts/demo-bootstrap/refresh-mandates.ts",
     "lycoris:bootstrap": "bun --env-file=packages/scripts/.env.local packages/scripts/demo-bootstrap/index.ts",
-    "preinstall": "bunx only-allow@1.2.2 bun",
+    "preinstall": "[ -n \"$CI$VERCEL\" ] || bunx only-allow@1.2.2 bun",
     "prepare": "lefthook install || true",
     "smoke:settle-kit": "bun scripts/smoke-settle-kit-next.mjs",
     "measure:settle-kit": "bun scripts/measure-settle-kit.mjs",

@@ -5,7 +5,29 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "$TURBO_ROOT$/scripts/build-settle-kit.mjs"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"]
+      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"],
+      "env": [
+        "NODE_ENV",
+        "SKIP_ENV_VALIDATION",
+        "AGENT_URL",
+        "APP_URL",
+        "ATTESTATION_REGISTRY_ADDRESS",
+        "BOOTSTRAP_SECRET",
+        "CDP_API_KEY_ID",
+        "CDP_API_KEY_SECRET",
+        "CDP_PAYMASTER_URL",
+        "CDP_WALLET_SECRET",
+        "DATABASE_URL",
+        "EXTERNAL_X402_URL",
+        "FACILITATOR_PRIVATE_KEY",
+        "FACILITATOR_URL",
+        "LYCORIS_AGENT_SHARED_SECRET",
+        "MANDATES_JSON",
+        "MANDATE_FILE",
+        "PAY_TO_ADDRESS",
+        "SPONSORED_WALLET_ADDRESS"
+      ],
+      "passThroughEnv": ["CI", "VERCEL", "VERCEL_ENV", "VERCEL_URL", "VERCEL_REGION"]
     },
     "//#format-and-lint": {
       "description": "Check for formatting and linting issues"
