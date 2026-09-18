@@ -6,7 +6,14 @@ const allowed = {
   server: ["@settle-kit/core", "@x402/core", "@x402/evm", "@x402/next", "next", "viem"],
   react: ["react", "@settle-kit/core"],
   agents: ["viem", "@settle-kit/core", "@x402/core", "@x402/fetch"],
-  mcp: ["@settle-kit/core", "@settle-kit/agents", "@modelcontextprotocol/server", "viem", "zod"],
+  mcp: [
+    "@settle-kit/core",
+    "@settle-kit/agents",
+    "@modelcontextprotocol/server",
+    "viem",
+    "zod",
+    "node:crypto",
+  ],
 };
 const domNames = new Set([
   "window",
