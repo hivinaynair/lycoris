@@ -11,6 +11,7 @@ import {
 } from "@repo/ui/components/card";
 import type { CheckoutState } from "@settle-kit/core";
 import { useCheckout } from "@settle-kit/react";
+import { SETTLE_PHASE_LABEL, useSettlePhase } from "./settle-phase";
 import { userOpExplorerUrl } from "./user-op-explorer";
 
 // Copyable merchant recipe: presentation belongs to the host; payment logic stays in the SDK.
@@ -112,6 +113,7 @@ function MerchantPaymentStatus({
   simulated: boolean;
   sponsored: boolean;
 }) {
+  const phase = useSettlePhase();
   return (
     <div role="status" aria-live="polite" className="space-y-2">
       {state.status === "idle" && (
@@ -149,9 +151,11 @@ function MerchantPaymentStatus({
             ? "Payment submitted. Waiting for confirmation…"
             : simulated
               ? "Simulating payment…"
-              : sponsored
-                ? "Sending your sponsored payment…"
-                : "Continue in your wallet…"}
+              : // A sponsored payment now runs two visible waits before submission:
+                // topping up the visitor's smart account, then the account paying.
+                // Naming them is the only place 4337 is legible to someone watching.
+                (sponsored && phase && SETTLE_PHASE_LABEL[phase]) ||
+                (sponsored ? "Sending your sponsored payment…" : "Continue in your wallet…")}
         </p>
       )}
       {state.status === "settled" && (

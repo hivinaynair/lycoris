@@ -12,6 +12,7 @@ import { privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { loadOrCreateBurnerKey } from "./burner-key";
 import { toPaymentSigner } from "./burner-signer";
+import { setSettlePhase } from "./settle-phase";
 import { createUserOpReceiptClient } from "./user-op-receipt";
 
 const storageKey = "lycoris-sponsored-purchase";
@@ -88,24 +89,31 @@ export function createSponsoredPayment(recipient: HexAddress) {
       // Fund first, then delegate. The SDK's balance preflight runs inside
       // method.settle and is what proves the funding actually landed — which is
       // why the faucet route waits for its own receipt before answering.
-      const response = await fetch("/api/checkout/fund", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          purchaseId: input.quote.requestId,
-          payer: input.signer.address,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error ?? "Could not fund the demo account.");
+      setSettlePhase("funding");
+      try {
+        const response = await fetch("/api/checkout/fund", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            purchaseId: input.quote.requestId,
+            payer: input.signer.address,
+          }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error ?? "Could not fund the demo account.");
 
-      const userOpHash = await method.settle(input);
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({ id: input.quote.requestId, txHash: userOpHash }),
-      );
-      localStorage.setItem(`${storageKey}:${userOpHash}`, input.quote.requestId);
-      return userOpHash;
+        setSettlePhase("submitting");
+        const userOpHash = await method.settle(input);
+        localStorage.setItem(
+          storageKey,
+          JSON.stringify({ id: input.quote.requestId, txHash: userOpHash }),
+        );
+        localStorage.setItem(`${storageKey}:${userOpHash}`, input.quote.requestId);
+        return userOpHash;
+      } finally {
+        // Confirmation is its own wait and the SDK already names it.
+        setSettlePhase(undefined);
+      }
     },
     async confirm(input) {
       const result = await method.confirm(input);
