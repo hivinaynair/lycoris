@@ -1,17 +1,12 @@
-CREATE TABLE IF NOT EXISTS sponsored_checkout_payments (
-  id uuid PRIMARY KEY,
-  sponsor text NOT NULL,
-  recipient text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  -- The faucet transfer that funds the burner and the user operation that pays
-  -- the merchant are different events, so each gets its own column.
-  funding_tx_hash text,
-  user_op_hash text,
-  payer text
-);
-
--- Serialize budget reservations across server instances. Failures retain their slot:
--- an uncertain submission must never free budget for another payment.
+-- Raise the sponsored demo budget from 10 to 50 purchases.
+--
+-- The cap lives in the function rather than a column because it is enforced
+-- under the same advisory lock that serializes reservations: counting rows and
+-- inserting one must be a single decision, or two instances both see nine.
+--
+-- CREATE OR REPLACE keeps the existing rows and the advisory-lock semantics; the
+-- body below is `sponsored-checkout.sql`'s with one number changed, so the two
+-- must be edited together.
 CREATE OR REPLACE FUNCTION reserve_sponsored_checkout(p_id uuid, p_sponsor text, p_recipient text)
 RETURNS SETOF sponsored_checkout_payments LANGUAGE plpgsql AS $$
 DECLARE existing sponsored_checkout_payments;

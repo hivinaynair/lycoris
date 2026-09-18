@@ -1,3 +1,4 @@
+import { SPONSORED_CHECKOUT_BUDGET } from "@repo/shared/demo";
 import type { HexAddress } from "@settle-kit/core";
 import { BASE_SEPOLIA_USDC_ADDRESS } from "@settle-kit/core";
 import { PageFrame } from "@/components/page-chrome";
@@ -29,9 +30,9 @@ export default function CheckoutPage() {
             identity, not KYC; preclear checks mandate and identity, not balance.
           </p>
           <p>
-            The demo pays from a dedicated test wallet with a total budget of 10 purchases. Payment
-            IDs are saved in this browser so retries reuse the same transfer. No personal wallet is
-            connected.
+            The demo pays from a dedicated test wallet with a total budget of{" "}
+            {SPONSORED_CHECKOUT_BUDGET} purchases. Payment IDs are saved in this browser so retries
+            reuse the same transfer. No personal wallet is connected.
           </p>
         </div>
       </details>

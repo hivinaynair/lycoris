@@ -12,6 +12,15 @@ export const DEMO_SCENARIO_AGENTS = [
 export const WEATHER_PRICE_USDC = "0.1";
 export const WEATHER_AMOUNT_ATOMIC = "100000";
 export const WEATHER_TITLE = "Melbourne weather report";
+/**
+ * How many sponsored purchases the demo wallet will fund, in total.
+ *
+ * The cap that matters is enforced in `reserve_sponsored_checkout`, because only
+ * the database can count across server instances. This constant exists so the
+ * page and the budget test quote the same number as the migration that sets it;
+ * changing it here does nothing until that function is updated too.
+ */
+export const SPONSORED_CHECKOUT_BUDGET = 50;
 
 export const DEMO_REPORT_ROUTES = [
   {

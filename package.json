@@ -30,7 +30,8 @@
     "check:settle-kit-package": "bun scripts/check-settle-kit-package.mjs",
     "version:settle-kit": "bun scripts/version-settle-kit.mjs",
     "lycoris:setup-sponsored-checkout": "bun --env-file=packages/scripts/.env.local packages/scripts/setup-sponsored-checkout.ts",
-    "lycoris:migrate-4337": "bun --env-file=apps/lycoris/.env.local packages/scripts/migrate-sponsored-checkout-4337.ts"
+    "lycoris:migrate-4337": "bun --env-file=apps/lycoris/.env.local packages/scripts/migrate-sponsored-checkout-4337.ts",
+    "lycoris:migrate-budget": "bun --env-file=apps/lycoris/.env.local packages/scripts/migrate-sponsored-budget.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
