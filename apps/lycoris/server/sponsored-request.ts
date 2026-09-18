@@ -1,10 +1,28 @@
+import type { Hex } from "viem";
 import { z } from "zod";
+
+function sameOrigin(request: Request) {
+  if (request.headers.get("origin") !== new URL(request.url).origin)
+    throw new Error("Open checkout on this site to continue.");
+}
 
 const purchase = z.object({ purchaseId: z.string().uuid() }).strict();
 export async function readSponsoredRequest(request: Request) {
-  if (request.headers.get("origin") !== new URL(request.url).origin)
-    throw new Error("Open checkout on this site to continue.");
+  sameOrigin(request);
   const parsed = purchase.safeParse(await request.json().catch(() => null));
   if (!parsed.success) throw new Error("Provide a valid purchase ID.");
   return parsed.data.purchaseId;
+}
+
+// Funding names the burner to pay, so it cannot go through the strict
+// purchase-ID shape above. The address is all the caller may choose: the amount
+// and the merchant still come from the server's configuration.
+const funding = z
+  .object({ purchaseId: z.string().uuid(), payer: z.string().regex(/^0x[0-9a-fA-F]{40}$/) })
+  .strict();
+export async function readFundRequest(request: Request) {
+  sameOrigin(request);
+  const parsed = funding.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) throw new Error("Provide a valid purchase ID and payer address.");
+  return { purchaseId: parsed.data.purchaseId, payer: parsed.data.payer as Hex };
 }

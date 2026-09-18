@@ -38,7 +38,9 @@ export async function getSponsoredPurchase(id: string): Promise<Purchase | undef
   return result.rows[0] as Purchase | undefined;
 }
 
-export async function paySponsored(id: string) {
+// The sponsor is a faucet: it funds the visitor's burner, and the burner pays
+// the merchant. `recipient` stays the merchant the purchase was reserved for.
+export async function fundBurner(id: string, payer: Hex) {
   const { address, recipient } = configuration();
   const db = createDb();
   const previous = await getSponsoredPurchase(id);
@@ -78,12 +80,17 @@ export async function paySponsored(id: string) {
       data: encodeFunctionData({
         abi: erc20Abi,
         functionName: "transfer",
-        args: [recipient, BigInt(WEATHER_AMOUNT_ATOMIC)],
+        args: [payer, BigInt(WEATHER_AMOUNT_ATOMIC)],
       }),
     },
   });
+  // The caller funds and then settles immediately, and settle's balance preflight
+  // reads balanceOf. Returning before the transfer is mined reports an empty
+  // burner that is about to be funded. Wait before recording it, so a stored
+  // funding_tx_hash always means a settled balance.
+  await sponsorChain.waitForTransactionReceipt({ hash: transactionHash, confirmations: 1 });
   await db.execute(
-    sql`UPDATE sponsored_checkout_payments SET funding_tx_hash = ${transactionHash} WHERE id = ${id}::uuid`,
+    sql`UPDATE sponsored_checkout_payments SET funding_tx_hash = ${transactionHash}, payer = ${payer} WHERE id = ${id}::uuid`,
   );
   return { txHash: transactionHash };
 }
