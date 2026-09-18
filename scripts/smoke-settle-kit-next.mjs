@@ -4,6 +4,18 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 const root = join(import.meta.dirname, "..");
+const tools = join(root, "scripts");
+const requireTools = createRequire(join(tools, "package.json"));
+try {
+  requireTools.resolve("@playwright/test");
+} catch {
+  const install = Bun.spawn(["bun", "install", "--frozen-lockfile"], {
+    cwd: tools,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  if ((await install.exited) !== 0) throw new Error("Run bun install --cwd scripts");
+}
 const artifacts = process.argv[2];
 const host = await mkdtemp(join(tmpdir(), "settle-kit-next-"));
 console.log(`Independent host and evidence: ${host}`);
@@ -84,8 +96,9 @@ try {
     await Bun.sleep(500);
   }
   if (!ready) throw new Error("Independent Next host did not start");
-  const requireRoot = createRequire(join(root, "package.json"));
-  const { chromium } = await import(requireRoot.resolve("@playwright/test"));
+  const { chromium } = await import(
+    createRequire(join(tools, "package.json")).resolve("@playwright/test")
+  );
   browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1000, height: 800 } });
   const errors = [];

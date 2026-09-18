@@ -24,7 +24,6 @@
     "prepare": "lefthook install || true",
     "smoke:settle-kit": "bun scripts/smoke-settle-kit-next.mjs",
     "measure:settle-kit": "bun scripts/measure-settle-kit.mjs",
-    "playwright:install": "playwright install chromium",
     "pack:settle-kit": "bun scripts/pack-settle-kit.mjs",
     "check:settle-kit-package": "bun scripts/check-settle-kit-package.mjs",
     "version:settle-kit": "bun scripts/version-settle-kit.mjs",
@@ -35,7 +34,6 @@
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
     "@happy-dom/global-registrator": "^20.11.2",
-    "@playwright/test": "^1.58.2",
     "@repo/mocks": "*",
     "@repo/typescript-config": "*",
     "@testing-library/dom": "^10.4.1",
@@ -43,7 +41,6 @@
     "@testing-library/react": "^16.3.2",
     "@types/bun": "^1.3.14",
     "dependency-cruiser": "^17.3.10",
-    "esbuild": "^0.28.2",
     "lefthook": "^2.1.10",
     "turbo": "^2.10.9",
     "typescript": "5.9.2"

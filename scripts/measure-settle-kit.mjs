@@ -4,8 +4,19 @@ import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 
 const root = join(import.meta.dirname, "..");
-const require = createRequire(join(root, "package.json"));
-const { build } = require("esbuild");
+const tools = join(root, "scripts");
+const requireTools = createRequire(join(tools, "package.json"));
+try {
+  requireTools.resolve("esbuild");
+} catch {
+  const install = Bun.spawn(["bun", "install", "--frozen-lockfile"], {
+    cwd: tools,
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  if ((await install.exited) !== 0) throw new Error("Run bun install --cwd scripts");
+}
+const { build } = createRequire(join(tools, "package.json"))("esbuild");
 const imports = {
   core: 'export { createCheckout, createSettleConfig } from "./packages/settle-kit/core/dist/index.js";',
   react: 'export { SettleProvider, useCheckout } from "./packages/settle-kit/react/dist/index.js";',
