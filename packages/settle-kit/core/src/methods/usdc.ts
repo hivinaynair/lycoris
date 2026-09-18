@@ -83,7 +83,7 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
       assertDestination(destination);
       // At the settle seam the quote is the only input: check it against its own
       // stated amount, and that it still binds to the destination we were handed.
-      validateQuote(quote, quote.amountUsdc, destination);
+      validateQuote(quote, quote.amountUsdc, destination, id);
       if (signer.getChainId) {
         const chainId = await signer.getChainId();
         if (chainId !== destination.targetChain) {
