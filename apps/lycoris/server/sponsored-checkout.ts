@@ -18,6 +18,10 @@ type Purchase = {
   recipient: Hex;
   created_at: string;
   funding_tx_hash: Hex | null;
+  user_op_hash: Hex | null;
+  /** The burner this purchase was funded for. Recorded here so the report gate
+   *  has an address the caller did not choose. */
+  payer: Hex | null;
 };
 
 function configuration() {
@@ -93,4 +97,28 @@ export async function fundBurner(id: string, payer: Hex) {
     sql`UPDATE sponsored_checkout_payments SET funding_tx_hash = ${transactionHash}, payer = ${payer} WHERE id = ${id}::uuid`,
   );
   return { txHash: transactionHash };
+}
+
+/**
+ * Binds a user operation to the purchase it paid for, once.
+ *
+ * Without this, one payment could release the report for two purchases: a visitor
+ * keeps the same burner across purchases, so a second purchase inside the
+ * fifteen-minute window would otherwise accept the first one's operation. The
+ * unique claim is what makes "this operation paid for this purchase" true rather
+ * than merely plausible.
+ */
+export async function claimUserOpHash(id: string, userOpHash: string) {
+  const claimed = await createDb().execute(
+    sql`UPDATE sponsored_checkout_payments
+        SET user_op_hash = ${userOpHash}
+        WHERE id = ${id}::uuid
+          AND (user_op_hash IS NULL OR user_op_hash = ${userOpHash})
+          AND NOT EXISTS (
+            SELECT 1 FROM sponsored_checkout_payments other
+            WHERE other.user_op_hash = ${userOpHash} AND other.id <> ${id}::uuid
+          )
+        RETURNING id`,
+  );
+  if (claimed.rows.length === 0) throw new Error("That payment belongs to a different purchase.");
 }

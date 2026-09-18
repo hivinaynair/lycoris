@@ -26,3 +26,16 @@ export async function readFundRequest(request: Request) {
   if (!parsed.success) throw new Error("Provide a valid purchase ID and payer address.");
   return { purchaseId: parsed.data.purchaseId, payer: parsed.data.payer as Hex };
 }
+
+// Releasing the report names the operation that paid for it. The hash is all the
+// caller may choose: the payer it must have been sent by was recorded server-side
+// at funding time, and the amount and merchant come from configuration.
+const report = z
+  .object({ purchaseId: z.string().uuid(), userOpHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/) })
+  .strict();
+export async function readReportRequest(request: Request) {
+  sameOrigin(request);
+  const parsed = report.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) throw new Error("Provide a valid purchase ID and operation hash.");
+  return { purchaseId: parsed.data.purchaseId, userOpHash: parsed.data.userOpHash as Hex };
+}
