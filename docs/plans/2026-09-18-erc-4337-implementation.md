@@ -961,6 +961,70 @@ receipt so the SDK's balance preflight reads a settled balance."
 
 ---
 
+## Task 8b: Teach the access gate about user operations
+
+**Missed in the first draft of this plan.** Without it Tasks 7–9 leave the demo
+unable to serve the report the visitor just paid for.
+
+`verifyWeatherPayment` in `apps/lycoris/server/weather-payment.ts` is what
+releases the weather report, and every check in it assumes the payment is a
+top-level EOA transaction whose calldata decodes to `transfer(merchant, amount)`:
+
+- `tx.to` must be the USDC contract — under 4337 it is the EntryPoint
+- `decodeFunctionData(tx.input)` must yield `transfer` — it yields `handleOps`
+- `tx.from` must equal the payer — it is the bundler
+
+A userOpHash is not a transaction hash, so `getTransaction` cannot even resolve
+it. This fails **closed** — access denied rather than wrongly granted — but the
+demo is broken either way.
+
+What survives: the ERC-20 `Transfer` event is still emitted inside the bundle
+with the right `from`, `to` and `value`. Verification moves from *calldata* to
+*logs*.
+
+**Files:**
+- Modify: `apps/lycoris/server/weather-payment.ts`
+- Modify: `apps/lycoris/server/weather-payment.test.ts` (103 lines today)
+- Modify: `apps/lycoris/app/api/weather/sponsored/route.ts`
+
+**Step 1: Write the failing tests.** Extend `weather-payment.test.ts` with a
+userOp case: a bundle transaction sent by a bundler EOA, `to` the EntryPoint,
+whose receipt logs contain a USDC `Transfer` from the burner to the merchant for
+`WEATHER_AMOUNT_ATOMIC`. Assert it verifies. Then assert each tampered variant
+rejects — wrong recipient, wrong amount, a `from` that is not the recorded
+payer, and a reverted userOp inside a successful bundle.
+
+**Step 2: Add the userOp branch.** Keep the existing EOA path exactly as it is —
+the `/checkout` wallet route still uses it and it is still correct there. Add a
+third member to the input union alongside `signature` and `sponsoredPayer`,
+carrying the recorded `payer` (the burner address from the `payer` column Task 7
+adds) and the bundle transaction hash.
+
+For that branch, drop the `tx.to` and `decodeFunctionData` checks — they are
+meaningless against `handleOps` — and verify entirely from the receipt logs:
+a `Transfer` on the USDC contract, `from` the recorded payer, `to` the merchant,
+`value` exactly `WEATHER_AMOUNT_ATOMIC`. Keep the 15-minute freshness check
+against the bundle's block; that logic is unchanged.
+
+Binding to the recorded `payer` is what stops a visitor claiming someone else's
+payment: the burner address is written to the purchase row at funding time, so
+the log's `from` must match the row, not merely be *some* address.
+
+**Step 3: Update the route.** `weather/sponsored/route.ts` reads
+`purchase.tx_hash`; after Task 7 that column is `funding_tx_hash` and means the
+faucet transfer, which is the wrong transfer to verify. It must gate on the
+payment instead — the bundle that carried `user_op_hash` — and pass
+`purchase.payer`.
+
+**Step 4: Verify** the full gate, then commit:
+
+```bash
+git add apps/lycoris/server/weather-payment.ts apps/lycoris/server/weather-payment.test.ts apps/lycoris/app/api/weather/sponsored/route.ts
+git commit -m "fix(lycoris): verify payment from logs, not calldata"
+```
+
+---
+
 ## Task 9: Wire the demo to the SDK's real path
 
 The task that deletes the throwing stub.
