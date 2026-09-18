@@ -42,6 +42,7 @@ export async function onBeforeSettle({
       amountAtomic: paymentAmountAtomic,
       authorizationNonce,
       resource: paymentPayload.resource,
+      payTo: requirements.payTo,
     },
     verifyDeps,
   );

@@ -9,6 +9,7 @@ const MANDATE = {
   payload: {
     agent: AGENT,
     delegator: "0xe3F1Bac5798fe72a0fF43d8eA6Ae8e87E2d7E81C",
+    payTo: "0x9999999999999999999999999999999999999999",
     maxAmountUsdc: "1",
     expiry: "9999999999",
     nonce: "7889",

@@ -34,15 +34,24 @@ export async function ensureMandate({
   address,
   addressLower,
   onChainAgentId,
+  payTo,
 }: {
   delegator: Delegator;
   agentName: DemoAgentName;
   address: Address;
   addressLower: string;
   onChainAgentId: bigint;
+  /** The merchant these mandates authorize spending to, and only to. */
+  payTo: Address;
 }): Promise<SignedMandateForBootstrap> {
   const file = readMandateFile();
-  const expectedPayload = newMandatePayload(address, delegator.address, agentName, onChainAgentId);
+  const expectedPayload = newMandatePayload(
+    address,
+    delegator.address,
+    agentName,
+    onChainAgentId,
+    payTo,
+  );
 
   if (file[addressLower]) {
     const entry = parseSerializedMandateHeader(file[addressLower]);
@@ -52,6 +61,7 @@ export async function ensureMandate({
       entry.mandate.payload.agent.toLowerCase() === addressLower &&
       entry.mandate.payload.delegator.toLowerCase() === delegator.address.toLowerCase() &&
       entry.mandate.payload.maxAmountUsdc === expectedPayload.maxAmountUsdc &&
+      entry.mandate.payload.payTo.toLowerCase() === payTo.toLowerCase() &&
       entry.mandate.payload.expiry >= BigInt(Math.floor(Date.now() / 1000)) &&
       (await verifyMandate(entry.mandate))
     ) {
@@ -99,10 +109,14 @@ function newMandatePayload(
   delegatorAddress: Address,
   agentName: DemoAgentName,
   onChainAgentId: bigint,
+  payTo: Address,
 ): MandatePayload {
   return {
     agent: address,
     delegator: delegatorAddress,
+    // The merchant this authority is for. Bound into the signature, so a mandate
+    // issued for the demo resource cannot be presented anywhere else.
+    payTo: payTo,
     maxAmountUsdc: MAX_AMOUNT[agentName],
     expiry: MANDATE_FAR_FUTURE_EXPIRY,
     nonce: onChainAgentId,

@@ -25,11 +25,17 @@ export async function validateMandateForPayment(
     amountAtomic,
     authorizationNonce,
     resource,
+    payTo,
   }: {
     payer: string;
     amountAtomic: bigint;
     authorizationNonce?: string | undefined;
     resource?: unknown;
+    /**
+     * Who this payment actually pays. Supplied by the gate, never by the caller.
+     * Absent only at preclear, which is advisory and settles nothing.
+     */
+    payTo?: string | undefined;
   },
   deps: VerifyDeps,
 ): Promise<ValidateMandateResult> {
@@ -81,6 +87,13 @@ export async function validateMandateForPayment(
   const mandateMaxAtomic = mandate.payload.maxAmountUsdc * USDC_ATOMIC_FACTOR;
   if (amountAtomic > mandateMaxAtomic) {
     return reject("mandate_amount_exceeded", IdentityStatus.Verified, mandateEntry);
+  }
+
+  // A mandate authorizes spending to one merchant. Without this the delegator's
+  // signature would say "up to N until T" and nothing about to whom, so a mandate
+  // issued for one resource would be equally valid at any other.
+  if (payTo && mandate.payload.payTo.toLowerCase() !== payTo.toLowerCase()) {
+    return reject("mandate_recipient_mismatch", IdentityStatus.Verified, mandateEntry);
   }
 
   return { ok: true, mandateEntry };

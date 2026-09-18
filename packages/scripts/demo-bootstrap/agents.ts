@@ -5,7 +5,13 @@ import { BASE_SEPOLIA_EXPLORER } from "@repo/shared/chains";
 import type { DemoAgentName } from "@repo/shared/types";
 import { eq } from "drizzle-orm";
 import type { Address } from "viem";
-import { AGENT_URL, BOOTSTRAP_SECRET, NO_REGISTER, UNREGISTERED_AGENT_ID } from "./config.js";
+import {
+  AGENT_URL,
+  BOOTSTRAP_SECRET,
+  NO_REGISTER,
+  PAY_TO_ADDRESS,
+  UNREGISTERED_AGENT_ID,
+} from "./config.js";
 import type { AgentRow, BootstrapContext, Database, PublicClient } from "./context.js";
 import { registerInErc8004 } from "./erc8004.js";
 import { ensureMandate } from "./mandates.js";
@@ -51,6 +57,7 @@ export async function bootstrapAgent(
     address,
     addressLower,
     onChainAgentId,
+    payTo: PAY_TO_ADDRESS,
   });
 
   console.log("[bootstrap]   Agent AP2 credential ready");

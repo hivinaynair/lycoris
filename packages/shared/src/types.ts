@@ -29,6 +29,15 @@ export type AgentProfile = {
 export type MandatePayload = {
   agent: `0x${string}`;
   delegator: `0x${string}`;
+  /**
+   * The merchant this authority is for.
+   *
+   * Without it a mandate says only "this agent may spend up to N until T" and
+   * never says to whom, so one signed for a resource you trust is equally valid
+   * at a resource you do not. Every verifier binds the payment's recipient to
+   * this field.
+   */
+  payTo: `0x${string}`;
   maxAmountUsdc: bigint;
   expiry: bigint;
   nonce: bigint;

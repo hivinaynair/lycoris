@@ -11,6 +11,7 @@ export type SerializedMandateHeader = {
   payload: {
     agent: string;
     delegator: string;
+    payTo: string;
     maxAmountUsdc: string;
     expiry: string;
     nonce: string;
@@ -27,6 +28,7 @@ export function toSerializedMandateHeader({
     payload: {
       agent: mandate.payload.agent,
       delegator: mandate.payload.delegator,
+      payTo: mandate.payload.payTo,
       maxAmountUsdc: mandate.payload.maxAmountUsdc.toString(),
       expiry: mandate.payload.expiry.toString(),
       nonce: mandate.payload.nonce.toString(),
@@ -72,15 +74,18 @@ export function parseSerializedMandateHeader(raw: unknown): MandateHeaderValue |
   if (agentId === undefined || maxAmountUsdc === undefined) return undefined;
   if (expiry === undefined || nonce === undefined) return undefined;
 
-  const { agent, delegator } = body;
+  const { agent, delegator, payTo } = body;
   const { signature } = value;
   if (typeof agent !== "string" || !isAddress(agent, { strict: false })) return undefined;
   if (typeof delegator !== "string" || !isAddress(delegator, { strict: false })) return undefined;
+  // A mandate with no recipient is valid everywhere, which is the bug this field
+  // exists to close. Refuse the old shape rather than defaulting it.
+  if (typeof payTo !== "string" || !isAddress(payTo, { strict: false })) return undefined;
   if (typeof signature !== "string" || !isHex(signature)) return undefined;
 
   return {
     agentId,
-    mandate: { payload: { agent, delegator, maxAmountUsdc, expiry, nonce }, signature },
+    mandate: { payload: { agent, delegator, payTo, maxAmountUsdc, expiry, nonce }, signature },
   };
 }
 

@@ -4,10 +4,13 @@ import type { MandatePayload } from "./eip712";
 import { signMandate } from "./sign";
 import { verifyMandateLocal } from "./verify";
 
+const MERCHANT = "0x9999999999999999999999999999999999999999" as const;
+
 function payload(overrides: Partial<MandatePayload> = {}): MandatePayload {
   return {
     agent: "0x1111111111111111111111111111111111111111",
     delegator: "0x2222222222222222222222222222222222222222",
+    payTo: MERCHANT,
     maxAmountUsdc: 12_500_000n,
     expiry: BigInt(Math.floor(Date.now() / 1000) + 3600),
     nonce: 1n,
@@ -42,6 +45,7 @@ describe("verifyMandateLocal", () => {
     const account = privateKeyToAccount(generatePrivateKey());
     const next = payload({
       delegator: account.address,
+      payTo: MERCHANT,
       agent: account.address,
     });
     const signature = await signMandate(account, next);
@@ -50,5 +54,27 @@ describe("verifyMandateLocal", () => {
       { agent: account.address },
     );
     expect(result).toEqual({ ok: true });
+  });
+});
+
+// A mandate names a merchant. Checking the signature without checking the
+// recipient accepts one issued for somebody else's resource.
+describe("verifyMandateLocal recipient binding", () => {
+  async function signed() {
+    const account = privateKeyToAccount(generatePrivateKey());
+    const next = payload({ delegator: account.address, payTo: MERCHANT, agent: account.address });
+    return { payload: next, signature: await signMandate(account, next) };
+  }
+
+  it("rejects a mandate issued for a different merchant", async () => {
+    expect(
+      await verifyMandateLocal(await signed(), {
+        payTo: "0x8888888888888888888888888888888888888888",
+      }),
+    ).toEqual({ ok: false, reason: "recipient_mismatch" });
+  });
+
+  it("accepts the merchant the mandate names", async () => {
+    expect(await verifyMandateLocal(await signed(), { payTo: MERCHANT })).toEqual({ ok: true });
   });
 });

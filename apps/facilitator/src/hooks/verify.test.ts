@@ -19,6 +19,8 @@ const { onBeforeVerify } = await import("./verify.js");
 
 import type { VerifyDeps } from "../lib/validate-mandate.js";
 
+const MERCHANT = "0x9999999999999999999999999999999999999999" as const;
+
 const PAYER = "0xe9F97E2F7c6DCB8FCdBCDFBA074334D22a6c3117" as `0x${string}`;
 const DELEGATOR = "0xAa870A9C6FEd34B8aC01Da17d675d748f238a420" as `0x${string}`;
 const REGISTRY = "0x8004A818BFB912233c491871b3d84c89A494BD9e" as `0x${string}`;
@@ -28,6 +30,7 @@ const VALID_MANDATE: SignedMandate = {
   payload: {
     agent: PAYER,
     delegator: DELEGATOR,
+    payTo: MERCHANT,
     maxAmountUsdc: 100n,
     expiry: 9999999999n,
     nonce: 0n,
@@ -52,7 +55,7 @@ function makeCtx(amountAtomic = DEFAULT_AMOUNT_ATOMIC) {
       payload: { from: PAYER, authorization: { nonce: AUTH_NONCE } },
       accepted: { amount: amountAtomic },
     },
-    requirements: { amount: amountAtomic },
+    requirements: { amount: amountAtomic, payTo: MERCHANT },
   } as any;
 }
 
@@ -123,6 +126,23 @@ describe("onBeforeVerify", () => {
   it("aborts when payment amount exceeds mandate maxAmountUsdc", async () => {
     const result = await withMandateHeader(() => onBeforeVerify(makeCtx("101000000"), happyDeps()));
     expect(result).toEqual({ abort: true, reason: "mandate_amount_exceeded" });
+  });
+
+  // A mandate says how much and until when. Without a recipient bound into the
+  // signature it never says to whom, so one issued for this resource would be
+  // just as valid at a resource the delegator never agreed to pay.
+  it("aborts when the payment goes to a merchant the mandate did not authorize", async () => {
+    const ctx = makeCtx();
+    ctx.requirements.payTo = "0x8888888888888888888888888888888888888888";
+    const result = await withMandateHeader(() => onBeforeVerify(ctx, happyDeps()));
+    expect(result).toEqual({ abort: true, reason: "mandate_recipient_mismatch" });
+  });
+
+  it("accepts the merchant the mandate names, in any casing", async () => {
+    const ctx = makeCtx();
+    ctx.requirements.payTo = MERCHANT.toUpperCase().replace("0X", "0x");
+    const result = await withMandateHeader(() => onBeforeVerify(ctx, happyDeps()));
+    expect(result).toBeUndefined();
   });
 
   it("aborts when agent not found in ERC-8004 (lookup returns null)", async () => {
