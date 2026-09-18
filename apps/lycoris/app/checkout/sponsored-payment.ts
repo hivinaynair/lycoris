@@ -6,6 +6,7 @@ import {
   type SettleAdapter,
   SettleKitError,
 } from "@settle-kit/core";
+import { createUserOpReceiptClient } from "@settle-kit/core/account-abstraction";
 import { createPublicClient, http } from "viem";
 import { createBundlerClient, toCoinbaseSmartAccount } from "viem/account-abstraction";
 import { privateKeyToAccount } from "viem/accounts";
@@ -13,7 +14,6 @@ import { baseSepolia } from "viem/chains";
 import { loadOrCreateBurnerKey } from "./burner-key";
 import { toPaymentSigner } from "./burner-signer";
 import { setSettlePhase } from "./settle-phase";
-import { createUserOpReceiptClient } from "./user-op-receipt";
 
 const storageKey = "lycoris-sponsored-purchase";
 type StoredPurchase = { id: string; txHash?: string; confirmed?: boolean };
@@ -56,6 +56,8 @@ async function burnerAccount() {
 
 export function createSponsoredPayment(recipient: HexAddress) {
   const method = createUsdcMethod({
+    // A second method, so `methods` and `selectMethod` finally mean something.
+    id: "usdc-4337",
     // Confirmation must read the operation's own outcome. A userOp can revert
     // inside a bundle whose transaction succeeded; the transaction receipt would
     // call that unpaid purchase settled.

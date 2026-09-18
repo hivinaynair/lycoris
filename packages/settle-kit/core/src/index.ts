@@ -16,6 +16,8 @@ export type {
   SettleConfig,
   SettleError,
   SettleErrorCode,
+  SettleMethodId,
+  Settlement,
   SettlementHash,
 } from "./types";
 export {

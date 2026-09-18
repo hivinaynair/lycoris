@@ -1,4 +1,4 @@
-import type { SettlementHash } from "@settle-kit/core";
+import type { SettlementHash } from "../types";
 
 export type UserOpReceipt = {
   success: boolean;

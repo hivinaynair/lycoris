@@ -8,6 +8,7 @@ import {
   type HexAddress,
   type Quote,
   type SettleAdapter,
+  type SettleMethodId,
   type SettlementHash,
 } from "../types";
 
@@ -54,6 +55,9 @@ export type UsdcMethodOptions = {
   quoteTtlMs?: number | undefined;
   now?: (() => number) | undefined;
   requestId?: (() => string) | undefined;
+  /** Defaults to "usdc". A smart-account host names its adapter separately so
+   *  `methods` and `selectMethod` can tell the two apart. */
+  id?: SettleMethodId | undefined;
 };
 
 export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter {
@@ -61,8 +65,9 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
   const now = options.now ?? Date.now;
   const requestId = options.requestId ?? (() => crypto.randomUUID());
 
+  const id = options.id ?? "usdc";
   return {
-    id: "usdc",
+    id,
     async quote({ amountUsdc }) {
       const amountAtomic = parseUsdcAmount(amountUsdc);
       const quote: Quote = {
@@ -70,7 +75,7 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
         amountUsdc,
         amountAtomic,
         expiresAt: now() + quoteTtlMs,
-        method: "usdc",
+        method: id,
       };
       return quote;
     },

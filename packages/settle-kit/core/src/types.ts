@@ -18,6 +18,29 @@ export const BASE_SEPOLIA_EXPLORER = "https://sepolia.basescan.org";
 export const USDC_DECIMALS = 6;
 export const DEFAULT_QUOTE_TTL_MS = 5 * 60 * 1000;
 
+/**
+ * The payment methods an adapter can be.
+ *
+ * This was the literal `"usdc"` until a second method existed, which made
+ * `SettleConfig.methods` an array that could hold exactly one thing and
+ * `selectMethod` a function with nothing to select. Confirming a user operation
+ * needs its own adapter — a different receipt client, a hash that is not a
+ * transaction hash — so the literal had to go.
+ */
+export type SettleMethodId = "usdc" | "usdc-4337";
+
+/**
+ * What a settlement is identified by, once a payer might be a smart account.
+ *
+ * Mutual exclusion rather than a branded union: the hex brands are optional
+ * phantom properties, so `TransactionHash | UserOpHash` would admit any hex
+ * string and narrow to nothing. `?: never` makes the two shapes genuinely
+ * incompatible and lets a consumer branch on which key is present.
+ */
+export type Settlement =
+  | { transactionHash: SettlementHash; userOpHash?: never }
+  | { userOpHash: SettlementHash; transactionHash?: never };
+
 export type Destination = {
   targetChain: typeof BASE_SEPOLIA_CHAIN_ID;
   targetAsset: HexAddress;
@@ -49,7 +72,7 @@ export type Quote = {
   amountUsdc: string;
   amountAtomic: string;
   expiresAt: number;
-  method: "usdc";
+  method: SettleMethodId;
   /** Set by the quote server when the recipient belongs to the resource, not the app. */
   destination?: Destination | undefined;
 };
@@ -75,7 +98,7 @@ export type CheckoutState =
     };
 
 export type SettleAdapter = {
-  id: "usdc";
+  id: SettleMethodId;
   quote: (input: { amountUsdc: string; destination?: Destination | undefined }) => Promise<Quote>;
   settle: (input: {
     quote: Quote;

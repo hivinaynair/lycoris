@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type { SettlementHash } from "@settle-kit/core";
+import type { SettlementHash } from "../types";
 import { createUserOpReceiptClient } from "./user-op-receipt";
 
 const userOpHash =

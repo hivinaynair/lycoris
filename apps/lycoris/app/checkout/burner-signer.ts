@@ -47,7 +47,7 @@ export type UserOperationSender<account extends { address: HexAddress } = { addr
  * operation is not an error here.** `sendTransaction` resolves as soon as the bundler
  * accepts the operation, exactly as an EOA's resolves once the transaction is
  * broadcast; in both cases the chain has not yet had its say. Deciding the outcome is
- * `confirm()`'s job, and `createUserOpReceiptClient` (`./user-op-receipt`) does it by
+ * `confirm()`'s job, and `createUserOpReceiptClient` (`@settle-kit/core/account-abstraction`) does it by
  * reading `UserOperationEvent.success`. So a reverted user operation walks the
  * identical state path as a reverted ERC-20 transfer — `settling` → `confirm()` →
  * `"reverted"` → `failed` — with the hash intact for the buyer to inspect.
