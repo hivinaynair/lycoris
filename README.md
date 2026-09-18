@@ -88,43 +88,214 @@ export function Store({ getSigner }: { getSigner: () => Promise<PaymentSigner> }
 `getSigner` returns an address, `sendTransaction`, and ideally `getChainId`. That
 is the entire wallet contract.
 
-## Pick the smallest thing that works
+## Examples
 
-Every path shares the same session semantics and error codes. They differ only in
-who renders and who decides price.
+Pick the smallest thing that works. Every path shares the same session semantics
+and error codes — they differ only in who renders and who decides price.
 
-| You want | Use | Docs |
-| --- | --- | --- |
-| A styled checkout, dropped in | `@settle-kit/react` + `/ui` | [#react](https://lycoris.vinaynair.dev/docs#react) |
-| Your own checkout UI | `useCheckout()` | [#custom-ui](https://lycoris.vinaynair.dev/docs#custom-ui) |
-| No React at all | `@settle-kit/core` | [#core](https://lycoris.vinaynair.dev/docs#core) |
-| Your server to set price and recipient | any of the above, plus `quoteUrl` | [#start](https://lycoris.vinaynair.dev/docs#start) |
-| To charge AI agents for an API | `@settle-kit/server` | [#server](https://lycoris.vinaynair.dev/docs#server) |
-| Your agent to buy something | `@settle-kit/agents` | [#agents](https://lycoris.vinaynair.dev/docs#agents) |
-| An MCP client to buy something | `@settle-kit/mcp` | [README](packages/settle-kit/mcp/README.md) |
-| To pay from a smart account | `@settle-kit/core` — a signer, not a new package | [guide](docs/writing-a-payment-signer.md) |
+### Your own checkout UI
 
-## Three things that will bite you
+`useCheckout()` is the session as a state machine. One branch per status and the
+whole lifecycle is covered. [#custom-ui](https://lycoris.vinaynair.dev/docs#custom-ui)
 
-**A transaction hash is not success.** `settled` means a receipt was read and it
-said so. If receipt lookup fails, the session stays in `settling` holding the hash,
-and `retryConfirmation()` re-reads it — it never sends a second transfer. Sessions
-in flight refuse to be reset or replaced.
+```tsx
+"use client";
+import { useCheckout } from "@settle-kit/react";
 
-**A userOp can revert inside a transaction that succeeded.** ERC-4337 records the
-outcome in `UserOperationEvent.success`, not in the receipt's status, so confirming
-a userOp by reading `receipt.status` marks unpaid purchases as settled. This is why
-`createUsdcMethod` takes a `receiptClient`: give it one that reads
-`eth_getUserOperationReceipt`, and a reverted userOp walks the same path as a
-reverted ERC-20 transfer. Account abstraction is a **signer**, not a payment method
-— worked adapters for wagmi, viem, a CDP server wallet and a 4337 account are in
-[Writing a `PaymentSigner`](docs/writing-a-payment-signer.md).
+export function BuyReport() {
+  const { state, begin, pay, reset, retryConfirmation } = useCheckout();
+  switch (state.status) {
+    case "idle":
+      return <button onClick={() => void begin({ amountUsdc: "0.1" })}>Buy report</button>;
+    case "quoting":
+      return <p>Preparing payment…</p>;
+    case "awaiting_payment":
+      return <button onClick={() => void pay()}>Pay {state.quote.amountUsdc} USDC</button>;
+    case "settling":
+      return state.confirmationError
+        ? <button onClick={() => void retryConfirmation()}>Check payment status</button>
+        : <p>Waiting for your wallet and confirmation…</p>;
+    case "settled":
+      return <><p>Payment confirmed.</p><button onClick={reset}>New purchase</button></>;
+    case "failed":
+      return <><p role="alert">{state.error.message}</p><button onClick={reset}>Reset</button></>;
+  }
+}
+```
 
-**Trusting the browser for the recipient is how funds get redirected.** Set
-`quoteUrl` and your server decides the amount *and* the destination. The SDK treats
-that response as untrusted anyway: `amountAtomic` must equal
-`parseUsdcAmount(amountUsdc)` and match what the buyer asked for, or the quote
-fails. Accepted quotes are frozen before use.
+`payNow()` collapses quote and pay into one click; `begin()` then `pay()` keeps a
+review step between them.
+
+In this repo: [checkout-embed.tsx](apps/lycoris/app/checkout/checkout-embed.tsx) mounts the
+provider, [checkout-controls.tsx](apps/lycoris/app/checkout/checkout-controls.tsx) drives the session.
+
+### No React
+
+Same engine, no DOM, no wagmi, no x402. [#core](https://lycoris.vinaynair.dev/docs#core)
+
+```ts
+import { createCheckout, createSettleConfig, BASE_SEPOLIA_USDC_ADDRESS } from "@settle-kit/core";
+import type { PaymentSigner } from "@settle-kit/core";
+
+export function preparePayment(getSigner: () => Promise<PaymentSigner>) {
+  const config = createSettleConfig({
+    getSigner,
+    destination: {
+      targetChain: 84532,
+      targetAsset: BASE_SEPOLIA_USDC_ADDRESS,
+      recipient: "0x1111111111111111111111111111111111111111", // your merchant
+    },
+  });
+  const checkout = createCheckout(config, { amountUsdc: "0.1" });
+  const unsubscribe = checkout.subscribe(() => render(checkout.getState()));
+  return { checkout, unsubscribe };
+}
+
+// await checkout.selectMethod("usdc");  // quotes, moves to awaiting_payment
+// await checkout.pay();                 // submits, then confirms the receipt
+```
+
+In this repo: [user-op-explorer.ts](apps/lycoris/app/checkout/user-op-explorer.ts) reads userOp
+receipts for the sponsored checkout.
+
+### Your server decides price and recipient
+
+Set `quoteUrl` and the SDK asks your API instead of trusting the browser. It POSTs
+`{ "amountUsdc": "0.1", "method": "usdc" }` and you answer with a quote.
+[#start](https://lycoris.vinaynair.dev/docs#start)
+
+```ts
+// app/api/quote/route.ts
+import { BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_USDC_ADDRESS, DEFAULT_QUOTE_TTL_MS, parseUsdcAmount } from "@settle-kit/core";
+
+export async function POST(request: Request) {
+  const { amountUsdc } = await request.json();
+  const amountAtomic = parseUsdcAmount(amountUsdc);  // throws on a bad amount
+  if (amountAtomic !== "100000") {
+    return Response.json({ error: "This report costs 0.1 USDC." }, { status: 400 });
+  }
+  return Response.json({
+    requestId: crypto.randomUUID(),
+    amountUsdc: "0.1",
+    amountAtomic,
+    expiresAt: Date.now() + DEFAULT_QUOTE_TTL_MS,
+    method: "usdc",
+    destination: {
+      targetChain: BASE_SEPOLIA_CHAIN_ID,
+      targetAsset: BASE_SEPOLIA_USDC_ADDRESS,
+      recipient: process.env.PAY_TO_ADDRESS,         // the server decides
+    },
+  });
+}
+```
+
+Returning `destination` is what makes the recipient server-authoritative, so a
+tampered client cannot redirect funds. The SDK validates the reply as untrusted
+data either way.
+
+### Charge AI agents for your API
+
+Unpaid requests get a 402 with terms; your handler runs only after verification.
+[#server](https://lycoris.vinaynair.dev/docs#server)
+
+```ts
+// app/api/report/route.ts
+import { withAgenticPayment } from "@settle-kit/server/next";
+
+export const GET = withAgenticPayment(
+  async () => Response.json({ report: "Your report data" }),
+  {
+    priceUsdc: "0.1",
+    network: "eip155:84532",
+    payTo: process.env.PAY_TO_ADDRESS!,
+    facilitatorUrl: process.env.FACILITATOR_URL!,
+    description: "Weather report",
+  },
+);
+```
+
+Your handler runs **after verification but before settlement** — keep it read-only
+or independently idempotent.
+
+In this repo: [x402-report.ts](apps/lycoris/features/settlement-pipeline/lib/x402-report.ts) is the
+paid weather route the agent demo buys from.
+
+### Your agent buys something
+
+The other side of that exchange. [#agents](https://lycoris.vinaynair.dev/docs#agents)
+
+```ts
+import { createPaidFetch, payForResource, quoteResource } from "@settle-kit/agents";
+
+type Scheme = Parameters<typeof createPaidFetch>[0]["scheme"];
+
+export async function buyReport(url: string, scheme: Scheme, mandateHeader: string) {
+  const terms = await quoteResource(url);   // undefined if the URL is not x402-gated
+  if (!terms) throw new Error(`${url} is not a paid resource`);
+
+  const paidFetch = createPaidFetch({ scheme, getMandateHeader: () => mandateHeader });
+  const paid = await payForResource({ url, paidFetch });
+
+  if (paid.error) throw new Error(paid.error);
+  return paid.body;  // also: httpStatus, txHash, authorizationNonce, challenge
+}
+```
+
+Keep the URL allowlist, credential storage and spend policy in your host app.
+
+In this repo: [fetch_paid_resource.ts](apps/agent/agent/tools/fetch_paid_resource.ts) — note it
+preclears in the approval gate, before the signer is ever touched.
+
+### An MCP client buys something
+
+Point any MCP client at the stdio server. The model chooses whether to spend; the
+wallet, mandate, limit and merchant come from the environment.
+[README](packages/settle-kit/mcp/README.md)
+
+```json
+{
+  "mcpServers": {
+    "settle-kit": {
+      "command": "bun",
+      "args": ["/absolute/path/to/lycoris/packages/settle-kit/mcp/dist/bin.js"],
+      "env": {
+        "SETTLE_MCP_MANDATE": "…",
+        "SETTLE_MCP_FACILITATOR_URL": "https://…",
+        "SETTLE_MCP_ALLOWLIST": "https://your.api/report",
+        "SETTLE_MCP_PRIVATE_KEY": "0x…"
+      }
+    }
+  }
+}
+```
+
+Nothing is published to npm, so that absolute path is the only install today.
+
+In this repo: [bin.ts](packages/settle-kit/mcp/src/bin.ts) — `legacy: "reject"` is the modern-only knob.
+
+### Pay from a smart account
+
+Account abstraction is a **signer**, not a payment method — no new package.
+[guide](docs/writing-a-payment-signer.md)
+
+```ts
+import { toCoinbaseSmartAccount } from "viem/account-abstraction";
+
+const signer: PaymentSigner = {
+  address: account.address,
+  sendTransaction: ({ to, data }) =>
+    bundler.sendUserOperation({ account, calls: [{ to, value: 0n, data }] }),
+  getChainId: async () => baseSepolia.id,
+};
+```
+
+One trap: a userOp bundled into a **successful** transaction can still have
+reverted. Pass `createUsdcMethod` a `receiptClient` that reads
+`eth_getUserOperationReceipt` and returns `"reverted"` on
+`UserOperationEvent.success === false`, or unpaid purchases get marked settled.
+
+In this repo: [burner-signer.ts](apps/lycoris/app/checkout/burner-signer.ts) and
+[sponsored-payment.ts](apps/lycoris/app/checkout/sponsored-payment.ts).
 
 ## Error codes
 
