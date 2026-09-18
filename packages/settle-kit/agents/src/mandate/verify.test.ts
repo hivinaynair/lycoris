@@ -56,3 +56,25 @@ describe("verifyMandateLocal", () => {
     expect(result).toEqual({ ok: true });
   });
 });
+
+// A mandate names a merchant. Checking the signature without checking the
+// recipient accepts one issued for somebody else's resource.
+describe("verifyMandateLocal recipient binding", () => {
+  async function signed() {
+    const account = privateKeyToAccount(generatePrivateKey());
+    const next = payload({ delegator: account.address, payTo: MERCHANT, agent: account.address });
+    return { payload: next, signature: await signMandate(account, next) };
+  }
+
+  it("rejects a mandate issued for a different merchant", async () => {
+    expect(
+      await verifyMandateLocal(await signed(), {
+        payTo: "0x8888888888888888888888888888888888888888",
+      }),
+    ).toEqual({ ok: false, reason: "recipient_mismatch" });
+  });
+
+  it("accepts the merchant the mandate names", async () => {
+    expect(await verifyMandateLocal(await signed(), { payTo: MERCHANT })).toEqual({ ok: true });
+  });
+});
