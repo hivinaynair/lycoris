@@ -1,10 +1,10 @@
 import type { CheckoutAction } from "./state";
-import type { CheckoutState, SettleAdapter, TxHash } from "./types";
+import type { CheckoutState, SettleAdapter, SettlementHash } from "./types";
 
 export async function confirmPayment(
   getAdapter: () => SettleAdapter,
   current: Extract<CheckoutState, { status: "settling" }>,
-  txHash: TxHash,
+  txHash: SettlementHash,
   setState: (action: CheckoutAction) => void,
 ) {
   try {

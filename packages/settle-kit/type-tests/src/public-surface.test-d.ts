@@ -102,3 +102,6 @@ export function narrowing(state: CheckoutState) {
   }
   return undefined;
 }
+
+// ── SettlementHash is public API. If this import breaks, the rename regressed.
+export type PinnedSettlementHash = import("@settle-kit/core").SettlementHash;

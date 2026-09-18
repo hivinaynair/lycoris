@@ -8,7 +8,7 @@ import {
   type HexAddress,
   type Quote,
   type SettleAdapter,
-  type TxHash,
+  type SettlementHash,
 } from "../types";
 
 const ERC20_ABI = [
@@ -45,10 +45,10 @@ export type UsdcMethodOptions = {
   receiptClient?:
     | {
         waitForTransactionReceipt: (args: {
-          hash: TxHash;
+          hash: SettlementHash;
           confirmations: number;
           timeout: number;
-        }) => Promise<{ status: "success" | "reverted"; transactionHash: TxHash }>;
+        }) => Promise<{ status: "success" | "reverted"; transactionHash: SettlementHash }>;
       }
     | undefined;
   quoteTtlMs?: number | undefined;

@@ -1,6 +1,6 @@
 "use client";
 
-import type { Destination, TxHash } from "@settle-kit/core";
+import type { Destination, SettlementHash } from "@settle-kit/core";
 import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
 import { useContext } from "react";
 import { type CheckoutAppearance, resolveAppearance } from "./appearance";
@@ -30,7 +30,7 @@ export type CheckoutProps = CheckoutCallbacks & {
   destination?: Destination;
   className?: string;
   appearance?: CheckoutAppearance;
-  transactionUrl?: (hash: TxHash) => string | undefined;
+  transactionUrl?: (hash: SettlementHash) => string | undefined;
   labels?: Partial<CheckoutLabels>;
   /** Quote and pay from the initial click, without an extra review step. */
   skipReview?: boolean;

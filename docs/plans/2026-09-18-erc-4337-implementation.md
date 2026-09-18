@@ -18,7 +18,7 @@ bun run check-types && bun run check-boundaries && bun run check-tokens && bun t
 
 ## Task 1: Rename `TxHash` to `SettlementHash`
 
-The brand symbol is module-local and never exported, so no external code can construct it. Aliasing makes the two types identical — this is not a breaking change.
+The brand symbol is module-local and never exported, so no external code can construct it. The package is unpublished, so `TxHash` is deleted outright rather than kept as an alias — a compatibility shim for zero consumers is ceremony. The rename propagates through the whole type graph; the `txHash` property names stay.
 
 **Files:**
 - Modify: `packages/settle-kit/core/src/types.ts:10`

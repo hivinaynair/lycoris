@@ -3,11 +3,12 @@ declare const brand: unique symbol;
  * The brand is **optional**, which is the whole trick: anything structurally
  * `0x${string}` — a viem `Address`, a `Hash`, a literal — still flows in and out
  * unchanged, so the SDK stays interoperable with the library it is built on. But a
- * value already carrying one brand cannot satisfy the other, so a transaction hash
+ * value already carrying one brand cannot satisfy the other, so a settlement hash
  * can never land in a payee position. See `@settle-kit/type-tests`.
  */
 export type HexAddress = `0x${string}` & { readonly [brand]?: "HexAddress" };
-export type TxHash = `0x${string}` & { readonly [brand]?: "TxHash" };
+/** The hash that identifies a settlement: a transaction hash, or a userOpHash under ERC-4337. */
+export type SettlementHash = `0x${string}` & { readonly [brand]?: "SettlementHash" };
 /** Deliberately unbranded: arbitrary calldata, not an identity. */
 export type Hex = `0x${string}`;
 
@@ -39,7 +40,7 @@ export type SettleError = {
 
 export type PaymentSigner = {
   address: HexAddress;
-  sendTransaction: (tx: { to: HexAddress; data: Hex }) => Promise<TxHash>;
+  sendTransaction: (tx: { to: HexAddress; data: Hex }) => Promise<SettlementHash>;
   getChainId?: () => Promise<number>;
 };
 
@@ -61,16 +62,16 @@ export type CheckoutState =
       status: "settling";
       quote: Quote;
       destination: Destination;
-      txHash?: TxHash;
+      txHash?: SettlementHash;
       confirmationError?: SettleError;
     }
-  | { status: "settled"; quote: Quote; destination: Destination; txHash: TxHash }
+  | { status: "settled"; quote: Quote; destination: Destination; txHash: SettlementHash }
   | {
       status: "failed";
       error: SettleError;
       quote?: Quote;
       destination?: Destination;
-      txHash?: TxHash;
+      txHash?: SettlementHash;
     };
 
 export type SettleAdapter = {
@@ -80,10 +81,10 @@ export type SettleAdapter = {
     quote: Quote;
     destination: Destination;
     signer: PaymentSigner;
-  }) => Promise<TxHash>;
+  }) => Promise<SettlementHash>;
   /** Confirm the submitted hash. Throws mean unknown outcome, never permission to resend. */
   confirm: (input: {
-    txHash: TxHash;
+    txHash: SettlementHash;
     quote: Quote;
     destination: Destination;
   }) => Promise<"success" | "reverted">;

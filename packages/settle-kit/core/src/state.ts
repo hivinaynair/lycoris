@@ -1,4 +1,4 @@
-import type { CheckoutState, Destination, Quote, SettleError, TxHash } from "./types";
+import type { CheckoutState, Destination, Quote, SettleError, SettlementHash } from "./types";
 
 export const IDLE_STATE: CheckoutState = { status: "idle" };
 
@@ -7,10 +7,10 @@ export type CheckoutAction =
   | { type: "QUOTE_OK"; quote: Quote; destination: Destination }
   | { type: "QUOTE_FAILED"; error: SettleError }
   | { type: "SETTLING" }
-  | { type: "SUBMITTED"; txHash: TxHash }
+  | { type: "SUBMITTED"; txHash: SettlementHash }
   | { type: "CONFIRMING" }
   | { type: "CONFIRMATION_UNKNOWN"; error: SettleError }
-  | { type: "SETTLED"; txHash: TxHash }
+  | { type: "SETTLED"; txHash: SettlementHash }
   | { type: "FAILED"; error: SettleError }
   | { type: "RESET" };
 
