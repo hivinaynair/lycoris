@@ -36,8 +36,16 @@ for (const [name, contents] of Object.entries(imports)) {
     includesAgentSdk: Object.keys(result.metafile.inputs).some(
       (file) => file.includes("settle-kit/agents") || file.includes("@x402"),
     ),
+    // ERC-4337 reaches the demo through PaymentSigner and the injectable
+    // receiptClient, so none of it should reach a package. viem builds to
+    // `_esm/account-abstraction/`, which this matches alongside the source path.
+    includesAccountAbstraction: Object.keys(result.metafile.inputs).some((file) =>
+      file.includes("account-abstraction"),
+    ),
   };
   if (measurements[name].includesAgentSdk) throw new Error("Agent code leaked into checkout");
+  if (measurements[name].includesAccountAbstraction)
+    throw new Error("Account abstraction leaked into checkout");
 }
 const css = await readFile(join(root, "packages/settle-kit/react/dist/styles.css"));
 const report = {

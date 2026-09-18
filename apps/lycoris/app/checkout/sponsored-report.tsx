@@ -16,7 +16,9 @@ export function SponsoredReport({ txHash }: { txHash: string }) {
       const response = await fetch("/api/weather/sponsored", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ purchaseId }),
+        // The hash names the operation; the server checks it was sent by the burner
+        // it funded for this purchase, so naming someone else's buys nothing.
+        body: JSON.stringify({ purchaseId, userOpHash: txHash }),
       });
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
@@ -26,7 +28,7 @@ export function SponsoredReport({ txHash }: { txHash: string }) {
     } finally {
       setBusy(false);
     }
-  }, [purchaseId]);
+  }, [purchaseId, txHash]);
   useEffect(() => {
     void load();
   }, [load]);

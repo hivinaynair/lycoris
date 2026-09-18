@@ -37,5 +37,7 @@ export const sponsoredCheckoutPayments = pgTable("sponsored_checkout_payments", 
   sponsor: text("sponsor").notNull(),
   recipient: text("recipient").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
-  txHash: text("tx_hash"),
+  fundingTxHash: text("funding_tx_hash"),
+  userOpHash: text("user_op_hash"),
+  payer: text("payer"),
 });

@@ -102,3 +102,32 @@ export function narrowing(state: CheckoutState) {
   }
   return undefined;
 }
+
+// ── SettlementHash is public API. If this import breaks, the rename regressed.
+export type PinnedSettlementHash = import("@settle-kit/core").SettlementHash;
+
+// ── A second method is the point of the `methods` array. Until 4337 there was
+// ── never one, and the literal `"usdc"` hid that the array could hold only one.
+export const smartAccountAdapter: SettleAdapter = {
+  id: "usdc-4337",
+  quote: async (): Promise<Quote> => ({
+    requestId: "q",
+    amountUsdc: "0.1",
+    amountAtomic: "100000",
+    expiresAt: Date.now() + 60_000,
+    method: "usdc-4337",
+  }),
+  settle: async () => "0xabc",
+  confirm: async () => "success",
+};
+
+// ── Settlement discriminates on which key is present. A branded union could not:
+// ── an unbranded hex string satisfies both arms, so nothing narrows.
+export function readSettlement(settlement: import("@settle-kit/core").Settlement) {
+  return settlement.userOpHash ? `op:${settlement.userOpHash}` : `tx:${settlement.transactionHash}`;
+}
+export const bothHashes: import("@settle-kit/core").Settlement = {
+  transactionHash: "0xaaa",
+  // @ts-expect-error a settlement carries one kind of hash, never both
+  userOpHash: "0xbbb",
+};
