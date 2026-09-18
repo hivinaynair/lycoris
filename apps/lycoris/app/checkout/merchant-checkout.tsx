@@ -9,8 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@repo/ui/components/card";
-import { BASE_SEPOLIA_EXPLORER, type CheckoutState } from "@settle-kit/core";
+import type { CheckoutState } from "@settle-kit/core";
 import { useCheckout } from "@settle-kit/react";
+import { userOpExplorerUrl } from "./user-op-explorer";
 
 // Copyable merchant recipe: presentation belongs to the host; payment logic stays in the SDK.
 export function MerchantCheckout({
@@ -69,7 +70,7 @@ export function MerchantCheckout({
         {txHash && !simulated && (
           <a
             className="block break-all text-muted-foreground underline underline-offset-4"
-            href={`${BASE_SEPOLIA_EXPLORER}/tx/${txHash}`}
+            href={userOpExplorerUrl(txHash)}
             target="_blank"
             rel="noreferrer"
           >

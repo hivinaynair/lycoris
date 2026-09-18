@@ -1,7 +1,7 @@
 import type { Hex } from "viem";
 import { z } from "zod";
 
-function sameOrigin(request: Request) {
+export function sameOrigin(request: Request) {
   if (request.headers.get("origin") !== new URL(request.url).origin)
     throw new Error("Open checkout on this site to continue.");
 }
