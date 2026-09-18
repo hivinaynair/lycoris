@@ -20,7 +20,8 @@
         "@settle-kit/core#build",
         "@settle-kit/react#build",
         "@settle-kit/agents#build",
-        "@settle-kit/server#build"
+        "@settle-kit/server#build",
+        "@settle-kit/mcp#build"
       ],
       "passThroughEnv": ["SKIP_ENV_VALIDATION"]
     },

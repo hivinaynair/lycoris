@@ -12,6 +12,7 @@ async function run(command, cwd = host) {
   if ((await child.exited) !== 0) throw new Error(`Failed: ${command.join(" ")}`);
 }
 await cp(join(root, "e2e/fixtures/settle-kit-next"), host, { recursive: true });
+// @settle-kit/mcp is a stdio process, not a Next.js consumer — leave it out.
 for (const name of ["core", "react", "agents", "server"]) {
   if (artifacts) {
     await cp(join(artifacts, `${name}.tgz`), join(host, `${name}.tgz`));

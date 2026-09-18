@@ -1,0 +1,54 @@
+{
+  "name": "@settle-kit/mcp",
+  "version": "0.0.1",
+  "type": "module",
+  "sideEffects": false,
+  "bin": {
+    "settle-kit-mcp": "./dist/bin.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "bun test",
+    "build": "bun ../../../scripts/build-settle-kit.mjs mcp",
+    "prepack": "bun run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.0.0",
+    "@settle-kit/agents": "workspace:*",
+    "@settle-kit/core": "workspace:*",
+    "viem": "^2",
+    "zod": "^4"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.0.0",
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "^5"
+  },
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts",
+    "README.md"
+  ],
+  "description": "An MCP server that buys x402-gated resources.",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hivinaynair/lycoris.git",
+    "directory": "packages/settle-kit/mcp"
+  },
+  "bugs": {
+    "url": "https://github.com/hivinaynair/lycoris/issues"
+  }
+}
