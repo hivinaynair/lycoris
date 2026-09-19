@@ -7,10 +7,11 @@ import type { Look } from "./checkout-appearance";
 import styles from "./checkout-layouts";
 import { MerchantCheckout } from "./merchant-checkout";
 import { SponsoredReport } from "./sponsored-report";
-import { userOpExplorerUrl } from "./user-op-explorer";
+import { useSettlementExplorerUrl } from "./user-op-explorer";
 
 export function CheckoutPreview({ look }: { look: Look }) {
   const { state } = useCheckout();
+  const settlementUrl = useSettlementExplorerUrl();
   return (
     <div className={styles.preview}>
       <div className="border-b border-border p-4">
@@ -29,7 +30,7 @@ export function CheckoutPreview({ look }: { look: Look }) {
             skipReview
             amountUsdc={WEATHER_PRICE_USDC}
             title={WEATHER_TITLE}
-            transactionUrl={userOpExplorerUrl}
+            transactionUrl={settlementUrl}
             labels={{
               buy: `Pay ${WEATHER_PRICE_USDC} USDC`,
               paymentMethod: "Demo wallet",

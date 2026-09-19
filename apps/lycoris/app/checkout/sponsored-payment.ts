@@ -15,6 +15,7 @@ import { baseSepolia } from "viem/chains";
 import { loadOrCreateBurnerKey } from "./burner-key";
 import { toPaymentSigner } from "./burner-signer";
 import { setSettlePhase } from "./settle-phase";
+import { rememberSettlementTx } from "./settlement-tx";
 import {
   beginSponsoredPurchase,
   readSponsoredPurchase,
@@ -94,15 +95,17 @@ export function createSponsoredPayment(recipient: HexAddress) {
     // inside a bundle whose transaction succeeded; the transaction receipt would
     // call that unpaid purchase settled.
     receiptClient: createUserOpReceiptClient({
-      getUserOperationReceipt: ({ hash }) =>
-        bundler.getUserOperationReceipt({ hash }).then((receipt) =>
-          receipt
-            ? {
-                success: receipt.success,
-                receipt: { transactionHash: receipt.receipt.transactionHash },
-              }
-            : null,
-        ),
+      getUserOperationReceipt: async ({ hash }) => {
+        const receipt = await bundler.getUserOperationReceipt({ hash });
+        if (!receipt) return null;
+        // The receipt client throws this hash away on purpose (see its comment), but
+        // it is the only one an explorer resolves, so keep a copy for the link.
+        rememberSettlementTx(hash, receipt.receipt.transactionHash);
+        return {
+          success: receipt.success,
+          receipt: { transactionHash: receipt.receipt.transactionHash },
+        };
+      },
     }),
   });
 

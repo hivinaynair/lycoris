@@ -12,7 +12,7 @@ import {
 import type { CheckoutState } from "@settle-kit/core";
 import { useCheckout } from "@settle-kit/react";
 import { SETTLE_PHASE_LABEL, useSettlePhase } from "./settle-phase";
-import { userOpExplorerUrl } from "./user-op-explorer";
+import { useSettlementExplorerUrl } from "./user-op-explorer";
 
 // Copyable merchant recipe: presentation belongs to the host; payment logic stays in the SDK.
 export function MerchantCheckout({
@@ -28,6 +28,7 @@ export function MerchantCheckout({
 }) {
   const { state, payNow, pay, reset, retryConfirmation, canPay, isBusy } = useCheckout();
   const txHash = "txHash" in state ? state.txHash : undefined;
+  const settlementUrl = useSettlementExplorerUrl();
   return (
     <Card className="rounded-none border border-border shadow-sm">
       <CardHeader>
@@ -71,7 +72,7 @@ export function MerchantCheckout({
         {txHash && !simulated && (
           <a
             className="block break-all text-muted-foreground underline underline-offset-4"
-            href={userOpExplorerUrl(txHash)}
+            href={settlementUrl(txHash)}
             target="_blank"
             rel="noreferrer"
           >
