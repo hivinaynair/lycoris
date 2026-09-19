@@ -85,26 +85,6 @@
           }
         }
       }
-    },
-    {
-      "includes": ["apps/*/src/features/**"],
-      "linter": {
-        "rules": {
-          "style": {
-            "noRestrictedImports": {
-              "level": "error",
-              "options": {
-                "patterns": [
-                  {
-                    "group": ["@/features", "@/features/**"],
-                    "message": "Inside a feature, import with a relative path. Another feature means hoist to src/shared or packages/, or compose in app/ / src/proxy.ts."
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
     }
   ]
 }

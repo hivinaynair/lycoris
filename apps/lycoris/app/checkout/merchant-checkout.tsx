@@ -18,12 +18,10 @@ import { useSettlementExplorerUrl } from "./user-op-explorer";
 export function MerchantCheckout({
   amountUsdc,
   title,
-  simulated = false,
   sponsored = false,
 }: {
   amountUsdc: string;
   title: string;
-  simulated?: boolean;
   sponsored?: boolean;
 }) {
   const { state, payNow, pay, reset, retryConfirmation, canPay, isBusy } = useCheckout();
@@ -50,12 +48,7 @@ export function MerchantCheckout({
             <p className="text-muted-foreground">Base Sepolia · test network</p>
           </div>
         </div>
-        <MerchantPaymentStatus
-          state={state}
-          amountUsdc={amountUsdc}
-          simulated={simulated}
-          sponsored={sponsored}
-        />
+        <MerchantPaymentStatus state={state} amountUsdc={amountUsdc} sponsored={sponsored} />
         {state.status === "failed" && (
           <Alert className="rounded-none" variant="destructive">
             <AlertDescription>{state.error.message}</AlertDescription>
@@ -69,7 +62,7 @@ export function MerchantCheckout({
             <Button onClick={() => void retryConfirmation()}>Check payment status</Button>
           </>
         )}
-        {txHash && !simulated && settlementUrl(txHash) && (
+        {txHash && settlementUrl(txHash) && (
           <a
             className="block break-all text-muted-foreground underline underline-offset-4"
             href={settlementUrl(txHash)}
@@ -106,12 +99,10 @@ export function MerchantCheckout({
 function MerchantPaymentStatus({
   state,
   amountUsdc,
-  simulated,
   sponsored,
 }: {
   state: CheckoutState;
   amountUsdc: string;
-  simulated: boolean;
   sponsored: boolean;
 }) {
   const phase = useSettlePhase();
@@ -120,7 +111,7 @@ function MerchantPaymentStatus({
       {state.status === "idle" && (
         <>
           <p className="font-heading text-4xl tracking-tight">{amountUsdc} USDC</p>
-          <p className="text-muted-foreground">{idleCopy(simulated, sponsored)}</p>
+          <p className="text-muted-foreground">{idleCopy(sponsored)}</p>
         </>
       )}
       {state.status === "quoting" && <p>Preparing your USDC payment…</p>}
@@ -136,9 +127,7 @@ function MerchantPaymentStatus({
           </details>
         </>
       )}
-      {state.status === "settling" && (
-        <p>{settlingCopy(state.txHash, simulated, sponsored, phase)}</p>
-      )}
+      {state.status === "settling" && <p>{settlingCopy(state.txHash, sponsored, phase)}</p>}
       {state.status === "settled" && (
         <p className="rounded-none border border-border bg-muted p-4">
           Payment confirmed: {state.quote.amountUsdc} USDC.
@@ -148,10 +137,7 @@ function MerchantPaymentStatus({
   );
 }
 
-function idleCopy(simulated: boolean, sponsored: boolean) {
-  if (simulated) {
-    return "Try a free sample. No wallet needed and no funds move.";
-  }
+function idleCopy(sponsored: boolean) {
   if (sponsored) {
     return "We cover this payment and network fees. Just click Pay.";
   }
@@ -165,17 +151,9 @@ function networkFeeCopy(sponsored: boolean) {
   return "Network fees are paid separately in test ETH. Your wallet shows the fee before confirmation.";
 }
 
-function settlingCopy(
-  txHash: string | undefined,
-  simulated: boolean,
-  sponsored: boolean,
-  phase: SettlePhase,
-) {
+function settlingCopy(txHash: string | undefined, sponsored: boolean, phase: SettlePhase) {
   if (txHash) {
     return "Payment submitted. Waiting for confirmation…";
-  }
-  if (simulated) {
-    return "Simulating payment…";
   }
   // A sponsored payment now runs two visible waits before submission:
   // topping up the visitor's smart account, then the account paying.

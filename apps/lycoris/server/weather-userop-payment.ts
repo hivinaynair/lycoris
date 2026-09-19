@@ -20,7 +20,7 @@ export type UserOpPaymentClients = {
 /**
  * Releases the report for a payment made by a smart account.
  *
- * `verifyWeatherPayment` cannot do this job. Every check it makes reads the
+ * A direct-transfer check cannot do this job. Those checks read the
  * transaction: `to` must be the USDC contract, and the calldata must decode to a
  * `transfer`. Under ERC-4337 the transaction belongs to the bundler, `to` is the
  * EntryPoint, and the calldata is `handleOps` carrying other people's operations

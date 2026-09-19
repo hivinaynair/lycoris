@@ -1,8 +1,5 @@
 import { DemoAgentName, type ReportRouteId } from "./types.js";
 
-/** Allowlisted third-party x402 resource on Base Sepolia. Override with EXTERNAL_X402_URL. */
-export const DEFAULT_EXTERNAL_X402_URL = "https://www.x402.org/protected";
-
 export const DEMO_SCENARIO_AGENTS = [
   DemoAgentName.AGENT_1,
   DemoAgentName.AGENT_2,
@@ -54,10 +51,6 @@ export type DemoReportRoute = (typeof DEMO_REPORT_ROUTES)[number];
 
 export function getDemoReportRoute(id: ReportRouteId) {
   return DEMO_REPORT_ROUTES.find((route) => route.id === id) ?? DEMO_REPORT_ROUTES[0];
-}
-
-export function getDemoReportRouteByPath(path: string) {
-  return DEMO_REPORT_ROUTES.find((route) => route.path === path);
 }
 
 export type FailureGate = "identity" | "mandate" | "settlement" | "attestation";

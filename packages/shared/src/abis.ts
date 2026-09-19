@@ -65,5 +65,3 @@ export const ATTESTATION_REGISTRY_ABI = [
     ],
   },
 ] as const;
-
-export const ATTESTED_COMMITMENT_EVENT = ATTESTATION_REGISTRY_ABI[1];
