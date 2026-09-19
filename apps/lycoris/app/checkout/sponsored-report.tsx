@@ -38,7 +38,7 @@ export function SponsoredReport({ txHash }: { txHash: string }) {
       className="mx-5 mb-5 space-y-3 border border-border bg-card p-5"
     >
       <h2 className="text-lg font-medium">Your Melbourne weather report</h2>
-      {report ? (
+      {report && (
         <div className="space-y-2 text-sm">
           <p>
             {report.temperatureC}°C · {report.rainProbabilityPercent}% rain probability
@@ -51,9 +51,8 @@ export function SponsoredReport({ txHash }: { txHash: string }) {
             Melbourne time · {report.provider}
           </p>
         </div>
-      ) : busy ? (
-        <p role="status">Loading your report…</p>
-      ) : null}
+      )}
+      {!report && busy && <p role="status">Loading your report…</p>}
       {error && (
         <>
           <p role="alert">{error}</p>

@@ -11,7 +11,7 @@ import {
 } from "@repo/ui/components/card";
 import type { CheckoutState } from "@settle-kit/core";
 import { useCheckout } from "@settle-kit/react";
-import { SETTLE_PHASE_LABEL, useSettlePhase } from "./settle-phase";
+import { SETTLE_PHASE_LABEL, type SettlePhase, useSettlePhase } from "./settle-phase";
 import { useSettlementExplorerUrl } from "./user-op-explorer";
 
 // Copyable merchant recipe: presentation belongs to the host; payment logic stays in the SDK.
@@ -120,13 +120,7 @@ function MerchantPaymentStatus({
       {state.status === "idle" && (
         <>
           <p className="font-heading text-4xl tracking-tight">{amountUsdc} USDC</p>
-          <p className="text-muted-foreground">
-            {simulated
-              ? "Try a free sample. No wallet needed and no funds move."
-              : sponsored
-                ? "We cover this payment and network fees. Just click Pay."
-                : "You’ll need a browser wallet with test USDC and Base Sepolia ETH for network fees."}
-          </p>
+          <p className="text-muted-foreground">{idleCopy(simulated, sponsored)}</p>
         </>
       )}
       {state.status === "quoting" && <p>Preparing your USDC payment…</p>}
@@ -138,26 +132,12 @@ function MerchantPaymentStatus({
             <p className="mt-3 break-all text-muted-foreground">
               Recipient: {state.destination.recipient}
             </p>
-            <p className="mt-2 text-muted-foreground">
-              {sponsored
-                ? "Network fees are paid by the demo in test ETH. Your wallet is never charged."
-                : "Network fees are paid separately in test ETH. Your wallet shows the fee before confirmation."}
-            </p>
+            <p className="mt-2 text-muted-foreground">{networkFeeCopy(sponsored)}</p>
           </details>
         </>
       )}
       {state.status === "settling" && (
-        <p>
-          {state.txHash
-            ? "Payment submitted. Waiting for confirmation…"
-            : simulated
-              ? "Simulating payment…"
-              : // A sponsored payment now runs two visible waits before submission:
-                // topping up the visitor's smart account, then the account paying.
-                // Naming them is the only place 4337 is legible to someone watching.
-                (sponsored && phase && SETTLE_PHASE_LABEL[phase]) ||
-                (sponsored ? "Sending your sponsored payment…" : "Continue in your wallet…")}
-        </p>
+        <p>{settlingCopy(state.txHash, simulated, sponsored, phase)}</p>
       )}
       {state.status === "settled" && (
         <p className="rounded-none border border-border bg-muted p-4">
@@ -166,4 +146,45 @@ function MerchantPaymentStatus({
       )}
     </div>
   );
+}
+
+function idleCopy(simulated: boolean, sponsored: boolean) {
+  if (simulated) {
+    return "Try a free sample. No wallet needed and no funds move.";
+  }
+  if (sponsored) {
+    return "We cover this payment and network fees. Just click Pay.";
+  }
+  return "You’ll need a browser wallet with test USDC and Base Sepolia ETH for network fees.";
+}
+
+function networkFeeCopy(sponsored: boolean) {
+  if (sponsored) {
+    return "Network fees are paid by the demo in test ETH. Your wallet is never charged.";
+  }
+  return "Network fees are paid separately in test ETH. Your wallet shows the fee before confirmation.";
+}
+
+function settlingCopy(
+  txHash: string | undefined,
+  simulated: boolean,
+  sponsored: boolean,
+  phase: SettlePhase,
+) {
+  if (txHash) {
+    return "Payment submitted. Waiting for confirmation…";
+  }
+  if (simulated) {
+    return "Simulating payment…";
+  }
+  // A sponsored payment now runs two visible waits before submission:
+  // topping up the visitor's smart account, then the account paying.
+  // Naming them is the only place 4337 is legible to someone watching.
+  if (sponsored && phase) {
+    return SETTLE_PHASE_LABEL[phase];
+  }
+  if (sponsored) {
+    return "Sending your sponsored payment…";
+  }
+  return "Continue in your wallet…";
 }

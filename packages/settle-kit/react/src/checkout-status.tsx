@@ -42,6 +42,44 @@ export function CheckoutStatus(props: StatusProps) {
   }
 }
 
+function PrimaryButton({
+  visual,
+  onClick,
+  children,
+}: {
+  visual: StatusProps["visual"];
+  onClick: () => void;
+  children: string;
+}) {
+  return (
+    <button
+      className={visual.classFor("primaryButton", `sk-button ${styles.button}`)}
+      type="button"
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
+}
+
+function TransactionLink({
+  hash,
+  transactionUrl,
+  label,
+}: {
+  hash: SettlementHash | undefined;
+  transactionUrl: StatusProps["transactionUrl"];
+  label: string;
+}) {
+  const href = hash ? transactionUrl(hash) : undefined;
+  if (!href) return null;
+  return (
+    <a href={href} target="_blank" rel="noreferrer">
+      {label}
+    </a>
+  );
+}
+
 function IdleCheckout({
   visual,
   copy,
@@ -51,13 +89,9 @@ function IdleCheckout({
   return (
     <>
       <p>{copy.idleDescription}</p>
-      <button
-        className={visual.classFor("primaryButton", `sk-button ${styles.button}`)}
-        type="button"
-        onClick={() => act(onBuy)}
-      >
+      <PrimaryButton visual={visual} onClick={() => act(onBuy)}>
         {copy.buy}
-      </button>
+      </PrimaryButton>
     </>
   );
 }
@@ -77,13 +111,9 @@ function ReviewCheckout({
   return (
     <>
       <p>{copy.reviewDescription}</p>
-      <button
-        className={visual.classFor("primaryButton", `sk-button ${styles.button}`)}
-        type="button"
-        onClick={() => act(checkout.pay)}
-      >
+      <PrimaryButton visual={visual} onClick={() => act(checkout.pay)}>
         {copy.pay}
-      </button>
+      </PrimaryButton>
     </>
   );
 }
@@ -102,23 +132,19 @@ function PendingCheckout({
         …
       </span>
       <p>{state.txHash ? "Payment submitted. Waiting for confirmation…" : copy.pendingWallet}</p>
-      {state.txHash && transactionUrl(state.txHash) ? (
-        <a href={transactionUrl(state.txHash)} target="_blank" rel="noreferrer">
-          View transaction
-        </a>
-      ) : null}
+      <TransactionLink
+        hash={state.txHash}
+        transactionUrl={transactionUrl}
+        label="View transaction"
+      />
       {state.confirmationError ? (
         <>
           <p className={visual.classFor("error", `sk-error ${styles.error}`)} role="alert">
             {state.confirmationError.message}
           </p>
-          <button
-            className={visual.classFor("primaryButton", `sk-button ${styles.button}`)}
-            type="button"
-            onClick={() => act(checkout.retryConfirmation)}
-          >
+          <PrimaryButton visual={visual} onClick={() => act(checkout.retryConfirmation)}>
             {copy.retryConfirmation}
-          </button>
+          </PrimaryButton>
         </>
       ) : null}
     </div>
@@ -145,18 +171,14 @@ function SettledCheckout({
         ✓
       </span>
       <p>Payment confirmed: {state.quote.amountUsdc} USDC.</p>
-      {transactionUrl(state.txHash) && (
-        <a href={transactionUrl(state.txHash)} target="_blank" rel="noreferrer">
-          View transaction
-        </a>
-      )}
-      <button
-        className={visual.classFor("primaryButton", `sk-button ${styles.button}`)}
-        type="button"
-        onClick={() => act(checkout.reset)}
-      >
+      <TransactionLink
+        hash={state.txHash}
+        transactionUrl={transactionUrl}
+        label="View transaction"
+      />
+      <PrimaryButton visual={visual} onClick={() => act(checkout.reset)}>
         {copy.newPurchase}
-      </button>
+      </PrimaryButton>
     </div>
   );
 }
@@ -174,18 +196,14 @@ function FailedCheckout({
       <p className={visual.classFor("error", `sk-error ${styles.error}`)} role="alert">
         {ERROR_COPY[state.error.code] ?? state.error.message}
       </p>
-      {state.txHash && transactionUrl(state.txHash) ? (
-        <a href={transactionUrl(state.txHash)} target="_blank" rel="noreferrer">
-          View failed transaction
-        </a>
-      ) : null}
-      <button
-        className={visual.classFor("primaryButton", `sk-button ${styles.button}`)}
-        type="button"
-        onClick={() => act(checkout.reset)}
-      >
+      <TransactionLink
+        hash={state.txHash}
+        transactionUrl={transactionUrl}
+        label="View failed transaction"
+      />
+      <PrimaryButton visual={visual} onClick={() => act(checkout.reset)}>
         {copy.reset}
-      </button>
+      </PrimaryButton>
     </>
   );
 }
