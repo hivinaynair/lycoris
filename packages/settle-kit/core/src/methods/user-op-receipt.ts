@@ -95,7 +95,9 @@ async function pollOnce(source: UserOpReceiptSource, hash: SettlementHash) {
   try {
     return await source.getUserOperationReceipt({ hash });
   } catch (error) {
-    if ((error as { name?: string })?.name === RECEIPT_NOT_FOUND) return null;
+    if (error && typeof error === "object" && "name" in error && error.name === RECEIPT_NOT_FOUND) {
+      return null;
+    }
     throw error;
   }
 }

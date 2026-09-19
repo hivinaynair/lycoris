@@ -2,6 +2,10 @@ import type { HexAddress } from "@settle-kit/core";
 import { verifyTypedData } from "viem";
 import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES, type SignedMandate } from "./eip712";
 
+function sameAddress(left: string, right: string) {
+  return left.toLowerCase() === right.toLowerCase();
+}
+
 export type MandateVerifyResult =
   | { ok: true }
   | {
@@ -26,10 +30,10 @@ export async function verifyMandateLocal(
   if (mandate.payload.expiry < now) {
     return { ok: false, reason: "expired" };
   }
-  if (opts?.agent && mandate.payload.agent.toLowerCase() !== opts.agent.toLowerCase()) {
+  if (opts?.agent && !sameAddress(mandate.payload.agent, opts.agent)) {
     return { ok: false, reason: "agent_mismatch" };
   }
-  if (opts?.payTo && mandate.payload.payTo.toLowerCase() !== opts.payTo.toLowerCase()) {
+  if (opts?.payTo && !sameAddress(mandate.payload.payTo, opts.payTo)) {
     return { ok: false, reason: "recipient_mismatch" };
   }
 

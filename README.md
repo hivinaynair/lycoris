@@ -384,8 +384,8 @@ in `packages/ui`, and each app has a validated env helper — use it. See
 
 ```text
 apps/       lycoris (storefront, docs, demo, feed) · agent (Eve) · facilitator
-packages/   settle-kit/{core,react,agents,server} · shared · db · ui · scripts
-e2e/        browser tests and an independent consumer fixture
+packages/   settle-kit/{core,react,agents,server,mcp} · shared · db · ui · scripts
+scripts/    pack/check/smoke fixtures for Settle Kit consumers
 ```
 
 ## Scope, stated plainly

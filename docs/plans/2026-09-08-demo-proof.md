@@ -1,4 +1,4 @@
-**Weather resource update:** Both paths now buy Melbourne weather for 0.1 USDC. The earlier recorded video predates this resource change; rerun `bun run record:walkthrough` for a current recording. Human report access uses server-verified payment plus a wallet ownership signature.
+**Weather resource update:** Both paths now buy Melbourne weather for 0.1 USDC. Human report access uses server-verified payment plus a wallet ownership signature.
 
 # Local interview preview
 
@@ -7,8 +7,8 @@ pending: Vinay requested local preview only.
 
 ## 90-second walkthrough
 
-`bun run record:walkthrough` creates `test-results/lycoris-walkthrough.webm`.
-This is a silent screen recording; the following is its narration guide.
+The original walkthrough video was recorded from a Playwright e2e suite that
+has been removed. This is the narration guide that accompanied it.
 
 - **0–10s:** “Lycoris is an embeddable USDC checkout. The playground lets you try the
   real SDK lifecycle without a wallet or moving funds.”

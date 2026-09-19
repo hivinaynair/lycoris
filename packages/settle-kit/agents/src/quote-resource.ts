@@ -2,7 +2,11 @@ import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
 import { decodePaymentRequiredHeader } from "@x402/core/http";
 import { asAddress, asAmount, asRecord, asString } from "./decode";
 import type { ResourceQuote } from "./types";
-import { BASE_SEPOLIA_CAIP2, challengeFromPaymentRequired } from "./x402-decode";
+import {
+  BASE_SEPOLIA_CAIP2,
+  challengeFromPaymentRequired,
+  paymentRequiredHeader,
+} from "./x402-decode";
 
 export async function quoteResource(
   url: string,
@@ -10,27 +14,28 @@ export async function quoteResource(
 ): Promise<ResourceQuote | undefined> {
   const response = await fetchImpl(url, { method: "GET" });
   if (response.status !== 402) return undefined;
-  const header =
-    response.headers.get("PAYMENT-REQUIRED") ?? response.headers.get("X-PAYMENT-REQUIRED");
+  const header = paymentRequiredHeader(response.headers);
   if (!header) return undefined;
 
   const decoded = asRecord(decodePaymentRequiredHeader(header));
   if (!decoded) return undefined;
 
-  const accepts: unknown[] = Array.isArray(decoded.accepts) ? decoded.accepts : [];
-  const terms =
-    accepts.map(asRecord).find((item) => asString(item?.network) === BASE_SEPOLIA_CAIP2) ??
-    (asString(decoded.network) === BASE_SEPOLIA_CAIP2 ? decoded : undefined);
+  const accepts = Array.isArray(decoded.accepts) ? decoded.accepts : [];
+  let terms = accepts.map(asRecord).find((item) => asString(item?.network) === BASE_SEPOLIA_CAIP2);
+  if (!terms && asString(decoded.network) === BASE_SEPOLIA_CAIP2) {
+    terms = decoded;
+  }
 
   const amount = asAmount(terms?.amount) ?? asAmount(decoded.maxAmountRequired);
   if (!amount) return undefined;
 
   const payTo = asAddress(terms?.payTo);
-  return {
+  const quote: ResourceQuote = {
     amountAtomic: amount,
-    ...(payTo ? { payTo } : {}),
     challenge: challengeFromPaymentRequired(decoded),
   };
+  if (payTo) quote.payTo = payTo;
+  return quote;
 }
 
 export function explorerUrl(txHash?: string) {

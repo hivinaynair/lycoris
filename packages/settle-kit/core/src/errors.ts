@@ -36,12 +36,13 @@ export function toSettleError(
     return { code: error.code, message: error.shortMessage || error.message };
   }
   if (error && typeof error === "object" && "code" in error) {
-    const code = String((error as { code: unknown }).code);
+    const { code: rawCode, message: rawMessage } = error as {
+      code: unknown;
+      message?: unknown;
+    };
+    const code = String(rawCode);
     if (code === "4001") return { code: "wallet_rejected", message: "Wallet request declined." };
-    const message =
-      "message" in error && typeof (error as { message: unknown }).message === "string"
-        ? (error as { message: string }).message
-        : code;
+    const message = typeof rawMessage === "string" ? rawMessage : code;
     if (isUserErrorCode(code) || code === "invalid_config") {
       return { code, message };
     }

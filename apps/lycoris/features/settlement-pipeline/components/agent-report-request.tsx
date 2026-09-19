@@ -48,15 +48,7 @@ export function AgentReportResponse({
         <>
           <p className="text-xs uppercase tracking-widest text-muted-foreground">Lycoris</p>
           <div className={styles.reportReply}>
-            <p role="status">
-              {reply ? (
-                <ReplyWithTxLinks text={reply} />
-              ) : loading ? (
-                "Finding your weather report…"
-              ) : (
-                ""
-              )}
-            </p>
+            <p role="status">{reportStatus(reply, loading)}</p>
             {error && (
               <Alert variant="destructive">
                 <AlertDescription>{error}</AlertDescription>
@@ -67,6 +59,16 @@ export function AgentReportResponse({
       )}
     </section>
   );
+}
+
+function reportStatus(reply: string | undefined, loading: boolean) {
+  if (reply) {
+    return <ReplyWithTxLinks text={reply} />;
+  }
+  if (loading) {
+    return "Finding your weather report…";
+  }
+  return "";
 }
 
 function ReplyWithTxLinks({ text }: { text: string }) {

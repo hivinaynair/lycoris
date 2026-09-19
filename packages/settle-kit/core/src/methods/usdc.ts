@@ -6,7 +6,6 @@ import { validateQuote } from "../quote-client";
 import {
   DEFAULT_QUOTE_TTL_MS,
   type HexAddress,
-  type Quote,
   type SettleAdapter,
   type SettleMethodId,
   type SettlementHash,
@@ -69,15 +68,13 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
   return {
     id,
     async quote({ amountUsdc }) {
-      const amountAtomic = parseUsdcAmount(amountUsdc);
-      const quote: Quote = {
+      return {
         requestId: requestId(),
         amountUsdc,
-        amountAtomic,
+        amountAtomic: parseUsdcAmount(amountUsdc),
         expiresAt: now() + quoteTtlMs,
         method: id,
       };
-      return quote;
     },
     async settle({ quote, destination, signer }) {
       assertDestination(destination);
@@ -95,15 +92,13 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
       }
 
       const required = BigInt(quote.amountAtomic);
-      const request = {
+      const client = options.client ?? (await importPublicClient(destination.targetChain));
+      const balance = await client.readContract({
         address: destination.targetAsset,
         abi: ERC20_ABI,
         functionName: "balanceOf",
         args: [signer.address],
-      } as const;
-      const balance = options.client
-        ? await options.client.readContract(request)
-        : await (await importPublicClient(destination.targetChain)).readContract(request);
+      } as const);
 
       if (balance < required) {
         throw new SettleKitError(

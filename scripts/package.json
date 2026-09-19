@@ -1,0 +1,12 @@
+{
+  "name": "settle-kit-smoke",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "playwright:install": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "esbuild": "^0.28.2"
+  }
+}

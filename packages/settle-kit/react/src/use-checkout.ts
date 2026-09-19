@@ -12,6 +12,10 @@ function getIdle() {
   return IDLE;
 }
 
+function subscribeIdle() {
+  return () => undefined;
+}
+
 export type UseCheckoutResult = {
   state: CheckoutState;
   canPay: boolean;
@@ -53,7 +57,7 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
   });
 
   const state = useSyncExternalStore(
-    ctx.manager?.subscribe ?? (() => () => undefined),
+    ctx.manager?.subscribe ?? subscribeIdle,
     ctx.manager?.getState ?? getIdle,
     getIdle,
   );
@@ -89,11 +93,11 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
       try {
         const manager = await beginSession(input);
         // A failed quote or a replaced session must never submit a payment.
-        if (
-          latest.current.ctx.managerRef.current === manager &&
-          manager.getState().status === "awaiting_payment"
-        )
+        const sessionStillCurrent = latest.current.ctx.managerRef.current === manager;
+        const quoteReady = manager.getState().status === "awaiting_payment";
+        if (sessionStillCurrent && quoteReady) {
           await manager.pay();
+        }
       } finally {
         startingPayment.current = false;
       }

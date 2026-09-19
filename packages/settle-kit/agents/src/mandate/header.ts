@@ -21,17 +21,18 @@ export type SerializedMandateHeader = {
 };
 
 export function serializeMandateHeader(value: MandateHeaderValue): string {
+  const { payload, signature } = value.mandate;
   return JSON.stringify({
     agentId: value.agentId.toString(),
     payload: {
-      agent: value.mandate.payload.agent,
-      delegator: value.mandate.payload.delegator,
-      payTo: value.mandate.payload.payTo,
-      maxAmountUsdc: value.mandate.payload.maxAmountUsdc.toString(),
-      expiry: value.mandate.payload.expiry.toString(),
-      nonce: value.mandate.payload.nonce.toString(),
+      agent: payload.agent,
+      delegator: payload.delegator,
+      payTo: payload.payTo,
+      maxAmountUsdc: payload.maxAmountUsdc.toString(),
+      expiry: payload.expiry.toString(),
+      nonce: payload.nonce.toString(),
     },
-    signature: value.mandate.signature,
+    signature,
   } satisfies SerializedMandateHeader);
 }
 
@@ -58,9 +59,16 @@ export function parseMandateHeader(json: string): MandateHeaderValue | undefined
   const expiry = asBigInt(body?.expiry);
   const nonce = asBigInt(body?.nonce);
 
-  if (agentId === undefined || maxAmountUsdc === undefined) return undefined;
-  if (expiry === undefined || nonce === undefined) return undefined;
-  if (agent === undefined || delegator === undefined) return undefined;
+  if (
+    agentId === undefined ||
+    maxAmountUsdc === undefined ||
+    expiry === undefined ||
+    nonce === undefined ||
+    agent === undefined ||
+    delegator === undefined
+  ) {
+    return undefined;
+  }
   // A mandate with no recipient is valid everywhere. Refuse the old shape.
   if (payTo === undefined) return undefined;
   if (!isHex(signature)) return undefined;

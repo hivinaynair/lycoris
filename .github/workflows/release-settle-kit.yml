@@ -43,7 +43,7 @@ jobs:
             bun run pack:settle-kit
           fi
       - run: bun run check:settle-kit-package
-      - run: bun run --cwd e2e/web e2e:install --with-deps
+      - run: bun install --cwd scripts --frozen-lockfile && bun run --cwd scripts playwright:install --with-deps
       - name: Independent Next.js checkout smoke
         run: bun run smoke:settle-kit "$GITHUB_WORKSPACE/dist/settle-kit"
       - uses: actions/upload-artifact@v4

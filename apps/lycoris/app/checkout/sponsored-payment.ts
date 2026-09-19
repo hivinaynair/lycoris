@@ -138,9 +138,8 @@ export function createSponsoredPayment(recipient: HexAddress) {
 
         setSettlePhase("submitting");
         const userOpHash = await method.settle(input);
-        const previous = readSponsoredPurchase(localStorage);
         writeSponsoredPurchase(localStorage, {
-          ...(previous ?? { id: input.quote.requestId }),
+          ...readSponsoredPurchase(localStorage),
           id: input.quote.requestId,
           txHash: userOpHash,
         });

@@ -3,6 +3,10 @@
 import type { CheckoutState } from "@settle-kit/core";
 import { useEffect, useRef } from "react";
 
+function restoresFocus(status: CheckoutState["status"]) {
+  return status === "awaiting_payment" || status === "settled" || status === "failed";
+}
+
 export function useCheckoutFocus(status: CheckoutState["status"]) {
   const card = useRef<HTMLElement>(null);
   const focusNext = useRef(false);
@@ -11,10 +15,11 @@ export function useCheckoutFocus(status: CheckoutState["status"]) {
     void action();
   }
   useEffect(() => {
-    if (!focusNext.current || !["awaiting_payment", "settled", "failed"].includes(status)) return;
+    if (!focusNext.current || !restoresFocus(status)) return;
     focusNext.current = false;
-    if (document.activeElement !== document.body && !card.current?.contains(document.activeElement))
-      return;
+    const active = document.activeElement;
+    const leftTheCard = active !== document.body && !card.current?.contains(active);
+    if (leftTheCard) return;
     card.current?.querySelector<HTMLButtonElement>("button")?.focus();
   }, [status]);
   return { card, act };
