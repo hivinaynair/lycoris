@@ -38,6 +38,7 @@
     },
     "check-types": {
       "dependsOn": [
+        "^build",
         "^check-types",
         "@settle-kit/core#build",
         "@settle-kit/react#build",
