@@ -49,7 +49,9 @@ if (name === "react") {
     [
       "bunx",
       "--no-install",
-      "@tailwindcss/cli",
+      // the bin name, not the package: bunx looks up bins, and the
+      // package name makes it hunt for a bin called "cli".
+      "tailwindcss",
       "-i",
       "src/styles.css",
       "-o",
