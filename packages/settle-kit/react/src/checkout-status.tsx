@@ -147,7 +147,7 @@ function SettledCheckout({
       <p>Payment confirmed: {state.quote.amountUsdc} USDC.</p>
       {transactionUrl(state.txHash) && (
         <a href={transactionUrl(state.txHash)} target="_blank" rel="noreferrer">
-          View on Basescan
+          View transaction
         </a>
       )}
       <button
