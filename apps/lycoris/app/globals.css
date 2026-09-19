@@ -54,3 +54,19 @@
     }
   }
 }
+
+/*
+ * The SDK renders its pending glyph as a literal "…" with no motion. A sponsored
+ * settlement funds, submits and then waits for a bundle, so the card sits there
+ * long enough that stillness reads as a hang. Scoped to the pending state: the
+ * settled card uses the same class for its ✓, which should not pulse.
+ */
+.sk-status:not(.sk-complete) .sk-status-icon {
+  animation: var(--animate-machine-blink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sk-status:not(.sk-complete) .sk-status-icon {
+    animation: none;
+  }
+}

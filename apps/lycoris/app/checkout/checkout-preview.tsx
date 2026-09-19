@@ -6,12 +6,14 @@ import { Checkout } from "@settle-kit/react/ui";
 import type { Look } from "./checkout-appearance";
 import styles from "./checkout-layouts";
 import { MerchantCheckout } from "./merchant-checkout";
+import { SETTLE_PHASE_LABEL, useSettlePhase } from "./settle-phase";
 import { SponsoredReport } from "./sponsored-report";
 import { useSettlementExplorerUrl } from "./user-op-explorer";
 
 export function CheckoutPreview({ look }: { look: Look }) {
   const { state } = useCheckout();
   const settlementUrl = useSettlementExplorerUrl();
+  const phase = useSettlePhase();
   return (
     <div className={styles.preview}>
       <div className="border-b border-border p-4">
@@ -38,7 +40,9 @@ export function CheckoutPreview({ look }: { look: Look }) {
               recoveryDescription:
                 "Your purchase is saved in this browser. If interrupted, return here to check the same payment without sending it again.",
               idleDescription: "We cover this payment and network fees. Just click Pay.",
-              pendingWallet: "Sending your sponsored payment…",
+              // The two real waits, named as they happen: a static line here reads as
+              // a frozen screen, and this is the only evidence a smart account exists.
+              pendingWallet: phase ? SETTLE_PHASE_LABEL[phase] : "Sending your sponsored payment…",
               reviewDescription: "Paid by the demo wallet on Base Sepolia.",
             }}
           />
