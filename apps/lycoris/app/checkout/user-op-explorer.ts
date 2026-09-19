@@ -10,21 +10,19 @@ import { readSettlementTx, settlementTxVersion, subscribeSettlementTx } from "./
  * A userOpHash is not a transaction hash: the bundler puts many operations into one
  * `handleOps` transaction, and only that transaction has a hash Basescan can resolve.
  * Once the receipt has told us which bundle carried the payment we link the real
- * transaction; until then Jiffyscan indexes operations, which is what the buyer has.
+ * transaction. Until then there is no link: a userOpHash in an explorer's `/tx/`
+ * route resolves nothing.
  *
  * This is the reason `Checkout` takes `transactionUrl` as a prop rather than
  * hard-coding a chain explorer: the SDK cannot know which kind of hash a host's
  * signer produces.
  */
-export function userOpExplorerUrl(hash: SettlementHash) {
-  return `https://jiffyscan.xyz/userOpHash/${hash}?network=base-sepolia`;
-}
-
 export function settlementExplorerUrl(hash: SettlementHash) {
   const transactionHash = readSettlementTx(hash);
-  return transactionHash
-    ? `${BASE_SEPOLIA_EXPLORER}/tx/${transactionHash}`
-    : userOpExplorerUrl(hash);
+  // No link rather than a userOp link: the bundle usually lands seconds after the
+  // confirmation card appears, and `transactionUrl` returning undefined is how the
+  // SDK is told there is nothing to link yet.
+  return transactionHash ? `${BASE_SEPOLIA_EXPLORER}/tx/${transactionHash}` : undefined;
 }
 
 /**

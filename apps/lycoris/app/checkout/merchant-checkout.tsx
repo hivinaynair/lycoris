@@ -69,7 +69,7 @@ export function MerchantCheckout({
             <Button onClick={() => void retryConfirmation()}>Check payment status</Button>
           </>
         )}
-        {txHash && !simulated && (
+        {txHash && !simulated && settlementUrl(txHash) && (
           <a
             className="block break-all text-muted-foreground underline underline-offset-4"
             href={settlementUrl(txHash)}
