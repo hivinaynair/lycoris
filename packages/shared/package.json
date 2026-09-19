@@ -5,62 +5,52 @@
   "exports": {
     "./identity": {
       "types": "./dist/identity.d.ts",
-      "bun": "./src/identity.ts",
       "default": "./dist/identity.js"
     },
     "./mandate": {
       "types": "./dist/mandate.d.ts",
-      "bun": "./src/mandate.ts",
       "default": "./dist/mandate.js"
     },
     "./mandate-header": {
       "types": "./dist/mandate-header.d.ts",
-      "bun": "./src/mandate-header.ts",
       "default": "./dist/mandate-header.js"
     },
     "./decision-record": {
       "types": "./dist/decision-record.d.ts",
-      "bun": "./src/decision-record.ts",
       "default": "./dist/decision-record.js"
     },
     "./demo": {
       "types": "./dist/demo.d.ts",
-      "bun": "./src/demo.ts",
       "default": "./dist/demo.js"
     },
     "./abis": {
       "types": "./dist/abis.d.ts",
-      "bun": "./src/abis.ts",
       "default": "./dist/abis.js"
     },
     "./types": {
       "types": "./dist/types.d.ts",
-      "bun": "./src/types.ts",
       "default": "./dist/types.js"
     },
     "./chains": {
       "types": "./dist/chains.d.ts",
-      "bun": "./src/chains.ts",
       "default": "./dist/chains.js"
     },
     "./commitment": {
       "types": "./dist/commitment.d.ts",
-      "bun": "./src/commitment.ts",
       "default": "./dist/commitment.js"
     },
     "./facilitator": {
       "types": "./dist/facilitator.d.ts",
-      "bun": "./src/facilitator.ts",
       "default": "./dist/facilitator.js"
     },
     "./settlement-errors": {
       "types": "./dist/settlement-errors.d.ts",
-      "bun": "./src/settlement-errors.ts",
       "default": "./dist/settlement-errors.js"
     }
   },
   "scripts": {
     "build": "rm -rf dist && tsc",
+    "dev": "tsc --watch",
     "check-types": "tsc --noEmit",
     "test": "bun test"
   },

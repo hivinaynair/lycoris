@@ -5,9 +5,17 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*", "$TURBO_ROOT$/scripts/build-settle-kit.mjs"],
-      "outputs": [".next/**", "!.next/cache/**", "!.next/dev/**", "dist/**"],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "dist/**",
+        ".vercel/output/**",
+        ".output/**"
+      ],
       "env": [
         "NODE_ENV",
+        "VERCEL",
         "SKIP_ENV_VALIDATION",
         "AGENT_URL",
         "APP_URL",
@@ -27,7 +35,7 @@
         "PAY_TO_ADDRESS",
         "SPONSORED_WALLET_ADDRESS"
       ],
-      "passThroughEnv": ["CI", "VERCEL", "VERCEL_ENV", "VERCEL_URL", "VERCEL_REGION"]
+      "passThroughEnv": ["CI", "VERCEL_ENV", "VERCEL_URL", "VERCEL_REGION"]
     },
     "//#format-and-lint": {
       "description": "Check for formatting and linting issues"
@@ -78,7 +86,8 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["^build"]
     },
     "add": {
       "cache": false
