@@ -46,6 +46,7 @@
       "version": "0.0.1",
       "dependencies": {
         "@hono/node-server": "^1.13.7",
+        "@noble/hashes": "^1.8.0",
         "@repo/db": "workspace:*",
         "@repo/shared": "workspace:*",
         "@x402/core": "^2.17.0",
