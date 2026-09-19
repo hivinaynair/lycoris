@@ -79,11 +79,6 @@
     "//#check-boundaries": {
       "description": "Enforce Next.js feature folder boundaries in apps/*"
     },
-    "e2e": {
-      "dependsOn": ["^build"],
-      "passThroughEnv": ["PLAYWRIGHT_*", "CI", "PORT"],
-      "outputs": ["playwright-report/**", "test-results/**"]
-    },
     "dev": {
       "cache": false,
       "persistent": true,

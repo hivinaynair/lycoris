@@ -1,5 +1,5 @@
 ---
-description: bun:test for unit/integration, Playwright for E2E, MSW for HTTP stubs
+description: bun:test for unit/integration, MSW for HTTP stubs
 globs: "**/*.{test,spec}.{ts,tsx}"
 alwaysApply: false
 ---
@@ -10,4 +10,4 @@ Do not add Vitest or Jest.
 
 - Unit/integration: `bun:test`, colocated `*.test.ts` / `*.test.tsx`. Use `mock()` from `bun:test`, not `vi.fn`.
 - HTTP stubs: `@repo/mocks` (already started from `test/setup.ts`).
-- E2E: `e2e/<app>`, files named `*.spec.ts`. Import `test` / `expect` from that app’s `playwright.setup`, not `@playwright/test`.
+- Independent Settle Kit consumer smoke: `bun run smoke:settle-kit` (Chromium via Playwright; not an app e2e suite).

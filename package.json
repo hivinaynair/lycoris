@@ -11,7 +11,6 @@
     "format-and-lint:fix": "biome check . --write",
     "check-types": "turbo run check-types",
     "test": "bun test",
-    "e2e": "turbo run e2e",
     "check-boundaries": "bun scripts/check-boundaries.mjs && bun scripts/check-settle-kit.mjs",
     "check-tokens": "bun scripts/check-tokens.mjs",
     "ui:add": "turbo run add --filter=@repo/ui",
@@ -25,7 +24,6 @@
     "prepare": "lefthook install || true",
     "smoke:settle-kit": "bun scripts/smoke-settle-kit-next.mjs",
     "measure:settle-kit": "bun scripts/measure-settle-kit.mjs",
-    "record:walkthrough": "RECORD_WALKTHROUGH=1 bun run --cwd e2e/web e2e tests/walkthrough.spec.ts --workers=1",
     "pack:settle-kit": "bun scripts/pack-settle-kit.mjs",
     "check:settle-kit-package": "bun scripts/check-settle-kit-package.mjs",
     "version:settle-kit": "bun scripts/version-settle-kit.mjs",
@@ -63,7 +61,6 @@
     "apps/*",
     "packages/*",
     "packages/settle-kit/*",
-    "e2e/*",
     "tooling/*"
   ],
   "dependencies": {}

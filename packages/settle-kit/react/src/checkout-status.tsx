@@ -1,10 +1,10 @@
 "use client";
 
 import type { CheckoutState, SettlementHash } from "@settle-kit/core";
-import type { resolveAppearance } from "./appearance";
+import type { ResolvedAppearance } from "./appearance";
 import type { CheckoutLabels } from "./checkout";
 import { styles } from "./checkout-styles";
-import type { useCheckout } from "./use-checkout";
+import type { UseCheckoutResult } from "./use-checkout";
 
 const ERROR_COPY: Record<string, string> = {
   insufficient_usdc: "Not enough USDC to complete this payment.",
@@ -16,12 +16,28 @@ const ERROR_COPY: Record<string, string> = {
 };
 
 type StatusProps = {
-  checkout: ReturnType<typeof useCheckout>;
-  visual: ReturnType<typeof resolveAppearance>;
+  checkout: UseCheckoutResult;
+  visual: ResolvedAppearance;
   copy: CheckoutLabels;
   act: (action: () => void | Promise<void>) => void;
   onBuy: () => Promise<void>;
   transactionUrl: (hash: SettlementHash) => string | undefined;
+};
+
+type StatusViewProps<Status extends CheckoutState["status"]> = StatusProps & {
+  state: Extract<CheckoutState, { status: Status }>;
+};
+
+type PrimaryButtonProps = {
+  visual: StatusProps["visual"];
+  onClick: () => void;
+  children: string;
+};
+
+type TransactionLinkProps = {
+  hash: SettlementHash | undefined;
+  transactionUrl: StatusProps["transactionUrl"];
+  label: string;
 };
 
 export function CheckoutStatus(props: StatusProps) {
@@ -42,15 +58,7 @@ export function CheckoutStatus(props: StatusProps) {
   }
 }
 
-function PrimaryButton({
-  visual,
-  onClick,
-  children,
-}: {
-  visual: StatusProps["visual"];
-  onClick: () => void;
-  children: string;
-}) {
+function PrimaryButton({ visual, onClick, children }: PrimaryButtonProps) {
   return (
     <button
       className={visual.classFor("primaryButton", `sk-button ${styles.button}`)}
@@ -62,15 +70,7 @@ function PrimaryButton({
   );
 }
 
-function TransactionLink({
-  hash,
-  transactionUrl,
-  label,
-}: {
-  hash: SettlementHash | undefined;
-  transactionUrl: StatusProps["transactionUrl"];
-  label: string;
-}) {
+function TransactionLink({ hash, transactionUrl, label }: TransactionLinkProps) {
   const href = hash ? transactionUrl(hash) : undefined;
   if (!href) return null;
   return (
@@ -80,12 +80,7 @@ function TransactionLink({
   );
 }
 
-function IdleCheckout({
-  visual,
-  copy,
-  act,
-  onBuy,
-}: StatusProps & { state: Extract<CheckoutState, { status: "idle" }> }) {
+function IdleCheckout({ visual, copy, act, onBuy }: StatusViewProps<"idle">) {
   return (
     <>
       <p>{copy.idleDescription}</p>
@@ -96,18 +91,11 @@ function IdleCheckout({
   );
 }
 
-function QuotingCheckout({
-  state,
-}: StatusProps & { state: Extract<CheckoutState, { status: "quoting" }> }) {
+function QuotingCheckout({ state }: StatusViewProps<"quoting">) {
   return <p>Locking {state.amountUsdc} USDC…</p>;
 }
 
-function ReviewCheckout({
-  checkout,
-  visual,
-  copy,
-  act,
-}: StatusProps & { state: Extract<CheckoutState, { status: "awaiting_payment" }> }) {
+function ReviewCheckout({ checkout, visual, copy, act }: StatusViewProps<"awaiting_payment">) {
   return (
     <>
       <p>{copy.reviewDescription}</p>
@@ -125,7 +113,7 @@ function PendingCheckout({
   copy,
   act,
   transactionUrl,
-}: StatusProps & { state: Extract<CheckoutState, { status: "settling" }> }) {
+}: StatusViewProps<"settling">) {
   return (
     <div className={visual.classFor("status", `sk-status ${styles.status}`)} role="status">
       <span className={`sk-status-icon ${styles.statusIcon}`} aria-hidden="true">
@@ -158,7 +146,7 @@ function SettledCheckout({
   copy,
   act,
   transactionUrl,
-}: StatusProps & { state: Extract<CheckoutState, { status: "settled" }> }) {
+}: StatusViewProps<"settled">) {
   return (
     <div
       className={visual.classFor(
@@ -190,7 +178,7 @@ function FailedCheckout({
   copy,
   act,
   transactionUrl,
-}: StatusProps & { state: Extract<CheckoutState, { status: "failed" }> }) {
+}: StatusViewProps<"failed">) {
   return (
     <>
       <p className={visual.classFor("error", `sk-error ${styles.error}`)} role="alert">

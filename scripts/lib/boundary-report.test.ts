@@ -23,7 +23,7 @@ describe("isTestFile", () => {
   it("matches colocated unit and integration names", () => {
     expect(isTestFile("src/features/admissions/enroll.test.ts")).toBe(true);
     expect(isTestFile("src/features/admissions/enroll.integration.test.ts")).toBe(true);
-    expect(isTestFile("e2e/web/auth.spec.ts")).toBe(true);
+    expect(isTestFile("src/features/admissions/enroll.spec.ts")).toBe(true);
     expect(isTestFile("src/features/admissions/enroll.ts")).toBe(false);
   });
 });
