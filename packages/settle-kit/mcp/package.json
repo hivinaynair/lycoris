@@ -31,7 +31,6 @@
   },
   "devDependencies": {
     "@modelcontextprotocol/client": "2.0.0",
-    "@modelcontextprotocol/conformance": "0.1.16",
     "@repo/typescript-config": "workspace:*",
     "typescript": "^5"
   },
