@@ -1,17 +1,23 @@
 import { describe, expect, test } from "bun:test";
 import { createCheckout } from "./create-checkout";
 import { createUsdcMethod } from "./methods/usdc";
-import { BASE_SEPOLIA_CHAIN_ID, BASE_SEPOLIA_USDC_ADDRESS, type SettleAdapter } from "./types";
+import {
+  BASE_SEPOLIA_CHAIN_ID,
+  BASE_SEPOLIA_USDC_ADDRESS,
+  type Destination,
+  type SettleAdapter,
+  type SettlementHash,
+} from "./types";
 
 const getSigner = async () => ({
   address: "0x1111111111111111111111111111111111111111" as const,
-  sendTransaction: async () => "0xabc" as const,
+  sendTransaction: async () => "0xabc" as SettlementHash,
 });
 
-const destination = {
+const destination: Destination = {
   targetChain: BASE_SEPOLIA_CHAIN_ID,
   targetAsset: BASE_SEPOLIA_USDC_ADDRESS,
-  recipient: "0x1111111111111111111111111111111111111111" as const,
+  recipient: "0x1111111111111111111111111111111111111111",
 };
 
 function session(methods?: SettleAdapter[]) {

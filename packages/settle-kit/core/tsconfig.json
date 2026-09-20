@@ -8,8 +8,7 @@
     "declarationMap": false,
     "allowImportingTsExtensions": true,
     "rewriteRelativeImportExtensions": true,
-    "lib": ["ES2022"]
+    "noEmit": true
   },
-  "include": ["src"],
-  "exclude": ["src/**/*.test.ts"]
+  "include": ["src"]
 }

@@ -15,7 +15,7 @@ const destination = {
   targetAsset: BASE_SEPOLIA_USDC_ADDRESS,
   recipient: "0x1111111111111111111111111111111111111111" as const,
 };
-const hash: SettlementHash = `0x${"ab".repeat(32)}`;
+const hash = `0x${"ab".repeat(32)}` as SettlementHash;
 const makeQuote = (): Quote => ({
   requestId: "q",
   amountUsdc: "12.50",

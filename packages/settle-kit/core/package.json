@@ -14,7 +14,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "bun test",
-    "build": "rm -rf dist && tsc",
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "prepack": "bun run build"
   },
   "peerDependencies": {
@@ -22,6 +22,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/bun": "^1.3.14",
     "typescript": "^5",
     "viem": "^2"
   },
