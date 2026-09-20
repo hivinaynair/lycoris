@@ -63,8 +63,10 @@ function RailControls({
           key={value}
           variant="ghost"
           className="h-10 w-full justify-between rounded-none border border-border"
+          type="button"
           aria-pressed={rail === value}
           disabled={disabled}
+          title={disabled ? "Wait for this payment to finish before switching." : undefined}
           onClick={() => {
             setRail(value);
           }}

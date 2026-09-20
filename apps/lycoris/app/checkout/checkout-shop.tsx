@@ -6,10 +6,10 @@ import {
   BASE_SEPOLIA_USDC_ADDRESS,
   type Destination,
 } from "@settle-kit/core";
-import { SettleProvider } from "@settle-kit/react";
+import { SettleProvider, useCheckout } from "@settle-kit/react";
 import "@settle-kit/react/styles.css";
 import { CloudSun } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { appearances, type Look } from "./checkout-appearance";
 import { CheckoutControls } from "./checkout-controls";
 import { CheckoutEmbed } from "./checkout-embed";
@@ -32,7 +32,6 @@ export function CheckoutShop({ recipient }: { recipient: Address }) {
   const payment = rail === "sponsored" ? sponsored : wallet;
   return (
     <SettleProvider
-      key={rail}
       appearance={appearances[look]}
       config={{
         appName: "Melbourne weather",
@@ -40,10 +39,22 @@ export function CheckoutShop({ recipient }: { recipient: Address }) {
         ...payment,
       }}
     >
+      <RailSession rail={rail} />
       <Playground look={look} setLook={setLook} rail={rail} setRail={setRail} />
     </SettleProvider>
   );
 }
+function RailSession({ rail }: { rail: CheckoutRail }) {
+  const { reset, state } = useCheckout();
+  const previous = useRef(rail);
+  useEffect(() => {
+    if (previous.current === rail) return;
+    previous.current = rail;
+    if (state.status !== "idle" && state.status !== "settling") reset();
+  }, [rail, reset, state.status]);
+  return null;
+}
+
 function Playground({
   look,
   setLook,
