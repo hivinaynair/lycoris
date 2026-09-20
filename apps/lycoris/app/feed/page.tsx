@@ -40,7 +40,7 @@ export default async function FeedPage({
               </p>
               <p className="mt-1 font-mono text-2xl font-semibold">{rows.length}</p>
             </div>
-            <Badge className="text-muted-foreground">Base Sepolia</Badge>
+            <Badge>Base Sepolia</Badge>
           </div>
         }
       />
