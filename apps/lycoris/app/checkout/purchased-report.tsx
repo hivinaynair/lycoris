@@ -2,24 +2,30 @@
 import { Button } from "@repo/ui/components/button";
 import { useCallback, useEffect, useState } from "react";
 import type { PublicForecast } from "@/server/weather";
+import type { CheckoutRail } from "./checkout-rail";
 import { sponsoredPurchaseId } from "./sponsored-payment";
 
-export function SponsoredReport({ txHash }: { txHash: string }) {
+export function PurchasedReport({ rail, txHash }: { rail: CheckoutRail; txHash: string }) {
   const [report, setReport] = useState<PublicForecast>();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [purchaseId] = useState(() => sponsoredPurchaseId(txHash));
+  const [purchaseId] = useState(() =>
+    rail === "sponsored" ? sponsoredPurchaseId(txHash) : undefined,
+  );
   const load = useCallback(async () => {
     setBusy(true);
     setError("");
     try {
-      const response = await fetch("/api/weather/sponsored", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // The hash names the operation; the server checks it was sent by the burner
-        // it funded for this purchase, so naming someone else's buys nothing.
-        body: JSON.stringify({ purchaseId, userOpHash: txHash }),
-      });
+      const response = await fetch(
+        rail === "sponsored" ? "/api/weather/sponsored" : "/api/weather/wallet",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(
+            rail === "sponsored" ? { purchaseId, userOpHash: txHash } : { txHash },
+          ),
+        },
+      );
       const body = await response.json();
       if (!response.ok) throw new Error(body.error);
       setReport(body);
@@ -28,7 +34,7 @@ export function SponsoredReport({ txHash }: { txHash: string }) {
     } finally {
       setBusy(false);
     }
-  }, [purchaseId, txHash]);
+  }, [purchaseId, rail, txHash]);
   useEffect(() => {
     void load();
   }, [load]);

@@ -5,10 +5,17 @@ import { useCheckout } from "@settle-kit/react";
 import { Check, ChevronDown, SlidersHorizontal } from "lucide-react";
 import type { Look } from "./checkout-appearance";
 import styles from "./checkout-layouts";
+import { CHECKOUT_RAIL_LABEL, CHECKOUT_RAILS, type CheckoutRail } from "./checkout-rail";
 
-type ControlsProps = { look: Look; setLook: (value: Look) => void };
-export function CheckoutControls({ look, setLook }: ControlsProps) {
+type ControlsProps = {
+  look: Look;
+  setLook: (value: Look) => void;
+  rail: CheckoutRail;
+  setRail: (value: CheckoutRail) => void;
+};
+export function CheckoutControls({ look, setLook, rail, setRail }: ControlsProps) {
   const checkout = useCheckout();
+  const settling = checkout.state.status === "settling";
   return (
     <details className={styles.disclosure}>
       <summary className={styles.summary}>
@@ -22,14 +29,57 @@ export function CheckoutControls({ look, setLook }: ControlsProps) {
         />
       </summary>
       <aside className={styles.controls} aria-label="Playground controls">
+        <RailControls rail={rail} setRail={setRail} disabled={settling} />
         <AppearanceControls look={look} setLook={setLook} />
       </aside>
       <div className="flex flex-wrap justify-between gap-2 border-t border-border px-6 py-4 text-[length:var(--font-small-size)] text-muted-foreground">
         <span>
           state: <output data-testid="checkout-state">{checkout.state.status}</output>
         </span>
+        <span>
+          rail: <output data-testid="checkout-rail">{rail}</output>
+        </span>
       </div>
     </details>
+  );
+}
+
+function RailControls({
+  rail,
+  setRail,
+  disabled,
+}: {
+  rail: CheckoutRail;
+  setRail: (value: CheckoutRail) => void;
+  disabled: boolean;
+}) {
+  return (
+    <fieldset className={styles.appearance} aria-label="How you pay">
+      <legend className="mb-3 text-[length:var(--font-small-size)] font-medium text-foreground">
+        How you pay
+      </legend>
+      {CHECKOUT_RAILS.map((value) => (
+        <Button
+          key={value}
+          variant="ghost"
+          className="h-10 w-full justify-between rounded-none border border-border"
+          type="button"
+          aria-pressed={rail === value}
+          disabled={disabled}
+          title={disabled ? "Wait for this payment to finish before switching." : undefined}
+          onClick={() => {
+            setRail(value);
+          }}
+        >
+          {CHECKOUT_RAIL_LABEL[value]}
+          {rail === value && <Check className="size-4" aria-hidden="true" />}
+        </Button>
+      ))}
+      <p className="text-[length:var(--font-small-size)] leading-relaxed text-muted-foreground">
+        Same <code>pay()</code>. Sponsored wraps the USDC method for a faucet and a 4337 receipt.
+        Your wallet is an ordinary EOA signer.
+      </p>
+    </fieldset>
   );
 }
 

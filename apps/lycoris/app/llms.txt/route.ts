@@ -36,7 +36,7 @@ payment is attempted.
 - /walkthrough: guided checkout, agent purchase, refusal, and evidence tour
 - /case-study: engineering decisions, ownership, validation, and production limits
 - /docs: SDK reference, React, wallet, agent and server examples
-- /checkout: a working checkout, sponsored, no wallet required
+- /checkout: a working checkout with two host rails — sponsored ERC-4337, or your Coinbase Wallet / injected EOA. Same pay({ amount }).
 - /demo: an agent buying the same resource over x402
 - /feed: public payment commitments and disclosed decision evidence
 

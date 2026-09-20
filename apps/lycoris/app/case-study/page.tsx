@@ -53,8 +53,9 @@ export default function CaseStudyPage() {
           <h2 className="text-2xl font-medium tracking-tight">A deliberately small product</h2>
           <p className="text-muted-foreground">
             Both paths buy Melbourne’s next 1 PM forecast for 0.1 test USDC. Weather makes the
-            delivery visible; it stands in for any read-only paid API. A sponsored smart account
-            removes signup, funding, and wallet setup from the visitor’s first experience.
+            delivery visible; it stands in for any read-only paid API. The playground’s default rail
+            is a sponsored smart account, so the first click needs no wallet. The other rail is a
+            Coinbase Wallet or injected EOA paying the same merchant.
           </p>
           <p className="text-muted-foreground">
             Settle Kit is the reusable TypeScript SDK; Lycoris is its host application. The live
@@ -72,8 +73,8 @@ export default function CaseStudyPage() {
           </p>
           <div className="space-y-4 border-l-2 border-primary pl-5 text-sm">
             <p>
-              <strong>Person:</strong> React checkout → funded smart account → USDC transfer →
-              verified operation receipt → report.
+              <strong>Person:</strong> React checkout → sponsored 4337 smart account or injected EOA
+              → USDC transfer → receipt → report.
             </p>
             <p>
               <strong>Agent:</strong> paid API request → HTTP 402 → permission preclear → signed

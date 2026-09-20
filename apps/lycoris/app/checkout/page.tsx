@@ -21,20 +21,21 @@ export default function CheckoutPage() {
             Base Sepolia (84532). USDC → USDC only. No cards, KYC, fiat onramp, DEX or bridge.
           </p>
           <p>
-            A server faucet funds a browser-owned smart account. The account transfers 0.1 test USDC
-            to the merchant, with gas sponsored by a paymaster. The SDK checks balance before
-            sending and confirms the user operation’s own outcome, not just the bundle transaction.
+            Two host rails, one <code>pay()</code>. <strong>Demo pays</strong> funds a browser-owned
+            smart account and submits a sponsored ERC-4337 user operation.{" "}
+            <strong>Your wallet</strong> uses Coinbase Wallet or another injected EOA; you send the
+            USDC transfer and pay Base Sepolia gas. The SDK checks balance before sending. Sponsored
+            confirmation reads the user operation’s own outcome, not just the bundle transaction.
           </p>
           <p>
-            Sponsored checkout and the agent buy the same Melbourne weather report for 0.1 USDC,
-            paid to the same merchant. Each purchase is a separate transfer. ERC-8004 is agent
-            identity, not KYC; preclear checks mandate and identity, not balance.
+            Both rails and the agent buy the same Melbourne weather report for 0.1 USDC, paid to the
+            same merchant. Each purchase is a separate transfer. ERC-8004 is agent identity, not
+            KYC; preclear checks mandate and identity, not balance.
           </p>
           <p>
             The faucet has a total budget of {SPONSORED_CHECKOUT_BUDGET} funded purchases (5 test
             USDC), enforced by database reservations. The gas sponsor has separate provider limits.
-            Purchase IDs and submitted hashes are saved in this browser for retries. No personal
-            wallet is connected.
+            Purchase IDs and submitted hashes are saved in this browser for sponsored retries.
           </p>
         </div>
       </details>

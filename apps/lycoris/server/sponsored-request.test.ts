@@ -1,5 +1,9 @@
 import { expect, it } from "bun:test";
-import { readFundRequest, readSponsoredRequest } from "./sponsored-request";
+import {
+  readFundRequest,
+  readSponsoredRequest,
+  readWalletReportRequest,
+} from "./sponsored-request";
 
 function request(body: unknown, origin = "http://localhost:3003") {
   return {
@@ -31,4 +35,12 @@ it("accepts a same-origin funding request naming only the burner to fund", async
   await expect(
     readFundRequest(request({ purchaseId, payer, amount: "100", recipient: "0x123" })),
   ).rejects.toThrow();
+});
+it("accepts a same-origin wallet report naming only the transaction", async () => {
+  const txHash = `0x${"ab".repeat(32)}`;
+  expect(await readWalletReportRequest(request({ txHash }))).toEqual({ txHash });
+  await expect(
+    readWalletReportRequest(request({ txHash }, "https://other.test")),
+  ).rejects.toThrow();
+  await expect(readWalletReportRequest(request({ txHash, recipient: "0x123" }))).rejects.toThrow();
 });

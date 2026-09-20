@@ -37,16 +37,18 @@ live purchases also wait for the agent and network. [Walkthrough script](docs/pl
 
 | Page | Try | Shows |
 | --- | --- | --- |
-| [Checkout](https://lycoris.vinaynair.dev/checkout) | Click **Pay**, read the report, swap checkout styles | A confirmed transfer and replaceable UI around one session |
+| [Checkout](https://lycoris.vinaynair.dev/checkout) | Click **Pay**, or switch to your wallet, then read the report | A confirmed transfer on a sponsored 4337 rail or an injected EOA |
 | [Agent demo](https://lycoris.vinaynair.dev/demo) | Pick a scenario, hit **Get me the report** | An agent buying over x402, through identity, mandate and balance gates |
 | [Feed](https://lycoris.vinaynair.dev/feed) | Browse commitments and disclosed evidence | How the facilitator records what it decided, and why |
 
-No signup or personal wallet connection. A CDP server faucet funds a browser-owned
-smart account; the account pays the merchant with gas sponsored by a paymaster.
-These are real testnet transactions, never the visitor's money. The faucet reserves
-at most **50 funded purchases / 5 test USDC per sponsor**; gas sponsorship has separate
-provider limits. Report access lasts 15 minutes. Exhaustion makes checkout
-unavailable; it does not switch to a simulation. See [setup and recovery](docs/sponsored-checkout.md).
+Checkout has two host rails and one verb. **Demo pays** uses a CDP faucet and a
+paymaster so a browser-owned smart account can send 0.1 test USDC without a
+personal wallet. **Your wallet** is Coinbase Wallet or another injected EOA; you
+send the transfer and pay gas. These are real testnet transactions. The faucet
+reserves at most **50 funded purchases / 5 test USDC per sponsor**; gas
+sponsorship has separate provider limits. Report access lasts 15 minutes.
+Exhaustion makes the sponsored rail unavailable; it does not switch to a
+simulation. See [setup and recovery](docs/sponsored-checkout.md).
 
 ## Packages
 
