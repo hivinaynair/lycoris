@@ -8,7 +8,7 @@ Mount `SettleProvider` once. Use `useCheckout` for your own UI, or render
 import { SettleProvider, useCheckout, type PaymentSigner } from "@settle-kit/react";
 
 function BuyButton() {
-  const { state, begin, pay, payNow, retryConfirmation } = useCheckout();
+  const { state, pay, retryConfirmation } = useCheckout();
   if (state.status === "settling") {
     return state.confirmationError ? (
       <button onClick={() => void retryConfirmation()}>Check payment status</button>
@@ -16,11 +16,11 @@ function BuyButton() {
       <p>Continue in your wallet…</p>
     );
   }
-  if (state.status === "awaiting_payment") {
-    return <button onClick={() => void pay()}>Pay {state.quote.amountUsdc} USDC</button>;
+  if (state.status === "settled") {
+    return <p>Paid {state.quote.amount} USDC</p>;
   }
   return (
-    <button onClick={() => void payNow({ amountUsdc: "0.10", title: "Weather report" })}>
+    <button onClick={() => void pay({ amount: "0.10", title: "Weather report" })}>
       Pay 0.10 USDC
     </button>
   );
@@ -45,23 +45,14 @@ export function Store({ getSigner }: { getSigner: () => Promise<PaymentSigner> }
 }
 ```
 
-## Optional default card
+Optional default card:
 
 ```tsx
 import { Checkout } from "@settle-kit/react/ui";
 import "@settle-kit/react/styles.css";
 
-<Checkout amountUsdc="0.10" title="Weather report" skipReview />;
+<Checkout amount="0.10" title="Weather report" />;
 ```
 
-`begin` quotes. `pay` submits. `payNow` does both from one click. `skipReview`
-on `<Checkout>` uses `payNow`.
-
-Optional `copy` overrides a few sentences (who pays, recovery). Button labels
-stay English. `className` styles the card. `appearance` is `theme` plus CSS
-variables — not a slot/theming framework.
-
-`onSettled` means a successful receipt. `retryConfirmation` never resubmits.
-Sessions are in memory; keep the page open until confirmation.
-
-Base Sepolia, test USDC only. Peer deps: React 19 and viem 2.
+`pay({ amount })` quotes and submits. `retryConfirmation` looks up the same hash
+and never sends again.

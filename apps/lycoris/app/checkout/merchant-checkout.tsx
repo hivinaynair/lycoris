@@ -16,15 +16,15 @@ import { useSettlementExplorerUrl } from "./user-op-explorer";
 
 // Copyable merchant recipe: presentation belongs to the host; payment logic stays in the SDK.
 export function MerchantCheckout({
-  amountUsdc,
+  amount,
   title,
   sponsored = false,
 }: {
-  amountUsdc: string;
+  amount: string;
   title: string;
   sponsored?: boolean;
 }) {
-  const { state, payNow, pay, reset, retryConfirmation, canPay, isBusy } = useCheckout();
+  const { state, pay, reset, retryConfirmation } = useCheckout();
   const txHash = "txHash" in state ? state.txHash : undefined;
   const settlementUrl = useSettlementExplorerUrl();
   return (
@@ -48,7 +48,7 @@ export function MerchantCheckout({
             <p className="text-muted-foreground">Base Sepolia · test network</p>
           </div>
         </div>
-        <MerchantPaymentStatus state={state} amountUsdc={amountUsdc} sponsored={sponsored} />
+        <MerchantPaymentStatus state={state} amount={amount} sponsored={sponsored} />
         {state.status === "failed" && (
           <Alert className="rounded-none" variant="destructive">
             <AlertDescription>{state.error.message}</AlertDescription>
@@ -73,17 +73,8 @@ export function MerchantCheckout({
           </a>
         )}
         {state.status === "idle" && (
-          <Button
-            className="h-11 w-full rounded-none"
-            disabled={isBusy}
-            onClick={() => void payNow({ amountUsdc, title })}
-          >
-            Pay {amountUsdc} USDC
-          </Button>
-        )}
-        {canPay && (
-          <Button className="h-11 w-full rounded-none" onClick={() => void pay()}>
-            Pay {state.status === "awaiting_payment" ? state.quote.amountUsdc : amountUsdc} USDC
+          <Button className="h-11 w-full rounded-none" onClick={() => void pay({ amount, title })}>
+            Pay {amount} USDC
           </Button>
         )}
         {(state.status === "failed" || state.status === "settled") && (
@@ -98,11 +89,11 @@ export function MerchantCheckout({
 
 function MerchantPaymentStatus({
   state,
-  amountUsdc,
+  amount,
   sponsored,
 }: {
   state: CheckoutState;
-  amountUsdc: string;
+  amount: string;
   sponsored: boolean;
 }) {
   const phase = useSettlePhase();
@@ -110,27 +101,15 @@ function MerchantPaymentStatus({
     <div role="status" aria-live="polite" className="space-y-2">
       {state.status === "idle" && (
         <>
-          <p className="font-heading text-4xl tracking-tight">{amountUsdc} USDC</p>
+          <p className="font-heading text-4xl tracking-tight">{amount} USDC</p>
           <p className="text-muted-foreground">{idleCopy(sponsored)}</p>
         </>
       )}
       {state.status === "quoting" && <p>Preparing your USDC payment…</p>}
-      {state.status === "awaiting_payment" && (
-        <>
-          <p className="font-heading text-4xl tracking-tight">{state.quote.amountUsdc} USDC</p>
-          <details className="rounded-none border border-border p-3 text-xs">
-            <summary className="cursor-pointer font-medium">Payment details</summary>
-            <p className="mt-3 break-all text-muted-foreground">
-              Recipient: {state.destination.recipient}
-            </p>
-            <p className="mt-2 text-muted-foreground">{networkFeeCopy(sponsored)}</p>
-          </details>
-        </>
-      )}
       {state.status === "settling" && <p>{settlingCopy(state.txHash, sponsored, phase)}</p>}
       {state.status === "settled" && (
         <p className="rounded-none border border-border bg-muted p-4">
-          Payment confirmed: {state.quote.amountUsdc} USDC.
+          Payment confirmed: {state.quote.amount} USDC.
         </p>
       )}
     </div>
@@ -142,13 +121,6 @@ function idleCopy(sponsored: boolean) {
     return "We cover this payment and network fees. Just click Pay.";
   }
   return "You’ll need a browser wallet with test USDC and Base Sepolia ETH for network fees.";
-}
-
-function networkFeeCopy(sponsored: boolean) {
-  if (sponsored) {
-    return "Network fees are paid by the demo in test ETH. Your wallet is never charged.";
-  }
-  return "Network fees are paid separately in test ETH. Your wallet shows the fee before confirmation.";
 }
 
 function settlingCopy(txHash: string | undefined, sponsored: boolean, phase: SettlePhase) {

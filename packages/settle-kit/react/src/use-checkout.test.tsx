@@ -11,13 +11,12 @@ const destination = {
   recipient: "0x1111111111111111111111111111111111111111" as const,
 };
 const hash = `0x${"ab".repeat(32)}` as const;
-function setup(getSigner?: () => Promise<PaymentSigner>, skipReview = false) {
+function setup(getSigner?: () => Promise<PaymentSigner>) {
   let buyer!: UseCheckoutResult;
   let observer!: UseCheckoutResult;
   const send = mock(async () => hash);
-  const onSettled = mock(() => {});
   function Buyer() {
-    buyer = useCheckout({ onSettled });
+    buyer = useCheckout();
     return null;
   }
   function Observer() {
@@ -31,38 +30,34 @@ function setup(getSigner?: () => Promise<PaymentSigner>, skipReview = false) {
         destination,
         getSigner:
           getSigner ?? (async () => ({ address: destination.recipient, sendTransaction: send })),
-        methods: [
-          createUsdcMethod({
-            client: { readContract: async () => 100000000n },
-            receiptClient: {
-              waitForTransactionReceipt: async () => ({ status: "success", transactionHash: hash }),
-            },
-          }),
-        ],
+        method: createUsdcMethod({
+          client: { readContract: async () => 100000000n },
+          receiptClient: {
+            waitForTransactionReceipt: async () => ({ status: "success", transactionHash: hash }),
+          },
+        }),
       }}
     >
       <Buyer />
       <Observer />
-      <Checkout amountUsdc="12.50" skipReview={skipReview} />
+      <Checkout amount="12.50" />
     </SettleProvider>,
   );
-  return { buyer: () => buyer, observer: () => observer, send, onSettled };
+  return { buyer: () => buyer, observer: () => observer, send };
 }
 
-it("supports begin then pay and two SKUs without remounting the Provider", async () => {
+it("supports two SKUs without remounting the Provider", async () => {
   const f = setup();
-  for (const amountUsdc of ["12.50", "4.00"]) {
+  for (const amount of ["12.50", "4.00"]) {
     await act(async () => {
-      await f.buyer().begin({ amountUsdc });
+      await f.buyer().pay({ amount });
     });
-    expect(f.observer().state).toMatchObject({ status: "awaiting_payment", quote: { amountUsdc } });
+    expect(f.observer().state).toMatchObject({ status: "settled", quote: { amount } });
     await act(async () => {
-      await f.buyer().pay();
+      f.buyer().reset();
     });
-    expect(screen.getByTestId("status").textContent).toBe("settled");
   }
   expect(f.send).toHaveBeenCalledTimes(2);
-  expect(f.onSettled).toHaveBeenCalledTimes(2);
 });
 
 it("rejects replacing an in-flight session and retains the shared payment", async () => {
@@ -73,32 +68,25 @@ it("rejects replacing an in-flight session and retains the shared payment", asyn
         resolve = r;
       }),
   );
-  await act(async () => {
-    await f.buyer().begin({ amountUsdc: "12.50" });
-  });
   let paying!: Promise<void>;
   await act(async () => {
-    paying = f.buyer().pay();
+    paying = f.buyer().pay({ amount: "12.50" });
   });
-  await expect(f.buyer().begin({ amountUsdc: "4.00" })).rejects.toMatchObject({
-    code: "invalid_config",
+  await act(async () => {
+    await f.buyer().pay({ amount: "4.00" });
   });
   expect(f.observer().state.status).toBe("settling");
   await act(async () => {
     resolve({ address: destination.recipient, sendTransaction: f.send });
     await paying;
   });
-  expect(f.observer().state).toMatchObject({ status: "settled", quote: { amountUsdc: "12.50" } });
+  expect(f.observer().state).toMatchObject({ status: "settled", quote: { amount: "12.50" } });
 });
 
-it("the default Buy button quotes once and reaches the pay screen", async () => {
+it("the default Pay button quotes and settles from one click", async () => {
   setup();
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Buy" }));
-  });
-  expect(screen.getByRole("button", { name: /Pay [\d.]+ USDC/ })).toBeTruthy();
-  await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: /Pay [\d.]+ USDC/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Pay 12.50 USDC" }));
   });
   expect(screen.getByText("Payment confirmed: 12.50 USDC.")).toBeTruthy();
 });
@@ -106,75 +94,59 @@ it("the default Buy button quotes once and reaches the pay screen", async () => 
 it("invalid new purchase leaves the existing session intact", async () => {
   const f = setup();
   await act(async () => {
-    await f.buyer().begin({ amountUsdc: "12.50" });
+    await f.buyer().pay({ amount: "12.50" });
   });
-  await expect(f.buyer().begin({ amountUsdc: "abc" })).rejects.toMatchObject({
+  await expect(f.buyer().pay({ amount: "abc" })).rejects.toMatchObject({
     code: "invalid_config",
   });
-  expect(f.buyer().state.status).toBe("awaiting_payment");
+  expect(f.buyer().state.status).toBe("settled");
 });
 
-it("keeps actions stable and uses the latest committed callbacks during a payment", async () => {
+it("keeps actions stable while a payment is in flight", async () => {
   let checkout!: UseCheckoutResult;
   let confirm!: (value: { status: "success"; transactionHash: typeof hash }) => void;
-  const first = mock(() => {});
-  const latest = mock(() => {});
   const config = {
     appName: "Merchant",
     destination,
     getSigner: async () => ({ address: destination.recipient, sendTransaction: async () => hash }),
-    methods: [
-      createUsdcMethod({
-        client: { readContract: async () => 100000000n },
-        receiptClient: {
-          waitForTransactionReceipt: () =>
-            new Promise<{ status: "success"; transactionHash: typeof hash }>((resolve) => {
-              confirm = resolve;
-            }),
-        },
-      }),
-    ],
+    method: createUsdcMethod({
+      client: { readContract: async () => 100000000n },
+      receiptClient: {
+        waitForTransactionReceipt: () =>
+          new Promise<{ status: "success"; transactionHash: typeof hash }>((resolve) => {
+            confirm = resolve;
+          }),
+      },
+    }),
   };
-  function Buyer({ callback }: { callback: () => void }) {
-    checkout = useCheckout({ onSettled: callback });
+  function Buyer() {
+    checkout = useCheckout();
     return null;
   }
   const view = render(
     <SettleProvider config={config}>
-      <Buyer callback={first} />
+      <Buyer />
     </SettleProvider>,
   );
-  const actions = [checkout.begin, checkout.pay, checkout.reset, checkout.retryConfirmation];
-  expect(checkout.canPay).toBe(false);
-  await act(async () => {
-    await checkout.begin({ amountUsdc: "4" });
-  });
-  expect(checkout.canPay).toBe(true);
+  const actions = [checkout.pay, checkout.reset, checkout.retryConfirmation];
   let payment!: Promise<void>;
   await act(async () => {
-    payment = checkout.pay();
+    payment = checkout.pay({ amount: "4" });
   });
-  expect(checkout.isBusy).toBe(true);
-  expect(checkout.canPay).toBe(false);
   view.rerender(
     <SettleProvider config={{ ...config }}>
-      <Buyer callback={latest} />
+      <Buyer />
     </SettleProvider>,
   );
-  expect([checkout.begin, checkout.pay, checkout.reset, checkout.retryConfirmation]).toEqual(
-    actions,
-  );
+  expect([checkout.pay, checkout.reset, checkout.retryConfirmation]).toEqual(actions);
   await act(async () => {
     confirm({ status: "success", transactionHash: hash });
     await payment;
   });
-  expect(first).not.toHaveBeenCalled();
-  expect(latest).toHaveBeenCalledTimes(1);
-  expect(checkout.isBusy).toBe(false);
+  expect(checkout.state.status).toBe("settled");
 });
 
-it("supports UI labels, className, destination override and lifecycle callbacks", async () => {
-  const onFailed = mock(() => {});
+it("supports UI labels, className, and destination override", async () => {
   let observer!: UseCheckoutResult;
   const override = {
     ...destination,
@@ -195,29 +167,20 @@ it("supports UI labels, className, destination override and lifecycle callbacks"
       }}
     >
       <Observer />
-      <Checkout
-        amountUsdc="7"
-        destination={override}
-        className="merchant-brand"
-        onFailed={onFailed}
-      />
+      <Checkout amount="7" destination={override} className="merchant-brand" />
     </SettleProvider>,
   );
-  expect(screen.getByRole("button", { name: "Buy" }).closest("section")?.className).toContain(
-    "merchant-brand",
-  );
-  await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Buy" }));
-  });
-  expect(observer.state).toMatchObject({
-    status: "awaiting_payment",
-    destination: override,
-    quote: { amountUsdc: "7" },
-  });
+  expect(
+    screen.getByRole("button", { name: "Pay 7 USDC" }).closest("section")?.className,
+  ).toContain("merchant-brand");
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Pay 7 USDC" }));
   });
-  expect(onFailed).toHaveBeenCalledTimes(1);
+  expect(observer.state).toMatchObject({
+    status: "failed",
+    destination: override,
+    quote: { amount: "7" },
+  });
   expect(screen.getByRole("button", { name: "Reset" })).toBeTruthy();
 });
 
@@ -231,6 +194,12 @@ it("merges Provider appearance with local overrides without resetting a checkout
     appName: "Merchant",
     destination,
     getSigner: async () => ({ address: destination.recipient, sendTransaction: async () => hash }),
+    method: createUsdcMethod({
+      client: { readContract: async () => 100000000n },
+      receiptClient: {
+        waitForTransactionReceipt: async () => ({ status: "success", transactionHash: hash }),
+      },
+    }),
   };
   const content = (theme: "light" | "dark") => (
     <SettleProvider
@@ -242,7 +211,7 @@ it("merges Provider appearance with local overrides without resetting a checkout
     >
       <Observer />
       <Checkout
-        amountUsdc="4"
+        amount="4"
         appearance={{
           variables: { colorPrimary: "blue" },
         }}
@@ -250,29 +219,19 @@ it("merges Provider appearance with local overrides without resetting a checkout
     </SettleProvider>
   );
   const view = render(content("light"));
-  const card = screen.getByRole("button", { name: "Buy" }).closest("section");
+  const card = screen.getByRole("button", { name: "Pay 4 USDC" }).closest("section");
   if (!card) throw new Error("Checkout card not rendered");
   expect(card.style.getPropertyValue("--sk-radius")).toBe("24px");
   expect(card.style.getPropertyValue("--sk-primary")).toBe("blue");
   await act(async () => {
-    await checkout.begin({ amountUsdc: "4" });
+    await checkout.pay({ amount: "4" });
   });
   view.rerender(content("dark"));
   expect(card.getAttribute("data-sk-theme")).toBe("dark");
-  expect(checkout.state.status).toBe("awaiting_payment");
-  expect(screen.getByRole("button", { name: "Pay 4 USDC" })).toBeTruthy();
+  expect(checkout.state.status).toBe("settled");
 });
 
-it("skipReview settles from one initial Pay click", async () => {
-  const f = setup(undefined, true);
-  await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Pay 12.50 USDC" }));
-  });
-  expect(f.observer().state.status).toBe("settled");
-  expect(f.send).toHaveBeenCalledTimes(1);
-});
-
-it("payNow ignores duplicate calls while payment is pending", async () => {
+it("pay ignores duplicate calls while payment is pending", async () => {
   let resolve!: (signer: PaymentSigner) => void;
   const f = setup(
     () =>
@@ -282,10 +241,10 @@ it("payNow ignores duplicate calls while payment is pending", async () => {
   );
   let paying!: Promise<void>;
   await act(async () => {
-    paying = f.buyer().payNow({ amountUsdc: "12.50" });
+    paying = f.buyer().pay({ amount: "12.50" });
   });
   await act(async () => {
-    await f.buyer().payNow({ amountUsdc: "12.50" });
+    await f.buyer().pay({ amount: "12.50" });
     resolve({ address: destination.recipient, sendTransaction: f.send });
     await paying;
   });
@@ -293,14 +252,14 @@ it("payNow ignores duplicate calls while payment is pending", async () => {
   expect(f.observer().state.status).toBe("settled");
 });
 
-it("payNow never sends after invalid input and can recover", async () => {
+it("pay never sends after invalid input and can recover", async () => {
   const f = setup();
-  await expect(f.buyer().payNow({ amountUsdc: "abc" })).rejects.toMatchObject({
+  await expect(f.buyer().pay({ amount: "abc" })).rejects.toMatchObject({
     code: "invalid_config",
   });
   expect(f.send).not.toHaveBeenCalled();
   await act(async () => {
-    await f.buyer().payNow({ amountUsdc: "12.50" });
+    await f.buyer().pay({ amount: "12.50" });
   });
   expect(f.send).toHaveBeenCalledTimes(1);
 });
@@ -323,21 +282,19 @@ it("takes the recipient from the purchase when the Provider configures none", as
           address: destination.recipient,
           sendTransaction: async () => hash,
         }),
-        methods: [
-          createUsdcMethod({
-            client: { readContract: async () => 100000000n },
-            receiptClient: {
-              waitForTransactionReceipt: async () => ({ status: "success", transactionHash: hash }),
-            },
-          }),
-        ],
+        method: createUsdcMethod({
+          client: { readContract: async () => 100000000n },
+          receiptClient: {
+            waitForTransactionReceipt: async () => ({ status: "success", transactionHash: hash }),
+          },
+        }),
       }}
     >
       <Buyer />
     </SettleProvider>,
   );
   await act(async () => {
-    await buyer.begin({ amountUsdc: "12.50", destination: perResource });
+    await buyer.pay({ amount: "12.50", destination: perResource });
   });
-  expect(buyer.state).toMatchObject({ status: "awaiting_payment", destination: perResource });
+  expect(buyer.state).toMatchObject({ status: "settled", destination: perResource });
 });

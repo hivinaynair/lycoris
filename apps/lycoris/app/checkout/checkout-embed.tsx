@@ -10,8 +10,8 @@ import { IntegrationCode } from "./integration-code";
 export function CheckoutEmbed({ look }: { look: Look }) {
   const code =
     look === "custom"
-      ? `import { useCheckout } from "@settle-kit/react";\n\n// Your components. The same payment lifecycle.\nconst { state, payNow, isBusy } = useCheckout();\n\n// Call from your Pay button.\nawait payNow({ amountUsdc: "0.1" });\n// State narrows on state.status.`
-      : `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, getSigner }}\n  appearance={${JSON.stringify(appearances[look], null, 2)}}\n>\n  <Checkout amountUsdc="0.1" title="Melbourne weather report" skipReview />\n</SettleProvider>`;
+      ? `import { useCheckout } from "@settle-kit/react";\n\n// Your components. The same payment lifecycle.\nconst { state, pay } = useCheckout();\n\n// Call from your Pay button.\nawait pay({ amount: "0.1" });\n// State narrows on state.status.`
+      : `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, getSigner }}\n  appearance={${JSON.stringify(appearances[look], null, 2)}}\n>\n  <Checkout amount="0.1" title="Melbourne weather report" />\n</SettleProvider>`;
   return (
     <details className={styles.disclosure} open>
       <summary className={styles.summary}>

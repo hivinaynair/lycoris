@@ -88,14 +88,15 @@ export function Store({ getSigner }: { getSigner: () => Promise<PaymentSigner> }
         },
       }}
     >
-      <Checkout amountUsdc="0.1" title="Weather report" skipReview />
+      <Checkout amount="0.1" title="Weather report" />
     </SettleProvider>
   );
 }
 ```
 
 `getSigner` returns an address and `sendTransaction`. That is the entire wallet
-contract. The host puts the wallet on Base Sepolia.
+contract. The host puts the wallet on Base Sepolia. Pass `method` when the host
+wraps `createUsdcMethod` — for sponsorship, for example.
 
 ## Examples
 
@@ -112,14 +113,12 @@ whole lifecycle is covered. [#custom-ui](https://lycoris.vinaynair.dev/docs#cust
 import { useCheckout } from "@settle-kit/react";
 
 export function BuyReport() {
-  const { state, begin, pay, reset, retryConfirmation } = useCheckout();
+  const { state, pay, reset, retryConfirmation } = useCheckout();
   switch (state.status) {
     case "idle":
-      return <button onClick={() => void begin({ amountUsdc: "0.1" })}>Buy report</button>;
+      return <button onClick={() => void pay({ amount: "0.1" })}>Pay 0.1 USDC</button>;
     case "quoting":
       return <p>Preparing payment…</p>;
-    case "awaiting_payment":
-      return <button onClick={() => void pay()}>Pay {state.quote.amountUsdc} USDC</button>;
     case "settling":
       return state.confirmationError
         ? <button onClick={() => void retryConfirmation()}>Check payment status</button>
@@ -132,8 +131,8 @@ export function BuyReport() {
 }
 ```
 
-`payNow()` collapses quote and pay into one click; `begin()` then `pay()` keeps a
-review step between them.
+`pay({ amount })` quotes, sends, and waits for a receipt. If the receipt is
+missing, call `retryConfirmation()` — do not send again.
 
 In this repo: [checkout-embed.tsx](apps/lycoris/app/checkout/checkout-embed.tsx) mounts the
 provider, [checkout-controls.tsx](apps/lycoris/app/checkout/checkout-controls.tsx) drives the session.
@@ -147,7 +146,7 @@ import { createCheckout, BASE_SEPOLIA_USDC_ADDRESS, type PaymentSigner } from "@
 
 export function preparePayment(getSigner: () => Promise<PaymentSigner>) {
   const checkout = createCheckout({
-    amountUsdc: "0.1",
+    amount: "0.1",
     getSigner,
     destination: {
       targetChain: 84532,
@@ -165,11 +164,11 @@ export function preparePayment(getSigner: () => Promise<PaymentSigner>) {
 In this repo: [user-op-explorer.ts](apps/lycoris/app/checkout/user-op-explorer.ts) reads userOp
 receipts for the sponsored checkout.
 
-### Optional: your server decides the recipient
+### Optional: wrap the payment method
 
-`createCheckout` can POST to `quoteUrl` instead of quoting locally. The reply is
-treated as untrusted data. The playground does not use this path — it wraps
-`createUsdcMethod` in the host instead.
+The host may pass one `method` to wrap `createUsdcMethod` — funding, tracking, or
+sponsorship. That wrap is not a second payment API. The playground does this in
+[sponsored-payment.ts](apps/lycoris/app/checkout/sponsored-payment.ts).
 [#start](https://lycoris.vinaynair.dev/docs#start)
 
 ### Charge AI agents for your API

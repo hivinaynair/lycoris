@@ -74,11 +74,11 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
   const id = options.id ?? "usdc";
   return {
     id,
-    async quote({ amountUsdc }) {
-      const amountAtomic = parseUsdcAmount(amountUsdc);
+    async quote({ amount }) {
+      const amountAtomic = parseUsdcAmount(amount);
       const quote: Quote = {
         requestId: requestId(),
-        amountUsdc,
+        amount,
         amountAtomic,
         expiresAt: now() + quoteTtlMs,
         method: id,
@@ -87,7 +87,7 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
     },
     async settle({ quote, destination, signer }) {
       assertDestination(destination);
-      validateQuote(quote, quote.amountUsdc, destination, id);
+      validateQuote(quote, quote.amount, destination, id);
 
       const required = BigInt(quote.amountAtomic);
       const request = {

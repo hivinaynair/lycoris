@@ -7,14 +7,13 @@ import type { CheckoutAppearance } from "./appearance.ts";
 export type SettleAppConfig = {
   appName: string;
   getSigner: () => Promise<PaymentSigner>;
-  /** Default recipient. `begin` / `payNow` input or the quote server may supply it instead. */
+  /** Default recipient. `pay` input or the quote may supply it instead. */
   destination?: Destination | undefined;
-  methods?: SettleAdapter[] | undefined;
-  quoteUrl?: string | undefined;
+  method?: SettleAdapter | undefined;
 };
 
-export type BeginCheckoutInput = {
-  amountUsdc: string;
+export type PayInput = {
+  amount: string;
   destination?: Destination | undefined;
   /** Label shown by the default UI for this purchase. */
   title?: string | undefined;

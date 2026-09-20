@@ -22,7 +22,7 @@ function sameDestination(a: Destination, b: Destination): boolean {
  */
 export function validateQuote(
   value: unknown,
-  amountUsdc: string,
+  amount: string,
   requested?: Destination,
   method?: SettleMethodId,
 ): Quote {
@@ -33,7 +33,7 @@ export function validateQuote(
   if (
     typeof body.requestId !== "string" ||
     !body.requestId.trim() ||
-    typeof body.amountUsdc !== "string" ||
+    typeof body.amount !== "string" ||
     typeof body.amountAtomic !== "string" ||
     !/^[1-9]\d*$/.test(body.amountAtomic) ||
     !Number.isSafeInteger(body.expiresAt) ||
@@ -43,8 +43,8 @@ export function validateQuote(
   )
     throw invalid();
   try {
-    const expected = parseUsdcAmount(amountUsdc);
-    if (parseUsdcAmount(body.amountUsdc) !== expected || body.amountAtomic !== expected)
+    const expected = parseUsdcAmount(amount);
+    if (parseUsdcAmount(body.amount) !== expected || body.amountAtomic !== expected)
       throw invalid();
   } catch {
     throw invalid();
@@ -68,23 +68,10 @@ export function validateQuote(
   }
   return Object.freeze({
     requestId: body.requestId,
-    amountUsdc: body.amountUsdc,
+    amount: body.amount,
     amountAtomic: body.amountAtomic,
     expiresAt: body.expiresAt as number,
     method: body.method,
     ...(destination ? { destination } : {}),
   });
-}
-
-export async function fetchQuote(
-  quoteUrl: string,
-  input: { amountUsdc: string; destination?: Destination | undefined; method: SettleMethodId },
-): Promise<Quote> {
-  const response = await fetch(quoteUrl, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(input),
-  });
-  if (!response.ok) throw new Error(`Quote request failed (${response.status})`);
-  return validateQuote(await response.json(), input.amountUsdc, input.destination, input.method);
 }

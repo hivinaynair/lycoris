@@ -2,64 +2,56 @@ import { parseUsdcAmount } from "./amounts.ts";
 import { assertDestination } from "./destination.ts";
 import { invalidConfig, SettleKitError, toSettleError } from "./errors.ts";
 import { createUsdcMethod } from "./methods/usdc.ts";
-import { fetchQuote, validateQuote } from "./quote-client.ts";
+import { validateQuote } from "./quote-client.ts";
 import { type CheckoutAction, IDLE_STATE, reduce } from "./state.ts";
 import {
   type CheckoutManager,
   type CheckoutState,
   type CreateCheckoutInput,
+  type Destination,
+  type PaymentSigner,
   SETTLE_METHOD_IDS,
   type SettleAdapter,
-  type SettleConfig,
   type SettlementHash,
 } from "./types.ts";
 
-function resolveConfig(input: CreateCheckoutInput): SettleConfig {
+type ResolvedCheckout = {
+  amount: string;
+  destination?: Destination | undefined;
+  getSigner: () => Promise<PaymentSigner>;
+  method: SettleAdapter;
+};
+
+function resolveInput(input: CreateCheckoutInput): ResolvedCheckout {
   if (typeof input.getSigner !== "function") {
     invalidConfig("getSigner is required");
   }
   const destination = input.destination ? assertDestination(input.destination) : undefined;
-  const methods = input.methods ?? [createUsdcMethod()];
-  if (methods.length === 0) invalidConfig("Provide at least one payment method");
-  if (methods.length > 1) invalidConfig("v1 supports one payment method");
-  const method = methods[0];
-  if (!method || !(SETTLE_METHOD_IDS as readonly string[]).includes(method.id))
-    invalidConfig(`Unknown payment method: ${method?.id}`);
+  const method = input.method ?? createUsdcMethod();
+  if (!(SETTLE_METHOD_IDS as readonly string[]).includes(method.id))
+    invalidConfig(`Unknown payment method: ${method.id}`);
   if (
     typeof method.quote !== "function" ||
     typeof method.settle !== "function" ||
     typeof method.confirm !== "function"
   )
     invalidConfig(`Method ${method.id} needs quote, settle, and confirm`);
+  parseUsdcAmount(input.amount);
   return {
+    amount: input.amount.trim(),
     ...(destination ? { destination } : {}),
     getSigner: input.getSigner,
-    methods,
-    ...(input.quoteUrl !== undefined ? { quoteUrl: input.quoteUrl } : {}),
-    ...(input.onSettled ? { onSettled: input.onSettled } : {}),
-    ...(input.onFailed ? { onFailed: input.onFailed } : {}),
+    method,
   };
 }
 
-function requireAdapter(methods: SettleAdapter[]): SettleAdapter {
-  const method = methods[0];
-  if (!method) invalidConfig("Provide at least one payment method");
-  return method;
-}
-
-function notifyCheckout(listeners: Set<() => void>, next: CheckoutState, config: SettleConfig) {
+function notifyCheckout(listeners: Set<() => void>) {
   for (const listener of listeners) {
     try {
       listener();
     } catch (error) {
       console.error("Settle Kit subscriber failed", error);
     }
-  }
-  try {
-    if (next.status === "settled") config.onSettled?.(next);
-    if (next.status === "failed") config.onFailed?.(next);
-  } catch (error) {
-    console.error("Settle Kit callback failed", error);
   }
 }
 
@@ -100,15 +92,14 @@ async function confirmPayment(
 /**
  * Start a checkout session for a USDC amount.
  *
- * Call `quote` to price, then `pay` to submit — or just `pay()` from idle to
- * do both. The manager is in-memory: keep the page open until confirmation.
+ * Call `pay()` to quote, submit, and wait for a receipt. The manager is
+ * in-memory: keep the page open until confirmation.
  */
 export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
-  const config = resolveConfig(input);
+  const config = resolveInput(input);
   const destination = config.destination;
-  parseUsdcAmount(input.amountUsdc);
-  const amountUsdc = input.amountUsdc.trim();
-  const adapter = requireAdapter(config.methods);
+  const adapter = config.method;
+  const amount = config.amount;
   let state: CheckoutState = IDLE_STATE;
   const listeners = new Set<() => void>();
   let generation = 0;
@@ -122,7 +113,7 @@ export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
     const next = reduce(state, action);
     if (next === state) return;
     state = next;
-    notifyCheckout(listeners, next, config);
+    notifyCheckout(listeners);
   }
 
   function checkExpiry(expiresAt: number) {
@@ -132,15 +123,13 @@ export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
 
   async function quote() {
     if (state.status !== "idle")
-      invalidConfig(`quote() requires idle; current status is ${state.status}`);
+      invalidConfig(`pay() requires idle; current status is ${state.status}`);
     const token = ++generation;
-    setState({ type: "QUOTING", amountUsdc });
+    setState({ type: "QUOTING", amount });
     try {
-      const value = config.quoteUrl
-        ? await fetchQuote(config.quoteUrl, { amountUsdc, destination, method: adapter.id })
-        : await adapter.quote({ amountUsdc, destination });
+      const value = await adapter.quote({ amount, destination });
       if (token !== generation) return;
-      const quoted = validateQuote(value, amountUsdc, destination, adapter.id);
+      const quoted = validateQuote(value, amount, destination, adapter.id);
       const settleTo = quoted.destination ?? destination;
       if (!settleTo) {
         invalidConfig(
@@ -171,13 +160,14 @@ export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
   }
 
   async function pay() {
-    if (state.status === "idle") await quote();
+    if (state.status !== "idle")
+      invalidConfig(`pay() requires idle; current status is ${state.status}`);
+    await quote();
     const current = getState();
-    if (current.status !== "awaiting_payment") {
-      if (current.status === "failed") return;
-      invalidConfig(`pay() requires idle or awaiting_payment; current status is ${current.status}`);
+    if (current.status !== "settling") {
+      if (current.status === "failed" || current.status === "idle") return;
+      invalidConfig(`pay() could not start settlement; current status is ${current.status}`);
     }
-    setState({ type: "SETTLING" });
     try {
       checkExpiry(current.quote.expiresAt);
       const signer = await config.getSigner();
@@ -204,7 +194,6 @@ export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
         listeners.delete(listener);
       };
     },
-    quote,
     pay,
     retryConfirmation: confirm,
     reset() {

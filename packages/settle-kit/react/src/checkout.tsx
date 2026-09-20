@@ -6,7 +6,7 @@ import { useContext } from "react";
 import { type CheckoutAppearance, resolveAppearance } from "./appearance.ts";
 import { styles } from "./checkout-styles.ts";
 import { SettleContext } from "./context.ts";
-import { type CheckoutCallbacks, useCheckout } from "./use-checkout.ts";
+import { useCheckout } from "./use-checkout.ts";
 
 const ERROR_COPY: Record<string, string> = {
   insufficient_usdc: "Not enough USDC to complete this payment.",
@@ -19,16 +19,15 @@ const ERROR_COPY: Record<string, string> = {
 
 export type CheckoutCopy = {
   idleDescription?: string;
-  reviewDescription?: string;
   pendingWallet?: string;
   paymentMethod?: string;
   networkFee?: string;
   recoveryDescription?: string;
 };
 
-export type CheckoutProps = CheckoutCallbacks & {
+export type CheckoutProps = {
   /** Purchase amount as a decimal string, e.g. `"12.50"`. */
-  amountUsdc: string;
+  amount: string;
   title?: string;
   destination?: Destination;
   className?: string;
@@ -37,38 +36,33 @@ export type CheckoutProps = CheckoutCallbacks & {
   transactionUrl?: (hash: SettlementHash) => string | undefined;
   /** Host-specific sentences. Button labels stay fixed English. */
   copy?: CheckoutCopy;
-  /** Quote and pay from the first click, skipping the review step. */
-  skipReview?: boolean;
 };
 
 /**
  * Default checkout card. Render inside `SettleProvider`.
  *
- * Amount is required. Set `skipReview` for a single Pay button.
+ * One Pay button quotes and submits.
  */
 export function Checkout({
-  amountUsdc,
+  amount: amountProp,
   title = "Pay with USDC",
   destination,
   className,
   appearance,
   transactionUrl = (hash) => `${BASE_SEPOLIA_EXPLORER}/tx/${hash}`,
   copy,
-  skipReview = false,
-  onSettled,
-  onFailed,
 }: CheckoutProps) {
-  const checkout = useCheckout({ onSettled, onFailed });
+  const checkout = useCheckout();
   const context = useContext(SettleContext);
   const config = context?.config;
   const visual = resolveAppearance(context?.appearance, appearance);
   const { state } = checkout;
   const amount =
     "quote" in state
-      ? (state.quote?.amountUsdc ?? amountUsdc)
-      : "amountUsdc" in state
-        ? state.amountUsdc
-        : amountUsdc;
+      ? (state.quote?.amount ?? amountProp)
+      : state.status === "quoting"
+        ? state.amount
+        : amountProp;
   const recipient =
     "destination" in state
       ? (state.destination?.recipient ?? (destination ?? config?.destination)?.recipient)
@@ -76,7 +70,6 @@ export function Checkout({
   const text = {
     idleDescription:
       "You’ll need a browser wallet with test USDC and Base Sepolia ETH for network fees.",
-    reviewDescription: "Review the recipient in payment details, then confirm in your wallet.",
     pendingWallet: "Continue in your wallet…",
     paymentMethod: "Wallet payment",
     networkFee: "Paid separately in test ETH. Your wallet shows the fee before you confirm.",
@@ -87,11 +80,6 @@ export function Checkout({
   const heading = checkout.title ?? title;
   const cardClass = [`sk-checkout ${styles.card}`, className].filter(Boolean).join(" ");
   const buttonClass = `sk-button ${styles.button}`;
-
-  async function onBuy() {
-    const start = skipReview ? checkout.payNow : checkout.begin;
-    await start({ amountUsdc, title, destination });
-  }
 
   return (
     <section
@@ -126,8 +114,7 @@ export function Checkout({
         checkout={checkout}
         text={text}
         amount={amount}
-        skipReview={skipReview}
-        onBuy={onBuy}
+        onPay={() => checkout.pay({ amount: amountProp, title, destination })}
         transactionUrl={transactionUrl}
         buttonClass={buttonClass}
       />
@@ -153,8 +140,7 @@ function CheckoutStatus({
   checkout,
   text,
   amount,
-  skipReview,
-  onBuy,
+  onPay,
   transactionUrl,
   buttonClass,
 }: {
@@ -162,8 +148,7 @@ function CheckoutStatus({
   checkout: ReturnType<typeof useCheckout>;
   text: Required<CheckoutCopy>;
   amount: string;
-  skipReview: boolean;
-  onBuy: () => Promise<void>;
+  onPay: () => Promise<void>;
   transactionUrl: (hash: SettlementHash) => string | undefined;
   buttonClass: string;
 }) {
@@ -171,24 +156,14 @@ function CheckoutStatus({
     return (
       <>
         <p>{text.idleDescription}</p>
-        <button className={buttonClass} type="button" onClick={() => void onBuy()}>
-          {skipReview ? `Pay ${amount} USDC` : "Buy"}
+        <button className={buttonClass} type="button" onClick={() => void onPay()}>
+          {`Pay ${amount} USDC`}
         </button>
       </>
     );
   }
   if (state.status === "quoting") {
-    return <p>Locking {state.amountUsdc} USDC…</p>;
-  }
-  if (state.status === "awaiting_payment") {
-    return (
-      <>
-        <p>{text.reviewDescription}</p>
-        <button className={buttonClass} type="button" onClick={() => void checkout.pay()}>
-          {`Pay ${amount} USDC`}
-        </button>
-      </>
-    );
+    return <p>Locking {state.amount} USDC…</p>;
   }
   if (state.status === "settling") {
     return (
@@ -225,7 +200,7 @@ function CheckoutStatus({
         <span className={`sk-status-icon ${styles.statusIcon}`} aria-hidden="true">
           ✓
         </span>
-        <p>Payment confirmed: {state.quote.amountUsdc} USDC.</p>
+        <p>Payment confirmed: {state.quote.amount} USDC.</p>
         {transactionUrl(state.txHash) && (
           <a href={transactionUrl(state.txHash)} target="_blank" rel="noreferrer">
             View transaction

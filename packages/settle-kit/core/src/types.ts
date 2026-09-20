@@ -65,15 +65,15 @@ export type PaymentSigner = {
 export type Quote = {
   requestId: string;
   /** Display amount, e.g. `"12.50"`. */
-  amountUsdc: string;
+  amount: string;
   /** Amount in USDC atomic units (6 decimals). */
   amountAtomic: string;
   /** Unix timestamp in milliseconds. */
   expiresAt: number;
   method: SettleMethodId;
   /**
-   * Recipient for this purchase. Set by the quote server when the payee belongs
-   * to the resource rather than the host app.
+   * Recipient for this purchase. Set by the quote when the payee belongs to the
+   * resource rather than the host app.
    */
   destination?: Destination | undefined;
 };
@@ -81,13 +81,11 @@ export type Quote = {
 /**
  * Lifecycle of a checkout session. Discriminate on `status`.
  *
- * `awaiting_payment` always includes `quote` and `destination`. `settled` always
- * includes `txHash`.
+ * `settling` includes `quote` and `destination`. `settled` always includes `txHash`.
  */
 export type CheckoutState =
   | { status: "idle" }
-  | { status: "quoting"; amountUsdc: string }
-  | { status: "awaiting_payment"; quote: Quote; destination: Destination }
+  | { status: "quoting"; amount: string }
   | {
       status: "settling";
       quote: Quote;
@@ -110,7 +108,7 @@ export type CheckoutState =
  */
 export type SettleAdapter = {
   id: SettleMethodId;
-  quote: (input: { amountUsdc: string; destination?: Destination | undefined }) => Promise<Quote>;
+  quote: (input: { amount: string; destination?: Destination | undefined }) => Promise<Quote>;
   settle: (input: {
     quote: Quote;
     destination: Destination;
@@ -129,34 +127,17 @@ export type SettleAdapter = {
   }) => Promise<"success" | "reverted">;
 };
 
-export type SettleConfig = {
-  /**
-   * Default recipient. Per-checkout input or the quote may supply it instead.
-   */
-  destination?: Destination;
-  getSigner: () => Promise<PaymentSigner>;
-  methods: SettleAdapter[];
-  quoteUrl?: string;
-  onSettled?: (state: Extract<CheckoutState, { status: "settled" }>) => void;
-  onFailed?: (state: Extract<CheckoutState, { status: "failed" }>) => void;
-};
-
 export type CreateCheckoutInput = {
-  amountUsdc: string;
+  amount: string;
   destination?: Destination | undefined;
   getSigner: () => Promise<PaymentSigner>;
-  methods?: SettleAdapter[] | undefined;
-  quoteUrl?: string | undefined;
-  onSettled?: ((state: Extract<CheckoutState, { status: "settled" }>) => void) | undefined;
-  onFailed?: ((state: Extract<CheckoutState, { status: "failed" }>) => void) | undefined;
+  method?: SettleAdapter | undefined;
 };
 
 export type CheckoutManager = {
   getState: () => CheckoutState;
   subscribe: (listener: () => void) => () => void;
-  /** Quote the configured method. Requires `idle`. */
-  quote: () => Promise<void>;
-  /** Quote if idle, then submit. Requires `idle` or `awaiting_payment`. */
+  /** Quote, submit, then wait for a receipt. Requires `idle`. */
   pay: () => Promise<void>;
   /** Retry receipt lookup only. Never resubmits. */
   retryConfirmation: () => Promise<void>;

@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  type CheckoutManager,
-  type CheckoutState,
-  createCheckout,
-  type Destination,
-} from "@settle-kit/core";
+import { type CheckoutManager, createCheckout, type Destination } from "@settle-kit/core";
 import { type ReactNode, useMemo, useRef, useState } from "react";
 import type { CheckoutAppearance } from "./appearance.ts";
 import { type SettleAppConfig, SettleContext } from "./context.ts";
@@ -48,19 +43,12 @@ export function SettleProvider({
 
 export function startCheckout(
   config: SettleAppConfig,
-  input: { amountUsdc: string; destination?: Destination | undefined },
-  hooks?: {
-    onSettled?: (state: Extract<CheckoutState, { status: "settled" }>) => void;
-    onFailed?: (state: Extract<CheckoutState, { status: "failed" }>) => void;
-  },
+  input: { amount: string; destination?: Destination | undefined },
 ) {
   return createCheckout({
-    amountUsdc: input.amountUsdc,
+    amount: input.amount,
     destination: input.destination ?? config.destination,
     getSigner: config.getSigner,
-    methods: config.methods,
-    quoteUrl: config.quoteUrl,
-    onSettled: hooks?.onSettled,
-    onFailed: hooks?.onFailed,
+    method: config.method,
   });
 }

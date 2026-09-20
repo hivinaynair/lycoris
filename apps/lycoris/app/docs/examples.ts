@@ -36,7 +36,7 @@ export function Store({ getSigner }: {
         recipient: "0x1111111111111111111111111111111111111111", // replace
       },
     }}>
-      <Checkout amountUsdc="0.1" title="Weather report" />
+      <Checkout amount="0.1" title="Weather report" />
     </SettleProvider>
   );
 }`;
@@ -66,16 +66,14 @@ import { useCheckout } from "@settle-kit/react";
 
 // Render inside the same SettleProvider.
 export function BuyReport() {
-  const { state, begin, pay, reset, retryConfirmation } = useCheckout();
+  const { state, pay, reset, retryConfirmation } = useCheckout();
   switch (state.status) {
     case "idle":
-      return <button onClick={() => void begin({ amountUsdc: "0.1" })}>
-        Buy report
+      return <button onClick={() => void pay({ amount: "0.1" })}>
+        Pay 0.1 USDC
       </button>;
     case "quoting":
       return <p>Preparing payment…</p>;
-    case "awaiting_payment":
-      return <button onClick={() => void pay()}>Pay {state.quote.amountUsdc} USDC</button>;
     case "settling":
       return state.confirmationError
         ? <button onClick={() => void retryConfirmation()}>Check payment status</button>
@@ -94,7 +92,7 @@ export const appearance = `<SettleProvider
     variables: { borderRadius: "16px", colorPrimary: "var(--primary)" },
   }}
 >
-  <Checkout amountUsdc="0.1" className="your-checkout" />
+  <Checkout amount="0.1" className="your-checkout" />
 </SettleProvider>`;
 
 export const paidFetch = `import { createPaidFetch, payForResource } from "@settle-kit/agents";
@@ -129,7 +127,7 @@ export const headless = `import { createCheckout, type PaymentSigner } from "@se
 
 export function preparePayment(getSigner: () => Promise<PaymentSigner>) {
   return createCheckout({
-    amountUsdc: "0.1",
+    amount: "0.1",
     getSigner,
     destination: {
       targetChain: 84532,
@@ -140,5 +138,4 @@ export function preparePayment(getSigner: () => Promise<PaymentSigner>) {
 }
 
 // checkout.subscribe(() => render(checkout.getState()));
-// await checkout.pay(); // quotes, submits, waits for a receipt
-// or: await checkout.quote(); then await checkout.pay();`;
+// await checkout.pay();`;

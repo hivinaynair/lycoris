@@ -7,7 +7,7 @@ import { createCheckout, BASE_SEPOLIA_USDC_ADDRESS, type PaymentSigner } from "@
 
 export function checkoutFor(getSigner: () => Promise<PaymentSigner>) {
   return createCheckout({
-    amountUsdc: "0.10",
+    amount: "0.10",
     getSigner,
     destination: {
       targetChain: 84532,
@@ -19,19 +19,18 @@ export function checkoutFor(getSigner: () => Promise<PaymentSigner>) {
 
 const checkout = checkoutFor(getSigner);
 checkout.subscribe(() => console.log(checkout.getState()));
-await checkout.pay(); // quotes, then submits, then waits for a receipt
+await checkout.pay();
 ```
 
 `PaymentSigner` is two fields: `address` and `sendTransaction({ to, data })`.
 The transaction `to` is Circle USDC; the merchant is inside `transfer`
 calldata. The host puts the wallet on Base Sepolia.
 
-Call `quote()` if you want a review step, then `pay()`. `pay()` from idle does
-both.
+`pay()` quotes, submits, and waits for a receipt.
 
 ## What the session guarantees
 
-- `settled` and `onSettled` wait for a successful receipt, not just a submitted hash.
+- `settled` waits for a successful receipt, not just a submitted hash.
 - A reverted receipt becomes `failed`. A receipt timeout stays `settling`;
   `retryConfirmation()` looks up the same hash and never sends again.
 - Reset and a second `pay()` are refused while `settling`.
