@@ -3,6 +3,7 @@
 import { Button } from "@repo/ui/components/button";
 import { cn } from "@repo/ui/lib/utils";
 import { ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { SegmentedControl } from "./segmented-control";
 
 export type Filter = "all" | "approved" | "rejected";
 
@@ -26,30 +27,13 @@ export function FeedToolbar({
   empty: boolean;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-center gap-2">
-      <div className="flex gap-0.5 rounded-lg border border-border bg-muted/60 p-0.5">
-        {filters.map((f) => (
-          <Button
-            key={f.id}
-            variant="ghost"
-            size="sm"
-            onClick={() => onFilter(f.id)}
-            className={cn(
-              "h-auto rounded-[2px] px-3 py-1.5 text-[12.5px] font-medium",
-              filter === f.id
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
+    <>
+      <SegmentedControl label="Decision" value={filter} onChange={onFilter} options={filters} />
       <Button variant="outline" size="sm" className="ml-auto" onClick={onExport} disabled={empty}>
         <FileText className="size-4" />
         Export
       </Button>
-    </div>
+    </>
   );
 }
 

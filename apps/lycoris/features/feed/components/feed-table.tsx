@@ -17,6 +17,7 @@ import { buildFeedCsv, downloadCsv, isDisclosed } from "../lib/feed-csv";
 import { DetailSheet } from "./detail-sheet";
 import { FeedPagination, FeedToolbar, type Filter, PAGE_SIZE } from "./feed-table-controls";
 import { DisclosedFeedRow, PublicFeedRow } from "./feed-table-rows";
+import { ViewerToggle } from "./viewer-toggle";
 
 type FeedTableProps = {
   rows: AttestationRow[];
@@ -58,16 +59,20 @@ export function FeedTable({ rows, agentNames = {}, role }: FeedTableProps) {
 
   return (
     <>
-      {!publicView && (
-        <FeedToolbar
-          filter={filter}
-          onFilter={updateFilter}
-          onExport={() =>
-            downloadCsv(`lycoris-feed-${filter}.csv`, buildFeedCsv(filtered, role, agentNames))
-          }
-          empty={filtered.length === 0}
-        />
-      )}
+      <ViewerToggle
+        trailing={
+          publicView ? undefined : (
+            <FeedToolbar
+              filter={filter}
+              onFilter={updateFilter}
+              onExport={() =>
+                downloadCsv(`lycoris-feed-${filter}.csv`, buildFeedCsv(filtered, role, agentNames))
+              }
+              empty={filtered.length === 0}
+            />
+          )
+        }
+      />
 
       <FeedRows
         rows={pagedRows}

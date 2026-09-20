@@ -5,7 +5,6 @@ import { Card, CardContent } from "@repo/ui/components/card";
 import { Suspense } from "react";
 import { PageFrame, PageHead } from "@/components/page-chrome";
 import { FeedTable } from "@/features/feed/components/feed-table";
-import { ViewerToggle } from "@/features/feed/components/viewer-toggle";
 import { getAgentsWithMandates } from "@/server/agents";
 import { getAttestations, parseViewerRole } from "@/server/attestations";
 
@@ -47,9 +46,6 @@ export default async function FeedPage({
 
       <Card className="gap-0 rounded-xl border border-border bg-card p-0 shadow-none">
         <CardContent className="p-3">
-          <Suspense>
-            <ViewerToggle />
-          </Suspense>
           <Suspense>
             <FeedTable rows={rows} agentNames={agentNames} role={role} />
           </Suspense>

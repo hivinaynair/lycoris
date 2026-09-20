@@ -1,9 +1,9 @@
 "use client";
 
-import { Button } from "@repo/ui/components/button";
-import { cn } from "@repo/ui/lib/utils";
 import { parseAsStringLiteral, useQueryState } from "nuqs";
+import type { ReactNode } from "react";
 import { VIEWER_ROLES, type ViewerRole } from "@/server/attestation-view";
+import { SegmentedControl } from "./segmented-control";
 
 const captions: Record<ViewerRole, string> = {
   public:
@@ -20,7 +20,7 @@ const labels: Record<ViewerRole, string> = {
   institution: "Institution",
 };
 
-export function ViewerToggle() {
+export function ViewerToggle({ trailing }: { trailing?: ReactNode }) {
   const [view, setView] = useQueryState(
     "view",
     parseAsStringLiteral(VIEWER_ROLES).withDefault("public").withOptions({ shallow: false }),
@@ -28,23 +28,14 @@ export function ViewerToggle() {
 
   return (
     <div className="mb-4 flex flex-col gap-2">
-      <div className="flex w-fit gap-0.5 rounded-lg border border-border bg-muted/60 p-0.5">
-        {VIEWER_ROLES.map((role) => (
-          <Button
-            key={role}
-            variant="ghost"
-            size="sm"
-            onClick={() => void setView(role)}
-            className={cn(
-              "h-auto rounded-[2px] px-3 py-1.5 text-[12.5px] font-medium",
-              view === role
-                ? "bg-card text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {labels[role]}
-          </Button>
-        ))}
+      <div className="flex flex-wrap items-center gap-2">
+        <SegmentedControl
+          label="Viewer"
+          value={view}
+          onChange={(role) => void setView(role)}
+          options={VIEWER_ROLES.map((role) => ({ id: role, label: labels[role] }))}
+        />
+        {trailing}
       </div>
       <p className="max-w-[620px] text-sm text-muted-foreground">{captions[view]}</p>
     </div>
