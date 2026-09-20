@@ -109,8 +109,9 @@ function LimitsSection() {
           transactions require manual inspection.
         </li>
         <li>
-          The playground makes real Base Sepolia transfers from a dedicated demo wallet. Its
-          lifetime budget is 50 purchases (5 test USDC); report access lasts 15 minutes.
+          The playground makes real Base Sepolia transfers. Demo pays uses a sponsored smart account
+          with a 50-purchase faucet budget (5 test USDC). Your wallet is a Coinbase Wallet or other
+          injected EOA; you send the USDC and pay gas. Report access lasts 15 minutes.
         </li>
         <li>
           The SDK is not published to npm. Local tarballs and an independent consumer are the

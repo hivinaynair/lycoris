@@ -5,7 +5,6 @@ import { Card, CardContent } from "@repo/ui/components/card";
 import { Suspense } from "react";
 import { PageFrame, PageHead } from "@/components/page-chrome";
 import { FeedTable } from "@/features/feed/components/feed-table";
-import { ViewerToggle } from "@/features/feed/components/viewer-toggle";
 import { getAgentsWithMandates } from "@/server/agents";
 import { getAttestations, parseViewerRole } from "@/server/attestations";
 
@@ -40,16 +39,13 @@ export default async function FeedPage({
               </p>
               <p className="mt-1 font-mono text-2xl font-semibold">{rows.length}</p>
             </div>
-            <Badge className="text-muted-foreground">Base Sepolia</Badge>
+            <Badge>Base Sepolia</Badge>
           </div>
         }
       />
 
       <Card className="gap-0 rounded-xl border border-border bg-card p-0 shadow-none">
         <CardContent className="p-3">
-          <Suspense>
-            <ViewerToggle />
-          </Suspense>
           <Suspense>
             <FeedTable rows={rows} agentNames={agentNames} role={role} />
           </Suspense>
