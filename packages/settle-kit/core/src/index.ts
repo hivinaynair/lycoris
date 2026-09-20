@@ -18,7 +18,6 @@ export type {
   PaymentSigner,
   Quote,
   SettleAdapter,
-  SettleConfig,
   SettleError,
   SettleErrorCode,
   SettleMethodId,

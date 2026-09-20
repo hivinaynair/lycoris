@@ -18,7 +18,7 @@ const destination: Destination = {
 
 const quote: Quote = {
   requestId: "q1",
-  amountUsdc: "12.50",
+  amount: "12.50",
   amountAtomic: "12500000",
   expiresAt: Date.now() + 60_000,
   method: "usdc",
@@ -78,7 +78,7 @@ describe("createUsdcMethod", () => {
     let sent = false;
     const checkout = createCheckout({
       destination,
-      amountUsdc: "12.50",
+      amount: "12.50",
       getSigner: async () => ({
         address: "0x2222222222222222222222222222222222222222",
         sendTransaction: async () => {
@@ -86,11 +86,9 @@ describe("createUsdcMethod", () => {
           return "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca";
         },
       }),
-      methods: [
-        createUsdcMethod({
-          client: { readContract: async () => 0n },
-        }),
-      ],
+      method: createUsdcMethod({
+        client: { readContract: async () => 0n },
+      }),
     });
 
     await checkout.pay();

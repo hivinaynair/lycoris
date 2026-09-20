@@ -25,12 +25,11 @@ export function CheckoutPreview({ look }: { look: Look }) {
       <div className={styles.checkoutBody}>
         {look === "custom" ? (
           <div className="w-full max-w-[400px]">
-            <MerchantCheckout amountUsdc={WEATHER_PRICE_USDC} title={WEATHER_TITLE} sponsored />
+            <MerchantCheckout amount={WEATHER_PRICE_USDC} title={WEATHER_TITLE} sponsored />
           </div>
         ) : (
           <Checkout
-            skipReview
-            amountUsdc={WEATHER_PRICE_USDC}
+            amount={WEATHER_PRICE_USDC}
             title={WEATHER_TITLE}
             transactionUrl={settlementUrl}
             copy={{
@@ -40,7 +39,6 @@ export function CheckoutPreview({ look }: { look: Look }) {
                 "Your purchase is saved in this browser. If interrupted, return here to check the same payment without sending it again.",
               idleDescription: "We cover this payment and network fees. Just click Pay.",
               pendingWallet: phase ? SETTLE_PHASE_LABEL[phase] : "Sending your sponsored payment…",
-              reviewDescription: "Paid by the demo wallet on Base Sepolia.",
             }}
           />
         )}

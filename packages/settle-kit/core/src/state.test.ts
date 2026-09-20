@@ -17,7 +17,7 @@ const destination: Destination = {
 
 const quote: Quote = {
   requestId: "q1",
-  amountUsdc: "12.50",
+  amount: "12.50",
   amountAtomic: "12500000",
   expiresAt: Date.now() + 60_000,
   method: "usdc",
@@ -34,14 +34,11 @@ function adapter(overrides: Partial<SettleAdapter> = {}): SettleAdapter {
 }
 
 describe("checkout reducer", () => {
-  it("walks idle → quoting → awaiting_payment → settling → settled", () => {
-    const quoting = reduce(IDLE_STATE, { type: "QUOTING", amountUsdc: "12.50" });
+  it("walks idle → quoting → settling → settled", () => {
+    const quoting = reduce(IDLE_STATE, { type: "QUOTING", amount: "12.50" });
     expect(quoting.status).toBe("quoting");
 
-    const awaiting = reduce(quoting, { type: "QUOTE_OK", quote, destination });
-    expect(awaiting.status).toBe("awaiting_payment");
-
-    const settling = reduce(awaiting, { type: "SETTLING" });
+    const settling = reduce(quoting, { type: "QUOTE_OK", quote, destination });
     expect(settling.status).toBe("settling");
 
     const settled = reduce(settling, {
@@ -57,15 +54,13 @@ describe("checkout reducer", () => {
   it("maps an expired quote to failed without settling", async () => {
     const checkout = createCheckout({
       destination,
-      amountUsdc: "12.50",
+      amount: "12.50",
       getSigner: async () => {
         throw new Error("signer should not be requested");
       },
-      methods: [
-        adapter({
-          quote: async () => ({ ...quote, expiresAt: Date.now() - 1 }),
-        }),
-      ],
+      method: adapter({
+        quote: async () => ({ ...quote, expiresAt: Date.now() - 1 }),
+      }),
     });
 
     await checkout.pay();
@@ -79,35 +74,17 @@ describe("checkout reducer", () => {
   it("quotes and pays from idle in one call", async () => {
     const checkout = createCheckout({
       destination,
-      amountUsdc: "12.50",
+      amount: "12.50",
       getSigner: async () => ({
         address: "0x2222222222222222222222222222222222222222",
         sendTransaction: async () =>
           "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
       }),
-      methods: [adapter()],
+      method: adapter(),
     });
 
     expect(checkout.getState().status).toBe("idle");
     await checkout.pay();
     expect(checkout.getState().status).toBe("settled");
-  });
-
-  it("reaches settled through quote then pay", async () => {
-    const checkout = createCheckout({
-      destination,
-      amountUsdc: "12.50",
-      getSigner: async () => ({
-        address: "0x2222222222222222222222222222222222222222",
-        sendTransaction: async () =>
-          "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
-      }),
-      methods: [adapter()],
-    });
-
-    await checkout.quote();
-    await checkout.pay();
-    const state = checkout.getState();
-    expect(state.status).toBe("settled");
   });
 });

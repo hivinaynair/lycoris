@@ -4,18 +4,18 @@ import { USDC_DECIMALS } from "./types.ts";
 const AMOUNT_PATTERN = /^(0|[1-9]\d*)(?:\.(\d+))?$/;
 
 /** Parse a decimal USDC amount (max 6 places) into atomic units. */
-export function parseUsdcAmount(amountUsdc: string): string {
-  if (typeof amountUsdc !== "string") invalidConfig("amountUsdc must be a string");
-  const trimmed = amountUsdc.trim();
+export function parseUsdcAmount(amount: string): string {
+  if (typeof amount !== "string") invalidConfig("amount must be a string");
+  const trimmed = amount.trim();
   const match = AMOUNT_PATTERN.exec(trimmed);
   if (!match) {
-    invalidConfig(`Invalid USDC amount: ${amountUsdc}`);
+    invalidConfig(`Invalid USDC amount: ${amount}`);
   }
 
   const whole = match[1] ?? "0";
   const fraction = (match[2] ?? "").padEnd(USDC_DECIMALS, "0");
   if (fraction.length > USDC_DECIMALS) {
-    invalidConfig(`USDC amount has more than ${USDC_DECIMALS} decimal places: ${amountUsdc}`);
+    invalidConfig(`USDC amount has more than ${USDC_DECIMALS} decimal places: ${amount}`);
   }
 
   const atomic = `${whole}${fraction}`.replace(/^0+(?=\d)/, "");

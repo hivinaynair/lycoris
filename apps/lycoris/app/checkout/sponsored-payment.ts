@@ -112,7 +112,7 @@ export function createSponsoredPayment(recipient: Address) {
     ...method,
     async quote(input) {
       const purchase = beginSponsoredPurchase(localStorage);
-      if (input.amountUsdc !== WEATHER_PRICE_USDC || input.destination?.recipient !== recipient)
+      if (input.amount !== WEATHER_PRICE_USDC || input.destination?.recipient !== recipient)
         throw new SettleKitError("invalid_config", "Only the demo weather report is sponsored.");
       const quote = await method.quote(input);
       return { ...quote, requestId: purchase.id };
@@ -163,7 +163,7 @@ export function createSponsoredPayment(recipient: Address) {
   };
 
   return {
-    methods: [adapter],
+    method: adapter,
     getSigner: async () => {
       const account = await burnerAccount();
       return toPaymentSigner({

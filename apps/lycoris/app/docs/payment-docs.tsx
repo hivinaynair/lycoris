@@ -20,14 +20,13 @@ function LifecycleSection() {
       <DocsTable
         headers={["State", "Meaning"]}
         rows={[
-          ["idle", "No active purchase. Show the product and Buy action."],
+          ["idle", "No active purchase. Show the product and Pay action."],
           ["quoting", "Locking the amount and validating the quote."],
-          ["awaiting_payment", "The quote is ready. Let the buyer review and confirm."],
           [
             "settling",
             "Wallet interaction or receipt lookup is in progress. A transaction hash alone does not mean success.",
           ],
-          ["settled", "A successful receipt was observed. onSettled fires here."],
+          ["settled", "A successful receipt was observed."],
           ["failed", "A known failure. Show the error; retain a transaction link if one exists."],
         ]}
       />
@@ -45,7 +44,7 @@ function CoreSection() {
     <DocsSection id="core" title="Use the headless engine">
       <p>
         Core works without React. Subscribe to the manager, render from getState(), and call pay()
-        from idle to quote and submit, or quote() then pay() if you want a review step.
+        from idle to quote and submit.
       </p>
       <CodeExample title="payment.ts" code={examples.headless} language="typescript" />
     </DocsSection>

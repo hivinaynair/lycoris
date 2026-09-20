@@ -3,7 +3,7 @@
 import type { CheckoutManager, CheckoutState } from "@settle-kit/core";
 import { SettleKitError } from "@settle-kit/core";
 import { useCallback, useContext, useLayoutEffect, useRef, useSyncExternalStore } from "react";
-import { type BeginCheckoutInput, SettleContext } from "./context.ts";
+import { type PayInput, SettleContext } from "./context.ts";
 import { startCheckout } from "./provider.tsx";
 
 const IDLE: CheckoutState = { status: "idle" };
@@ -14,17 +14,9 @@ function getIdle() {
 
 export type UseCheckoutResult = {
   state: CheckoutState;
-  /** True in `awaiting_payment`. Not a balance or permission check. */
-  canPay: boolean;
-  /** True in `quoting` or `settling`. */
-  isBusy: boolean;
   title: string | undefined;
-  /** Quote the purchase. Does not submit. */
-  begin: (input: BeginCheckoutInput) => Promise<void>;
   /** Quote and submit from one click. */
-  payNow: (input: BeginCheckoutInput) => Promise<void>;
-  /** Submit the quoted payment. Requires `awaiting_payment`. */
-  pay: () => Promise<void>;
+  pay: (input: PayInput) => Promise<void>;
   /** Retry receipt lookup only. Never resubmits. */
   retryConfirmation: () => Promise<void>;
   reset: () => void;
@@ -32,35 +24,25 @@ export type UseCheckoutResult = {
 
 function requireManager(manager: CheckoutManager | null, verb: string): CheckoutManager {
   if (!manager) {
-    throw new SettleKitError("invalid_config", `begin() before ${verb}()`);
+    throw new SettleKitError("invalid_config", `pay() before ${verb}()`);
   }
   return manager;
 }
 
-/** Callbacks attached to sessions started by this `useCheckout` instance. */
-export type CheckoutCallbacks = {
-  onSettled?: ((state: Extract<CheckoutState, { status: "settled" }>) => void) | undefined;
-  onFailed?: ((state: Extract<CheckoutState, { status: "failed" }>) => void) | undefined;
-};
-
 /**
  * Subscribe to the current checkout session.
  *
- * Must be used under `SettleProvider`. `begin` quotes; `pay` submits; `payNow`
- * quotes and submits from one click.
+ * Must be used under `SettleProvider`. `pay({ amount })` quotes and submits.
  */
-export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
+export function useCheckout(): UseCheckoutResult {
   const ctx = useContext(SettleContext);
   if (!ctx) {
     throw new SettleKitError("invalid_config", "useCheckout must be used inside SettleProvider");
   }
 
-  const latest = useRef({ ctx, options });
+  const latest = useRef({ ctx });
   useLayoutEffect(() => {
-    latest.current = { ctx, options };
-    return () => {
-      latest.current = { ctx, options: undefined };
-    };
+    latest.current = { ctx };
   });
 
   const state = useSyncExternalStore(
@@ -70,45 +52,19 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
   );
 
   const startingPayment = useRef(false);
-  const beginSession = useCallback(async (input: BeginCheckoutInput) => {
-    const { ctx } = latest.current;
-    const manager = startCheckout(ctx.config, input, {
-      onSettled: (state) => latest.current.options?.onSettled?.(state),
-      onFailed: (state) => latest.current.options?.onFailed?.(state),
-    });
-    ctx.managerRef.current?.reset();
-    ctx.setSession(manager, input.title);
-    await manager.quote();
-    return manager;
-  }, []);
 
-  const begin = useCallback(
-    async (input: BeginCheckoutInput) => {
-      await beginSession(input);
-    },
-    [beginSession],
-  );
-
-  const payNow = useCallback(
-    async (input: BeginCheckoutInput) => {
-      if (startingPayment.current) return;
-      startingPayment.current = true;
-      try {
-        const manager = await beginSession(input);
-        if (
-          latest.current.ctx.managerRef.current === manager &&
-          manager.getState().status === "awaiting_payment"
-        )
-          await manager.pay();
-      } finally {
-        startingPayment.current = false;
-      }
-    },
-    [beginSession],
-  );
-
-  const pay = useCallback(async () => {
-    await requireManager(latest.current.ctx.managerRef.current, "pay").pay();
+  const pay = useCallback(async (input: PayInput) => {
+    if (startingPayment.current) return;
+    startingPayment.current = true;
+    try {
+      const { ctx } = latest.current;
+      const manager = startCheckout(ctx.config, input);
+      ctx.managerRef.current?.reset();
+      ctx.setSession(manager, input.title);
+      await manager.pay();
+    } finally {
+      startingPayment.current = false;
+    }
   }, []);
 
   const reset = useCallback(() => {
@@ -125,12 +81,8 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
   }, []);
 
   return {
-    canPay: state.status === "awaiting_payment",
-    isBusy: state.status === "quoting" || state.status === "settling",
     state,
     title: ctx.title,
-    begin,
-    payNow,
     pay,
     retryConfirmation,
     reset,

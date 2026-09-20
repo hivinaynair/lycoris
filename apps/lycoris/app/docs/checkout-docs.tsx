@@ -18,9 +18,8 @@ function ReactSection() {
     <DocsSection id="react" title="Add a React checkout">
       <p>
         Mount one Provider around your store. Supply a wallet signer and, optionally, a default
-        merchant destination: each purchase can override it, and a quote endpoint can return its own
-        recipient. Then render Checkout for each purchase. Amounts are decimal strings with at most
-        six decimal places.
+        merchant destination: each purchase can override it. Then render Checkout for each purchase.
+        Amounts are decimal strings with at most six decimal places.
       </p>
       <CodeExample title="store.tsx" code={examples.reactCheckout} />
       <p className="text-muted-foreground">
@@ -59,31 +58,22 @@ function CustomUiSection() {
   return (
     <DocsSection id="custom-ui" title="Use your own components">
       <p>
-        useCheckout exposes the same session to every component under the Provider. begin selects
-        USDC and requests a quote; pay submits only after the buyer confirms. Keep your own buttons,
-        dialogs, and design system.
+        useCheckout exposes the same session to every component under the Provider. pay quotes and
+        submits from one click. Keep your own buttons, dialogs, and design system.
       </p>
       <CodeExample title="buy-report.tsx" code={examples.customCheckout} />
       <DocsTable
         headers={["API", "What it does"]}
         rows={[
           [
-            "begin({ amountUsdc, title?, destination? })",
-            "Starts a purchase and quotes USDC. Existing in-flight payments cannot be replaced.",
-          ],
-          [
-            "pay()",
-            "Requires awaiting_payment. Checks quote expiry, network, and USDC balance before submission.",
+            "pay({ amount, title?, destination? })",
+            "Quotes and submits. Existing in-flight payments cannot be replaced.",
           ],
           [
             "retryConfirmation()",
             "Checks the submitted transaction’s receipt again. Never sends another transfer.",
           ],
           ["reset()", "Returns to idle. Refuses to reset a payment that is still settling."],
-          [
-            "canPay / isBusy",
-            "UI conveniences. They do not replace the checks performed by pay().",
-          ],
         ]}
       />
     </DocsSection>
