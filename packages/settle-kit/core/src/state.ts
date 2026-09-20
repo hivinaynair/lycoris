@@ -1,4 +1,4 @@
-import type { CheckoutState, Destination, Quote, SettleError, SettlementHash } from "./types";
+import type { CheckoutState, Destination, Quote, SettleError, SettlementHash } from "./types.ts";
 
 export const IDLE_STATE: CheckoutState = { status: "idle" };
 
@@ -48,7 +48,6 @@ export function reduce(state: CheckoutState, action: CheckoutAction): CheckoutSt
       return { ...state, txHash: action.txHash };
     case "CONFIRMING": {
       if (state.status !== "settling") return state;
-      // Clearing the error drops the key; it never stores undefined.
       const { confirmationError: _cleared, ...confirming } = state;
       return confirming;
     }

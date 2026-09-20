@@ -13,11 +13,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://lycoris.vinaynair.dev"),
   title: "Lycoris",
   description:
-    "An embeddable USDC checkout SDK. Explore payment states, themes, and a host-owned wallet integration.",
+    "USDC payments for people and agents. Try a sponsored checkout, see an agent buy a paid API, and inspect the engineering behind Settle Kit.",
   openGraph: {
     title: "Lycoris",
     description:
-      "An embeddable USDC checkout SDK. Explore payment states, themes, and a host-owned wallet integration.",
+      "USDC payments for people and agents. Try a sponsored checkout, see an agent buy a paid API, and inspect the engineering behind Settle Kit.",
     url: "https://lycoris.vinaynair.dev",
     siteName: "Lycoris",
     type: "website",
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Lycoris",
     description:
-      "An embeddable USDC checkout SDK. Explore payment states, themes, and a host-owned wallet integration.",
+      "USDC payments for people and agents. Try a sponsored checkout, see an agent buy a paid API, and inspect the engineering behind Settle Kit.",
   },
 };
 

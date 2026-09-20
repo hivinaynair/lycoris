@@ -1,14 +1,14 @@
-import { invalidConfig } from "./errors";
+import { invalidConfig } from "./errors.ts";
 import {
+  type Address,
   BASE_SEPOLIA_CHAIN_ID,
   BASE_SEPOLIA_USDC_ADDRESS,
   type Destination,
-  type HexAddress,
-} from "./types";
+} from "./types.ts";
 
 const ADDRESS_PATTERN = /^0x[a-fA-F0-9]{40}$/;
 
-export function isHexAddress(value: string): value is HexAddress {
+export function isHexAddress(value: string): value is Address {
   return ADDRESS_PATTERN.test(value);
 }
 

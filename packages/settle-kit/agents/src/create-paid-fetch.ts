@@ -1,16 +1,12 @@
 import { decodePaymentRequiredHeader, decodePaymentSignatureHeader } from "@x402/core/http";
 import { wrapFetchWithPaymentFromConfig } from "@x402/fetch";
-import type { PaidFetchScheme, ResourceChallenge } from "./types";
-import {
-  challengeFromPaymentRequired,
-  extractAuthorizationNonce,
-  paymentRequiredHeader,
-} from "./x402-decode";
+import type { PaidFetchScheme, ResourceChallenge } from "./types.ts";
+import { challengeFromPaymentRequired, extractAuthorizationNonce } from "./x402-decode.ts";
 
 export type PaidFetchFn = (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>;
 export type PaymentMetadata = { authorizationNonce?: string; challenge?: ResourceChallenge };
 export type PaidFetch = PaidFetchFn & {
-  /** Metadata belongs to this response, never to the most recent call. */
+  /** Metadata for this `Response`. Concurrent calls do not share metadata. */
   getPaymentMetadata: (response: Response) => Readonly<PaymentMetadata> | undefined;
 };
 export type CreatePaidFetchOptions = {
@@ -19,6 +15,12 @@ export type CreatePaidFetchOptions = {
   fetch?: PaidFetchFn;
 };
 
+/**
+ * Wrap `fetch` to retry an x402 402 with a payment header.
+ *
+ * Optionally attaches `X-AP2-Mandate`. Query `getPaymentMetadata(response)` on
+ * the returned response — never on a later call.
+ */
 export function createPaidFetch(options: CreatePaidFetchOptions): PaidFetch {
   const baseFetch = options.fetch ?? fetch;
   const metadataByResponse = new WeakMap<Response, Readonly<PaymentMetadata>>();
@@ -27,45 +29,45 @@ export function createPaidFetch(options: CreatePaidFetchOptions): PaidFetch {
     const header = await options.getMandateHeader?.();
     if (header) request.headers.set("X-AP2-Mandate", header);
     const metadata: PaymentMetadata = {};
-    // One observer per call keeps challenge/signature data isolated during retries and concurrency.
     const observingFetch: PaidFetchFn = async (retryInput, retryInit) => {
       const retry = new Request(retryInput, retryInit);
       const signature = retry.headers.get("PAYMENT-SIGNATURE") ?? retry.headers.get("X-PAYMENT");
       if (signature) {
-        // Each attempt replaces the last observation rather than accumulating.
         delete metadata.authorizationNonce;
         try {
           const nonce = extractAuthorizationNonce(decodePaymentSignatureHeader(signature));
           if (nonce !== undefined) metadata.authorizationNonce = nonce;
         } catch {
-          // An undecodable signature header leaves the nonce unknown.
+          // Leave nonce unset when the signature header cannot be decoded.
         }
       }
       const response = await baseFetch(retry);
-      if (response.status !== 402) return response;
-      const required = paymentRequiredHeader(response.headers);
-      if (!required) return response;
-      delete metadata.challenge;
-      try {
-        metadata.challenge = challengeFromPaymentRequired(decodePaymentRequiredHeader(required));
-      } catch {
-        // An undecodable challenge header leaves the terms unknown.
+      if (response.status === 402) {
+        const required =
+          response.headers.get("PAYMENT-REQUIRED") ?? response.headers.get("X-PAYMENT-REQUIRED");
+        if (required) {
+          delete metadata.challenge;
+          try {
+            metadata.challenge = challengeFromPaymentRequired(
+              decodePaymentRequiredHeader(required),
+            );
+          } catch {
+            // Leave challenge unset when the required header cannot be decoded.
+          }
+        }
       }
       return response;
     };
-    const scheme: {
-      network: `${string}:${string}`;
-      client: never;
-      x402Version?: number;
-    } = {
-      network: options.scheme.network as `${string}:${string}`,
-      client: options.scheme.client as never,
-    };
-    if (options.scheme.x402Version !== undefined) {
-      scheme.x402Version = options.scheme.x402Version;
-    }
     const wrapped = wrapFetchWithPaymentFromConfig(observingFetch as typeof fetch, {
-      schemes: [scheme],
+      schemes: [
+        {
+          network: options.scheme.network as `${string}:${string}`,
+          client: options.scheme.client as never,
+          ...(options.scheme.x402Version !== undefined
+            ? { x402Version: options.scheme.x402Version }
+            : {}),
+        },
+      ],
     });
     const response = await wrapped(request);
     metadataByResponse.set(response, Object.freeze(metadata));

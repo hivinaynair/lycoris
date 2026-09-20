@@ -1,5 +1,5 @@
-import { jsonError, jsonResult } from "../result";
-import type { PaymentStore } from "../store";
+import { jsonError, jsonResult } from "../result.ts";
+import type { PaymentStore } from "../store.ts";
 
 export async function getPaymentStatus(payId: string, store: PaymentStore) {
   const record = await store.get(payId);

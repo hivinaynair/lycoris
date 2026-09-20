@@ -3,8 +3,8 @@
 import type { CheckoutManager, CheckoutState } from "@settle-kit/core";
 import { SettleKitError } from "@settle-kit/core";
 import { useCallback, useContext, useLayoutEffect, useRef, useSyncExternalStore } from "react";
-import { type BeginCheckoutInput, SettleContext } from "./context";
-import { startCheckout } from "./provider";
+import { type BeginCheckoutInput, SettleContext } from "./context.ts";
+import { startCheckout } from "./provider.tsx";
 
 const IDLE: CheckoutState = { status: "idle" };
 
@@ -12,19 +12,22 @@ function getIdle() {
   return IDLE;
 }
 
-function subscribeIdle() {
-  return () => undefined;
-}
-
 export type UseCheckoutResult = {
   state: CheckoutState;
+  /** True in `awaiting_payment`. Not a balance or permission check. */
   canPay: boolean;
+  /** True in `quoting` or `settling`. */
   isBusy: boolean;
   title: string | undefined;
+  /** Quote the purchase. Does not submit. */
   begin: (input: BeginCheckoutInput) => Promise<void>;
+  /** Quote and submit from one click. */
   payNow: (input: BeginCheckoutInput) => Promise<void>;
+  /** Low-level quote. `begin` already selects a method. */
   selectMethod: (id: string) => Promise<void>;
+  /** Submit the quoted payment. Requires `awaiting_payment`. */
   pay: () => Promise<void>;
+  /** Retry receipt lookup only. Never resubmits. */
   retryConfirmation: () => Promise<void>;
   reset: () => void;
 };
@@ -36,12 +39,18 @@ function requireManager(manager: CheckoutManager | null, verb: string): Checkout
   return manager;
 }
 
-/** Prop-shaped: a React caller may pass an explicit undefined, so these admit it. */
+/** Callbacks attached to sessions started by this `useCheckout` instance. */
 export type CheckoutCallbacks = {
   onSettled?: ((state: Extract<CheckoutState, { status: "settled" }>) => void) | undefined;
   onFailed?: ((state: Extract<CheckoutState, { status: "failed" }>) => void) | undefined;
 };
 
+/**
+ * Subscribe to the current checkout session.
+ *
+ * Must be used under `SettleProvider`. `begin` quotes; `pay` submits; `payNow`
+ * quotes and submits from one click.
+ */
 export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
   const ctx = useContext(SettleContext);
   if (!ctx) {
@@ -57,7 +66,7 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
   });
 
   const state = useSyncExternalStore(
-    ctx.manager?.subscribe ?? subscribeIdle,
+    ctx.manager?.subscribe ?? (() => () => undefined),
     ctx.manager?.getState ?? getIdle,
     getIdle,
   );
@@ -71,9 +80,6 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
     });
     ctx.managerRef.current?.reset();
     ctx.setSession(manager, input.title);
-    // The configured method, not a hard-coded id. A host that supplies a
-    // smart-account adapter has no method called "usdc", and hard-coding one
-    // made `methods` an array whose first element was the only one reachable.
     const [method] = ctx.config.methods ?? [];
     await manager.selectMethod(method?.id ?? "usdc");
     return manager;
@@ -92,12 +98,11 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
       startingPayment.current = true;
       try {
         const manager = await beginSession(input);
-        // A failed quote or a replaced session must never submit a payment.
-        const sessionStillCurrent = latest.current.ctx.managerRef.current === manager;
-        const quoteReady = manager.getState().status === "awaiting_payment";
-        if (sessionStillCurrent && quoteReady) {
+        if (
+          latest.current.ctx.managerRef.current === manager &&
+          manager.getState().status === "awaiting_payment"
+        )
           await manager.pay();
-        }
       } finally {
         startingPayment.current = false;
       }

@@ -1,4 +1,4 @@
-import type { Hex, HexAddress, PaymentSigner, SettlementHash } from "@settle-kit/core";
+import type { Address, Hex, PaymentSigner, SettlementHash } from "@settle-kit/core";
 
 /**
  * One call inside a user operation.
@@ -10,7 +10,7 @@ import type { Hex, HexAddress, PaymentSigner, SettlementHash } from "@settle-kit
  * file.
  */
 export type UserOperationCall = {
-  to: HexAddress;
+  to: Address;
   value: bigint;
   data: Hex;
 };
@@ -24,15 +24,14 @@ export type UserOperationCall = {
  * `address`; pinning `account` to the narrow shape here would force a cast at the
  * call site, which is precisely where a mistyped argument would go unnoticed.
  */
-export type UserOperationSender<account extends { address: HexAddress } = { address: HexAddress }> =
-  {
+export type UserOperationSender<account extends { address: Address } = { address: Address }> = {
+  account: account;
+  chainId: number;
+  sendUserOperation: (args: {
     account: account;
-    chainId: number;
-    sendUserOperation: (args: {
-      account: account;
-      calls: UserOperationCall[];
-    }) => Promise<SettlementHash>;
-  };
+    calls: UserOperationCall[];
+  }) => Promise<SettlementHash>;
+};
 
 /**
  * Presents a smart account to the SDK as an ordinary `PaymentSigner`.
@@ -61,7 +60,7 @@ export type UserOperationSender<account extends { address: HexAddress } = { addr
  * bundler refused the operation, so there is no hash to confirm and nothing was
  * submitted.
  */
-export function toPaymentSigner<account extends { address: HexAddress }>(
+export function toPaymentSigner<account extends { address: Address }>(
   sender: UserOperationSender<account>,
 ): PaymentSigner {
   return {

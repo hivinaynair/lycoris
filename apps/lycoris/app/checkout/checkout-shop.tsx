@@ -1,10 +1,10 @@
 "use client";
 
 import {
+  type Address,
   BASE_SEPOLIA_CHAIN_ID,
   BASE_SEPOLIA_USDC_ADDRESS,
   type Destination,
-  type HexAddress,
 } from "@settle-kit/core";
 import { SettleProvider } from "@settle-kit/react";
 import "@settle-kit/react/styles.css";
@@ -17,7 +17,7 @@ import styles from "./checkout-layouts";
 import { CheckoutPreview } from "./checkout-preview";
 import { createSponsoredPayment } from "./sponsored-payment";
 
-export function CheckoutShop({ recipient }: { recipient: HexAddress }) {
+export function CheckoutShop({ recipient }: { recipient: Address }) {
   const [look, setLook] = useState<Look>("default");
   const sponsored = useMemo(() => createSponsoredPayment(recipient), [recipient]);
   const destination: Destination = {

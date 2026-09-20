@@ -1,62 +1,56 @@
-**Weather resource update:** Both paths now buy Melbourne weather for 0.1 USDC. Human report access uses server-verified payment plus a wallet ownership signature.
+# Lycoris walkthrough and evidence
 
-# Local interview preview
+Updated September 20, 2026 for sponsored smart-account checkout and the guided tour.
+The older simulation-only recording and its timing are superseded.
 
-Run `bun run dev:ui` and open http://localhost:3003/checkout. Deployment is intentionally
-pending: Vinay requested local preview only.
+## A 90-second overview
 
-## 90-second walkthrough
+Open `/walkthrough`, then follow its four steps. The guide stays visible only while
+`tour=1` is present. It navigates between steps; it does not imply a payment succeeded
+or automatically spend funds. Live network and agent waits can exceed 90 seconds.
 
-The original walkthrough video was recorded from a Playwright e2e suite that
-has been removed. This is the narration guide that accompanied it.
+| Time | Screen | Explain |
+| --- | --- | --- |
+| 0–12s | Tour | One paid API, purchased by a person or an agent. Testnet scope. |
+| 12–25s | Checkout | No signup or personal wallet. Faucet-funded smart account and sponsored gas. |
+| 25–38s | Confirmed report | Operation confirmed, report delivered, transaction available to inspect. |
+| 38–55s | Agent purchase | HTTP 402, host-controlled authority, permission checks, settlement. |
+| 55–70s | Spending refusal | The mandate cannot cover the price; no settlement transaction. |
+| 70–82s | Decision feed | Inspect actual recorded attempts and available commitments. Roles are demo views. |
+| 82–90s | Case study | Architecture, implementation ownership, difficult decisions, and limits. |
 
-- **0–10s:** “Lycoris is an embeddable USDC checkout. The playground lets you try the
-  real SDK lifecycle without a wallet or moving funds.”
-- **10–24s:** “The app shares light and dark design tokens. Merchants can inherit
-  their app's theme or override appearance without changing payment state.”
-- **24–40s:** “A Provider takes the destination and a host-owned signer. Checkout
-  handles review, balance checking, submission, and receipt confirmation.”
-- **40–50s:** “Insufficient USDC fails before sending a transaction. Errors are
-  typed state that the host can render.”
-- **50–68s:** “Submission is not settlement. If confirmation is delayed, retry
-  checks the existing hash. It never sends a second payment.”
-- **68–80s:** “You can use the styled Checkout, customize its appearance, or build
-  entirely with the headless hook and your own components.”
-- **80–90s:** “This version supports USDC on Base Sepolia only. The agent x402 demo
-  is a separate consumer of the shared core, with its own resource payee.”
+## Narrated screen overview
 
-## Bundle measurement
+The website’s `/walkthrough/overview.mp4` is an **edited overview of captured screens**,
+with synthetic narration and WebVTT captions. It is not a continuous recording or a
+latency benchmark. Its payment-result screens must come from actual observed runs;
+do not create success screens or hashes for the video. The committed media lives in
+`apps/lycoris/public/walkthrough/`. The engineering write-up is
+[the case study](../case-study.md).
 
-`bun run measure:settle-kit` measures compiled ESM with esbuild minification and
-splitting. React/ReactDOM are external; viem is included. Gzip is summed per file,
-including lazy chunks. This is SDK cost, not full Next.js page cost or a latency test.
+## Automated checkout recording
 
-Measured September 8, 2026:
+`RECORD_WALKTHROUGH=1 bun run --cwd e2e/web e2e tests/walkthrough.spec.ts --workers=1` is a separate, silent checkout-only browser fixture.
+It mocks funding, bundler, paymaster, chain, and report calls and must not be presented
+as live settlement evidence. It writes `test-results/lycoris-walkthrough.webm`.
+The current fixture installs its payment mocks before visiting the page and preserves
+the video handle before closing the context.
 
-| Entry | Entry gzip | All chunks gzip |
-| --- | ---: | ---: |
-| Core | 3,025 B | 99,235 B |
-| React hook | 3,668 B | 99,878 B |
-| Styled UI | 5,446 B | 101,656 B |
+## Validation boundaries
 
-CSS adds 1,295 B gzip. No agent SDK/x402 code appears in these consumer graphs.
-Lazy RPC imports are limited to the used client and Base Sepolia chain, rather than
-loading the entire chain registry. Rerun for current numbers; entry size alone is
-not the full cost of completing a payment.
+- Repository checks: `bun run check-types`, `bun run check-boundaries`,
+  `bun run check-tokens`, `bun test`, and `git diff --check`.
+- A mocked checkout does not validate a live provider.
+- Browser review: the four tour destinations, scenario selection when navigating
+  between agent steps, exit behavior, light/dark appearance, and mobile overflow.
+- Sponsor configuration: `bun --env-file=apps/lycoris/.env.local scripts/demo/check-sponsored-config.ts` checks the configured
+  database cap and smart-account columns without changing data. It does not prove
+  the deployed app has the same environment or that the paymaster has capacity.
+- Live evidence: actual testnet checkout and agent runs, evaluated separately from
+  local tests. Historical decision rows are not rewritten by the resource parser fix.
 
-## Verification
-
-Latest local run: all required checks passed, 136 unit tests passed, and 9 browser
-tests passed. The recording-only test is skipped in normal test runs. The packed
-Next.js production smoke passed with two purchases and no browser errors.
-
-- Required repository checks: types, boundaries, tokens, Bun tests.
-- Browser suite: simulated success/rejection/insufficient/delayed outcomes,
-  wallet adapter checks, appearance continuity, theme persistence, keyboard
-  focus, 390px overflow, and automated axe accessibility checks.
-- Packed-package smoke: a separate Next app installs built SDK tarballs without
-  monorepo transpilation configuration and completes simulated purchases.
-
-Automated accessibility checks supplement manual light/dark and mobile inspection;
-they do not establish complete accessibility conformance. No real funds are used
-in these browser checks, and no public deployment is claimed.
+The reviewed implementation uses a browser-owned smart account, a server faucet,
+and a paymaster. Report delivery checks the operation and its USDC transfer; it does
+not ask the visitor for a report-ownership signature. Core receipt retry checks the
+submitted hash rather than sending another payment. Complete durable reconciliation
+and production finality are outside this demo.

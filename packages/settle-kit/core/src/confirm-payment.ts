@@ -1,5 +1,5 @@
-import type { CheckoutAction } from "./state";
-import type { CheckoutState, SettleAdapter, SettlementHash } from "./types";
+import type { CheckoutAction } from "./state.ts";
+import type { CheckoutState, SettleAdapter, SettlementHash } from "./types.ts";
 
 export async function confirmPayment(
   getAdapter: () => SettleAdapter,

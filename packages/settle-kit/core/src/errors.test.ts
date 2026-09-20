@@ -20,15 +20,11 @@ describe("SettleKitError", () => {
     expect(toSettleError(error).code).toBe("insufficient_usdc");
   });
 
-  // BaseError composes `message`, and toSettleError string-matches it to spot a
-  // rejected wallet. That detection must survive the rebase.
   test("still detects a rejected wallet from the message", () => {
     expect(toSettleError(new Error("User rejected the request")).code).toBe("wallet_rejected");
   });
 
-  // BaseError appends "Version: viem@x.y.z" to `message`. Hosts render
-  // SettleError.message straight to the buyer, so it must stay the copy we wrote.
-  test("surfaces the message we wrote, with no version suffix", () => {
+  test("surfaces the constructor message, with no version suffix", () => {
     const error = new SettleKitError("quote_expired", "Quote expired");
     expect(toSettleError(error).message).toBe("Quote expired");
   });
@@ -38,8 +34,6 @@ describe("SettleKitError", () => {
     expect(toSettleError(error).message).not.toContain("Version:");
   });
 
-  // BaseError assigns shortMessage verbatim, so an empty message leaves it "".
-  // Falling back to `message` beats rendering an empty string at the buyer.
   test("falls back to the composed message when shortMessage is empty", () => {
     const error = new SettleKitError("transfer_failed", "");
     expect(toSettleError(error).message).toBe(error.message);

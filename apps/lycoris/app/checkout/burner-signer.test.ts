@@ -1,14 +1,14 @@
 import { describe, expect, test } from "bun:test";
 import {
+  type Address,
   BASE_SEPOLIA_CHAIN_ID,
   type Hex,
-  type HexAddress,
   type SettlementHash,
 } from "@settle-kit/core";
 import { toPaymentSigner, type UserOperationSender } from "./burner-signer";
 
-const smartAccount = { address: "0x1111111111111111111111111111111111111111" as HexAddress };
-const usdc = "0x2222222222222222222222222222222222222222" as HexAddress;
+const smartAccount = { address: "0x1111111111111111111111111111111111111111" as Address };
+const usdc = "0x2222222222222222222222222222222222222222" as Address;
 const transferCalldata = "0xa9059cbb0000000000000000000000003333" as Hex;
 const userOpHash =
   "0xcccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc" as SettlementHash;

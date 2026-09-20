@@ -1,15 +1,16 @@
 import { encodeFunctionData } from "viem";
-import { parseUsdcAmount } from "../amounts";
-import { assertDestination } from "../destination";
-import { SettleKitError } from "../errors";
-import { validateQuote } from "../quote-client";
+import { parseUsdcAmount } from "../amounts.ts";
+import { assertDestination } from "../destination.ts";
+import { SettleKitError } from "../errors.ts";
+import { validateQuote } from "../quote-client.ts";
 import {
+  type Address,
   DEFAULT_QUOTE_TTL_MS,
-  type HexAddress,
+  type Quote,
   type SettleAdapter,
   type SettleMethodId,
   type SettlementHash,
-} from "../types";
+} from "../types.ts";
 
 const ERC20_ABI = [
   {
@@ -33,10 +34,10 @@ const ERC20_ABI = [
 
 export type BalanceClient = {
   readContract: (args: {
-    address: HexAddress;
+    address: Address;
     abi: typeof ERC20_ABI;
     functionName: "balanceOf";
-    args: readonly [HexAddress];
+    args: readonly [Address];
   }) => Promise<bigint>;
 };
 
@@ -54,11 +55,19 @@ export type UsdcMethodOptions = {
   quoteTtlMs?: number | undefined;
   now?: (() => number) | undefined;
   requestId?: (() => string) | undefined;
-  /** Defaults to "usdc". A smart-account host names its adapter separately so
-   *  `methods` and `selectMethod` can tell the two apart. */
+  /**
+   * Adapter id. Defaults to `"usdc"`. Use `"usdc-4337"` (or a distinct id) when
+   * configuring more than one method so `selectMethod` can tell them apart.
+   */
   id?: SettleMethodId | undefined;
 };
 
+/**
+ * USDC transfer adapter for EOA or ERC-4337 wallets.
+ *
+ * Pass `receiptClient` from `createUserOpReceiptClient` when the signer submits
+ * a user operation rather than a transaction.
+ */
 export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter {
   const quoteTtlMs = options.quoteTtlMs ?? DEFAULT_QUOTE_TTL_MS;
   const now = options.now ?? Date.now;
@@ -68,18 +77,18 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
   return {
     id,
     async quote({ amountUsdc }) {
-      return {
+      const amountAtomic = parseUsdcAmount(amountUsdc);
+      const quote: Quote = {
         requestId: requestId(),
         amountUsdc,
-        amountAtomic: parseUsdcAmount(amountUsdc),
+        amountAtomic,
         expiresAt: now() + quoteTtlMs,
         method: id,
       };
+      return quote;
     },
     async settle({ quote, destination, signer }) {
       assertDestination(destination);
-      // At the settle seam the quote is the only input: check it against its own
-      // stated amount, and that it still binds to the destination we were handed.
       validateQuote(quote, quote.amountUsdc, destination, id);
       if (signer.getChainId) {
         const chainId = await signer.getChainId();
@@ -92,13 +101,15 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
       }
 
       const required = BigInt(quote.amountAtomic);
-      const client = options.client ?? (await importPublicClient(destination.targetChain));
-      const balance = await client.readContract({
+      const request = {
         address: destination.targetAsset,
         abi: ERC20_ABI,
         functionName: "balanceOf",
         args: [signer.address],
-      } as const);
+      } as const;
+      const balance = options.client
+        ? await options.client.readContract(request)
+        : await (await importPublicClient(destination.targetChain)).readContract(request);
 
       if (balance < required) {
         throw new SettleKitError(
@@ -128,7 +139,6 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
         confirmations: 1,
         timeout: 60_000,
       });
-      // A replaced transaction may have different calldata. Never claim it paid this purchase.
       if (receipt.transactionHash.toLowerCase() !== txHash.toLowerCase())
         throw new Error("Transaction was replaced; inspect the original hash on the explorer");
       return receipt.status;
@@ -137,6 +147,6 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
 }
 
 async function importPublicClient(chainId: number) {
-  const { getUsdcPublicClient } = await import("./usdc-client");
+  const { getUsdcPublicClient } = await import("./usdc-client.ts");
   return getUsdcPublicClient(chainId);
 }

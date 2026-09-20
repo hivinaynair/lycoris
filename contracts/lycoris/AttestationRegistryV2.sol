@@ -20,8 +20,8 @@ pragma solidity ^0.8.20;
 /// the payment — and it hides it from observers, not from the facilitator, who holds the record.
 /// See docs/plans/2026-08-16-privacy-primitive.md.
 ///
-/// Not on the Foundry `src` path — built by `bun lycoris:compile-contracts` and deployed by
-/// `bun lycoris:deploy-contracts`, both in `packages/scripts`.
+/// Not on the Foundry `src` path — built by `scripts/contracts/compile-contracts.ts` and
+/// deployed by `scripts/contracts/deploy-contracts.ts`.
 contract AttestationRegistryV2 {
     /// @notice A decision was made and committed to. `commitment` is indexed so a viewer can look
     /// up one specific decision without scanning the chain.

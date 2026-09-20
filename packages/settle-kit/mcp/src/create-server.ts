@@ -4,17 +4,22 @@ import {
   type ServerContext,
 } from "@modelcontextprotocol/server";
 import { z } from "zod";
-import type { SettleMcpOptions } from "./options";
-import type { PayPhase } from "./state";
-import { createMemoryStore } from "./store";
-import { getDecisionRecordTool, getPaymentStatus } from "./tools/evidence";
-import { getAgentIdentity, getBalance, getMandate } from "./tools/identity";
-import { payForResourceTool } from "./tools/pay";
-import { quoteResourceTool } from "./tools/quote";
+import type { SettleMcpOptions } from "./options.ts";
+import type { PayPhase } from "./state.ts";
+import { createMemoryStore } from "./store.ts";
+import { getDecisionRecordTool, getPaymentStatus } from "./tools/evidence.ts";
+import { getAgentIdentity, getBalance, getMandate } from "./tools/identity.ts";
+import { payForResourceTool } from "./tools/pay.ts";
+import { quoteResourceTool } from "./tools/quote.ts";
 
 const UrlArgs = z.object({ url: z.string() });
 const PayIdArgs = z.object({ pay_id: z.string() });
 
+/**
+ * Create a Settle Kit MCP server.
+ *
+ * Protocol revision 2026-07-28, modern-only. Serve with `{ legacy: "reject" }`.
+ */
 export function createSettleMcpServer(options: SettleMcpOptions): McpServer {
   const store = options.store ?? createMemoryStore();
   const stateCodec = createRequestStateCodec<PayPhase>({

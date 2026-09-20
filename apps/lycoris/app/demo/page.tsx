@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useMemo, useState } from "react";
 import { PageFrame } from "@/components/page-chrome";
 import {
   AgentReportRequest,
@@ -24,10 +25,23 @@ import { demoAgents } from "@/lib/demo-scenarios";
 import type { TraceStep } from "@/lib/trace-steps";
 
 export default function Page() {
-  const [selectedIndex, setSelectedIndex] = useState(() => {
-    if (typeof window === "undefined") return 0;
-    return scenarioIndexFromSearch(window.location.search);
-  });
+  return (
+    <Suspense>
+      <ScenarioPage />
+    </Suspense>
+  );
+}
+
+function ScenarioPage() {
+  const search = useSearchParams();
+  const initialIndex = scenarioIndexFromSearch(search.toString());
+  return <DemoPage key={initialIndex} initialIndex={initialIndex} />;
+}
+
+function DemoPage({ initialIndex }: { initialIndex: number }) {
+  const router = useRouter();
+  const search = useSearchParams();
+  const [selectedIndex, setSelectedIndex] = useState(initialIndex);
   const [reportRequested, setReportRequested] = useState(false);
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const [activeGateStep, setActiveGateStep] = useState<TraceStep | null>(null);
@@ -55,6 +69,9 @@ export default function Page() {
     setReportRequested(false);
     resetRunState();
     setCopyState("idle");
+    const query = new URLSearchParams(search.toString());
+    query.set("scenario", String(index));
+    router.replace(`/demo?${query}`, { scroll: false });
   }
 
   return (

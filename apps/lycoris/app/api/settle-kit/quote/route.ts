@@ -1,9 +1,9 @@
 import { WEATHER_AMOUNT_ATOMIC, WEATHER_PRICE_USDC } from "@repo/shared/demo";
 import {
+  type Address,
   BASE_SEPOLIA_CHAIN_ID,
   BASE_SEPOLIA_USDC_ADDRESS,
   DEFAULT_QUOTE_TTL_MS,
-  type HexAddress,
   parseUsdcAmount,
 } from "@settle-kit/core";
 import { env } from "@/env";
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
       destination: {
         targetChain: BASE_SEPOLIA_CHAIN_ID,
         targetAsset: BASE_SEPOLIA_USDC_ADDRESS,
-        recipient: env.PAY_TO_ADDRESS as HexAddress,
+        recipient: env.PAY_TO_ADDRESS as Address,
       },
     });
   } catch {

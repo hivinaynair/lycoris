@@ -13,32 +13,19 @@ import {
   quoteResource,
   verifyMandateLocal,
 } from "@settle-kit/agents";
-import { failureGateForReason, getDecisionRecord, isHeldReason, preclear } from "../facilitator";
-import { derivePaymentId, quoteNonceFor } from "../ids";
-import { toMoney } from "../money";
-import { BASE_SEPOLIA_CAIP2, type SettleMcpOptions, type SettleMcpSigner } from "../options";
-import { jsonError, jsonResult } from "../result";
-import type { PayPhase } from "../state";
-import { explorerUrl, type PaymentRecord, type PaymentStore } from "../store";
-import { isAllowlisted } from "./quote";
+import { failureGateForReason, getDecisionRecord, isHeldReason, preclear } from "../facilitator.ts";
+import { derivePaymentId, quoteNonceFor } from "../ids.ts";
+import { toMoney } from "../money.ts";
+import { BASE_SEPOLIA_CAIP2, type SettleMcpOptions } from "../options.ts";
+import { jsonError, jsonResult } from "../result.ts";
+import type { PayPhase } from "../state.ts";
+import { explorerUrl, type PaymentRecord, type PaymentStore } from "../store.ts";
+import { isAllowlisted } from "./quote.ts";
 
 export type PayRound = {
   requestState: () => PayPhase | undefined;
   inputResponses: unknown;
   mint: (phase: PayPhase) => Promise<string>;
-};
-
-type QuotedResource = NonNullable<Awaited<ReturnType<typeof quoteResource>>>;
-
-type PaymentAttempt = {
-  url: string;
-  options: SettleMcpOptions;
-  store: PaymentStore;
-  signer: SettleMcpSigner;
-  mandateHeader: string;
-  quoted: QuotedResource;
-  payId: string;
-  fetchImpl: typeof fetch;
 };
 
 const APPROVAL_SCHEMA = {
@@ -78,20 +65,21 @@ export async function payForResourceTool(
   const existing = await store.get(payId);
   if (existing?.settled) return jsonResult(existing);
 
-  const attempt: PaymentAttempt = {
-    url,
-    options,
-    store,
-    signer,
-    mandateHeader,
-    quoted,
-    payId,
-    fetchImpl,
-  };
-
   const state = round?.requestState();
-  if (round && state?.step === "awaiting-approval") {
-    return continueAfterApproval({ ...attempt, round, quoteNonce, state });
+  if (state?.step === "awaiting-approval") {
+    return continueAfterApproval({
+      url,
+      options,
+      store,
+      ...(round ? { round } : {}),
+      signer,
+      mandateHeader,
+      quoted,
+      quoteNonce,
+      payId,
+      fetchImpl,
+      state,
+    });
   }
 
   const parsed = parseMandateHeader(mandateHeader);
@@ -104,8 +92,16 @@ export async function payForResourceTool(
     now,
   });
   if (!local.ok) {
-    const reason = `mandate_${local.reason}`;
-    return jsonError(reason, { reason, payId });
+    return jsonError(
+      local.reason.startsWith("expired") ? "mandate_expired" : `mandate_${local.reason}`,
+      {
+        reason: local.reason === "expired" ? "mandate_expired" : `mandate_${local.reason}`,
+        payId,
+        gate: failureGateForReason(
+          local.reason === "expired" ? "mandate_expired" : `mandate_${local.reason}`,
+        ),
+      },
+    );
   }
 
   const verdict = await preclear(
@@ -119,34 +115,58 @@ export async function payForResourceTool(
     fetchImpl,
   );
 
-  if (verdict.ok) return submitPayment(attempt);
-
-  if (!isHeldReason(verdict.reason)) {
-    return jsonError(verdict.reason, { reason: verdict.reason, payId });
-  }
-
-  if (!round) {
-    return jsonError("held", {
-      reason: verdict.reason,
+  if (!verdict.ok && isHeldReason(verdict.reason)) {
+    if (!round) {
+      return jsonError("held", {
+        reason: verdict.reason,
+        payId,
+        amount: toMoney(quoted.amountAtomic),
+      });
+    }
+    return askApproval(round, {
+      step: "awaiting-approval",
       payId,
-      amount: toMoney(quoted.amountAtomic),
+      url,
+      amountAtomic: quoted.amountAtomic,
+      quoteNonce,
     });
   }
 
-  return askApproval(round, {
-    step: "awaiting-approval",
-    payId,
+  if (!verdict.ok) {
+    return jsonError(verdict.reason, {
+      reason: verdict.reason,
+      payId,
+      gate: failureGateForReason(verdict.reason),
+    });
+  }
+
+  return submitPayment({
     url,
-    amountAtomic: quoted.amountAtomic,
-    quoteNonce,
+    options,
+    store,
+    signer,
+    mandateHeader,
+    quoted,
+    payId,
+    fetchImpl,
   });
 }
 
-async function continueAfterApproval(
-  input: PaymentAttempt & { round: PayRound; quoteNonce: string; state: PayPhase },
-): Promise<CallToolResult | InputRequiredResult> {
+async function continueAfterApproval(input: {
+  url: string;
+  options: SettleMcpOptions;
+  store: PaymentStore;
+  round?: PayRound;
+  signer: Awaited<ReturnType<SettleMcpOptions["getSigner"]>>;
+  mandateHeader: string;
+  quoted: NonNullable<Awaited<ReturnType<typeof quoteResource>>>;
+  quoteNonce: string;
+  payId: string;
+  fetchImpl: typeof fetch;
+  state: PayPhase;
+}): Promise<CallToolResult | InputRequiredResult> {
   const accepted = acceptedContent<{ approved: boolean }>(
-    input.round.inputResponses as never,
+    input.round?.inputResponses as never,
     "approval",
   );
   if (!accepted?.approved) {
@@ -156,11 +176,19 @@ async function continueAfterApproval(
     });
   }
 
-  const quoteMoved =
+  if (
     input.quoted.amountAtomic !== input.state.amountAtomic ||
     input.quoteNonce !== input.state.quoteNonce ||
-    input.url !== input.state.url;
-  if (quoteMoved) {
+    input.url !== input.state.url
+  ) {
+    if (!input.round) {
+      return jsonError("quote_drift", {
+        reason: "quote_drift",
+        payId: input.state.payId,
+        approved: toMoney(input.state.amountAtomic),
+        current: toMoney(input.quoted.amountAtomic),
+      });
+    }
     return askApproval(input.round, {
       step: "awaiting-approval",
       payId: derivePaymentId({
@@ -175,7 +203,16 @@ async function continueAfterApproval(
     });
   }
 
-  return submitPayment({ ...input, payId: input.state.payId });
+  return submitPayment({
+    url: input.url,
+    options: input.options,
+    store: input.store,
+    signer: input.signer,
+    mandateHeader: input.mandateHeader,
+    quoted: input.quoted,
+    payId: input.state.payId,
+    fetchImpl: input.fetchImpl,
+  });
 }
 
 async function askApproval(round: PayRound, phase: PayPhase): Promise<InputRequiredResult> {
@@ -191,7 +228,16 @@ async function askApproval(round: PayRound, phase: PayPhase): Promise<InputRequi
   });
 }
 
-async function submitPayment(input: PaymentAttempt): Promise<CallToolResult> {
+async function submitPayment(input: {
+  url: string;
+  options: SettleMcpOptions;
+  store: PaymentStore;
+  signer: Awaited<ReturnType<SettleMcpOptions["getSigner"]>>;
+  mandateHeader: string;
+  quoted: NonNullable<Awaited<ReturnType<typeof quoteResource>>>;
+  payId: string;
+  fetchImpl: typeof fetch;
+}): Promise<CallToolResult> {
   const createFetch = input.options.ports?.createPaidFetch ?? createPaidFetch;
   const pay = input.options.ports?.payForResource ?? payForResource;
   const paidFetch = createFetch({

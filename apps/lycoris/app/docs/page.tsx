@@ -76,21 +76,20 @@ export default function DocsPage() {
           <DocsSection id="start" title="Get started">
             <p>
               You can explore the demo without installing anything. To embed the SDK in another app,
-              build local tarballs and install them there. The packages are not on npm; publishing
-              is optional for this demo.
+              build the workspace packages and install them from this repository. The packages are
+              not on npm; publishing is optional for this demo.
             </p>
             <CodeExample title="Build and install" code={localInstall} language="bash" />
             <CodeExample title="Host package.json entries" code={localManifest} language="json" />
             <p className="text-muted-foreground">
               Replace /path/to/lycoris with the absolute repository path. The core override keeps
               transitive dependencies local while the packages are unpublished. For agents or
-              server, add the corresponding agents.tgz or server.tgz dependency with the same core
-              override.
+              server, add the corresponding package path with the same core override.
             </p>
             <p className="text-muted-foreground">
               Use React 19 and viem 2 for checkout. The server adapter supports Next.js 16.2.6+
-              within 16.x. Build and pack with Bun; the resulting ESM packages can be consumed by
-              other package managers.
+              within 16.x. Build with Bun; the resulting ESM packages can be consumed by other
+              package managers.
             </p>
             <DocsTable
               headers={["Package", "Use it for"]}

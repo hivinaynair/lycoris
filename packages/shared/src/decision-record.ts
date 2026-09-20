@@ -9,10 +9,18 @@ export function formatUsdcAtomic(amount: bigint) {
 }
 
 export function routeFromResource(resource: unknown, amountAtomic: bigint) {
+  // x402 v2 carries ResourceInfo ({ url, description, mimeType }). Older records
+  // and preclear requests carry a URL string. Both must name the purchased route.
+  const url =
+    typeof resource === "string"
+      ? resource
+      : resource && typeof resource === "object" && "url" in resource
+        ? resource.url
+        : undefined;
   let path: string | undefined;
-  if (typeof resource === "string") {
+  if (typeof url === "string" && url.trim()) {
     try {
-      path = new URL(resource, "http://local.invalid").pathname;
+      path = new URL(url, "http://local.invalid").pathname;
     } catch {
       path = undefined;
     }

@@ -1,4 +1,4 @@
-import { failureGateForReason } from "./facilitator";
+import { failureGateForReason } from "./facilitator.ts";
 
 export function jsonResult(data: unknown, isError = false) {
   return {

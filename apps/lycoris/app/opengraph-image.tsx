@@ -53,7 +53,7 @@ export default function OgImage() {
             fontSize: 28,
           }}
         >
-          Unofficial agentic-payment settlement rail demo
+          USDC payments for people and agents
         </div>
       </div>
     </div>,

@@ -13,9 +13,6 @@ describe("createSettleConfig", () => {
     expect(createSettleConfig({ getSigner }).methods).toHaveLength(1);
   });
 
-  // The bug this test exists for: the type said methods could hold more than
-  // one adapter while the validator still demanded exactly one called "usdc",
-  // so a smart-account host could not build a config at all.
   test("accepts a smart-account method", () => {
     const method = createUsdcMethod({ id: "usdc-4337" });
     expect(createSettleConfig({ getSigner, methods: [method] }).methods[0]?.id).toBe("usdc-4337");

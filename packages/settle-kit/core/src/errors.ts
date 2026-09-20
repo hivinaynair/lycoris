@@ -1,6 +1,7 @@
 import { BaseError } from "viem";
-import type { SettleError, SettleErrorCode } from "./types";
+import type { SettleError, SettleErrorCode } from "./types.ts";
 
+/** Typed error thrown by Settle Kit. `code` is stable; `message` is buyer-facing copy. */
 export class SettleKitError extends BaseError {
   readonly code: SettleErrorCode;
 
@@ -31,8 +32,7 @@ export function toSettleError(
   fallback: SettleErrorCode = "transfer_failed",
 ): SettleError {
   if (error instanceof SettleKitError) {
-    // BaseError composes `message` with a trailing "Version: viem@x.y.z" block.
-    // Hosts render this straight to the buyer, so prefer the copy we passed in.
+    // Prefer shortMessage so viem's version suffix is not shown to the buyer.
     return { code: error.code, message: error.shortMessage || error.message };
   }
   if (error && typeof error === "object" && "code" in error) {

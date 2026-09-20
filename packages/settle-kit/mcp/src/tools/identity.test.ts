@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import { type MandatePayload, serializeMandateHeader, signMandate } from "@settle-kit/agents";
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { SettleMcpOptions } from "../options";
 import { createMemoryStore } from "../store";
 import { getAgentIdentity, getBalance, getMandate } from "./identity";
 
-const MERCHANT = "0x9999999999999999999999999999999999999999" as HexAddress;
+const MERCHANT = "0x9999999999999999999999999999999999999999" as Address;
 
 async function signedMandate(overrides: Partial<MandatePayload> = {}) {
   const agent = privateKeyToAccount(generatePrivateKey());
@@ -30,7 +30,7 @@ async function signedMandate(overrides: Partial<MandatePayload> = {}) {
 
 function options(
   header: string,
-  address: HexAddress,
+  address: Address,
   extras: Partial<SettleMcpOptions["ports"]> = {},
 ): SettleMcpOptions {
   return {

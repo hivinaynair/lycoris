@@ -1,8 +1,8 @@
-export { readConfig } from "./config";
-export { createSettleMcpServer } from "./create-server";
-export { derivePaymentId } from "./ids";
-export type { Money } from "./money";
-export { toMoney } from "./money";
-export type { SettleMcpOptions, SettleMcpPorts, SettleMcpSigner } from "./options";
-export type { PaymentRecord, PaymentStore } from "./store";
-export { createMemoryStore } from "./store";
+export { readConfig } from "./config.ts";
+export { createSettleMcpServer } from "./create-server.ts";
+export { derivePaymentId } from "./ids.ts";
+export type { Money } from "./money.ts";
+export { toMoney } from "./money.ts";
+export type { SettleMcpOptions, SettleMcpPorts, SettleMcpSigner } from "./options.ts";
+export type { PaymentRecord, PaymentStore } from "./store.ts";
+export { createMemoryStore } from "./store.ts";

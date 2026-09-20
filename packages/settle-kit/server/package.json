@@ -14,7 +14,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "bun test",
-    "build": "bun ../../../scripts/build-settle-kit.mjs server",
+    "build": "rm -rf dist && tsc",
     "prepack": "bun run build"
   },
   "dependencies": {

@@ -1,4 +1,4 @@
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 
 export const MANDATE_CHAIN_ID = 84532;
 
@@ -20,10 +20,10 @@ export const MANDATE_EIP712_TYPES = {
 } as const;
 
 export type MandatePayload = {
-  agent: HexAddress;
-  delegator: HexAddress;
-  /** The merchant this authority is for. A mandate without one is valid anywhere. */
-  payTo: HexAddress;
+  agent: Address;
+  delegator: Address;
+  /** Merchant this authority is bound to. */
+  payTo: Address;
   maxAmountUsdc: bigint;
   expiry: bigint;
   nonce: bigint;
@@ -31,5 +31,5 @@ export type MandatePayload = {
 
 export type SignedMandate = {
   payload: MandatePayload;
-  signature: HexAddress;
+  signature: Address;
 };

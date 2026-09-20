@@ -22,7 +22,7 @@
   "scripts": {
     "check-types": "tsc --noEmit",
     "test": "bun test",
-    "build": "bun ../../../scripts/build-settle-kit.mjs react",
+    "build": "rm -rf dist && tsc && bunx --no-install tailwindcss -i src/styles.css -o dist/styles.css --minify",
     "prepack": "bun run build"
   },
   "peerDependencies": {

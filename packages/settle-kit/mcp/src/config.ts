@@ -1,7 +1,7 @@
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 import { ExactEvmScheme } from "@x402/evm";
 import { privateKeyToAccount } from "viem/accounts";
-import type { SettleMcpOptions, SettleMcpSigner } from "./options";
+import type { SettleMcpOptions, SettleMcpSigner } from "./options.ts";
 
 export type ProcessEnv = Record<string, string | undefined>;
 
@@ -28,7 +28,7 @@ function hasCdp(env: ProcessEnv): boolean {
 }
 
 async function signerFromPrivateKey(privateKey: string): Promise<SettleMcpSigner> {
-  const account = privateKeyToAccount(privateKey as HexAddress);
+  const account = privateKeyToAccount(privateKey as Address);
   return { address: account.address, client: new ExactEvmScheme(account) };
 }
 
@@ -37,11 +37,16 @@ async function signerFromCdp(accountName: string): Promise<SettleMcpSigner> {
   const cdp = new CdpClient();
   const account = await cdp.evm.getOrCreateAccount({ name: accountName });
   return {
-    address: account.address as HexAddress,
+    address: account.address as Address,
     client: new ExactEvmScheme(account as never),
   };
 }
 
+/**
+ * Read MCP configuration from the environment.
+ *
+ * Throws on a missing or malformed key at startup.
+ */
 export function readConfig(env: ProcessEnv = process.env): SettleMcpOptions {
   const mandate = requireEnv(env, "SETTLE_MCP_MANDATE");
   const facilitatorUrl = requireEnv(env, "SETTLE_MCP_FACILITATOR_URL");
@@ -54,8 +59,7 @@ export function readConfig(env: ProcessEnv = process.env): SettleMcpOptions {
   }
 
   if (privateKey) {
-    // Fail on a malformed key at startup, not at the first payment.
-    privateKeyToAccount(privateKey as HexAddress);
+    privateKeyToAccount(privateKey as Address);
   }
 
   const getSigner = privateKey

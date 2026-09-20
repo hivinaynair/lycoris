@@ -1,0 +1,61 @@
+WEBVTT
+
+00:00:00.000 --> 00:00:03.402
+Lycoris demonstrates USDC payments for people and AI agents.
+
+00:00:03.402 --> 00:00:09.452
+This edited screen overview follows a paid weather report, an agent purchase, and a spending refusal.
+
+00:00:09.452 --> 00:00:11.720
+All payments shown use test funds.
+
+00:00:12.000 --> 00:00:13.052
+Start with checkout.
+
+00:00:13.052 --> 00:00:15.859
+There is no signup or personal wallet connection.
+
+00:00:15.859 --> 00:00:22.174
+A server faucet supplies test USDC to a disposable smart account, and a paymaster covers the network fees.
+
+00:00:25.000 --> 00:00:27.591
+After payment confirmation, the report becomes available.
+
+00:00:27.591 --> 00:00:32.775
+The server verifies the smart account operation and the USDC transfer before releasing it.
+
+00:00:32.775 --> 00:00:36.108
+The transaction link lets a reviewer inspect the payment.
+
+00:00:38.000 --> 00:00:40.631
+Next, an agent buys the same report.
+
+00:00:40.631 --> 00:00:44.389
+The API returns an HTTP four oh two payment challenge.
+
+00:00:44.389 --> 00:00:50.779
+The host controls the wallet and merchant, while the facilitator checks identity, permission, and balance before settlement.
+
+00:00:55.000 --> 00:00:58.238
+Now the same purchase exceeds this agent's spending mandate.
+
+00:00:58.238 --> 00:01:02.555
+The request is refused before signing, and no settlement transaction is created.
+
+00:01:02.555 --> 00:01:05.793
+The interface exposes the reason alongside the payment trace.
+
+00:01:10.000 --> 00:01:13.065
+The decision feed records approved and blocked attempts.
+
+00:01:13.065 --> 00:01:15.748
+Open a record to inspect its evidence.
+
+00:01:15.748 --> 00:01:20.347
+These viewer roles demonstrate disclosure formats; they are not authenticated access controls.
+
+00:01:22.000 --> 00:01:26.236
+The case study explains the architecture, tests, and production limits.
+
+00:01:26.236 --> 00:01:29.201
+Settle Kit is experimental, on Base Sepolia.

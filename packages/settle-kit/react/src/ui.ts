@@ -1,5 +1,5 @@
 "use client";
 
-export type { CheckoutAppearance } from "./appearance";
-export type { CheckoutLabels, CheckoutProps } from "./checkout";
-export { Checkout } from "./checkout";
+export type { CheckoutAppearance } from "./appearance.ts";
+export type { CheckoutLabels, CheckoutProps } from "./checkout.tsx";
+export { Checkout } from "./checkout.tsx";

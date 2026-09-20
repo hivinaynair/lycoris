@@ -1,7 +1,7 @@
-import { BASE_SEPOLIA_USDC_ADDRESS, type HexAddress } from "@settle-kit/core";
+import { type Address, BASE_SEPOLIA_USDC_ADDRESS } from "@settle-kit/core";
 import { createPublicClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
-import { ERC8004_REGISTRY, type SettleMcpOptions } from "./options";
+import { ERC8004_REGISTRY, type SettleMcpOptions } from "./options.ts";
 
 const USDC_BALANCE_ABI = [
   {
@@ -38,7 +38,7 @@ function publicClient(rpcUrl?: string) {
 }
 
 export async function readUsdcBalance(
-  address: HexAddress,
+  address: Address,
   options: Pick<SettleMcpOptions, "rpcUrl">,
 ): Promise<bigint> {
   return publicClient(options.rpcUrl).readContract({
@@ -50,7 +50,7 @@ export async function readUsdcBalance(
 }
 
 export async function lookupRegistered(
-  input: { agentId: bigint; address: HexAddress },
+  input: { agentId: bigint; address: Address },
   options: Pick<SettleMcpOptions, "rpcUrl" | "registryAddress">,
 ): Promise<boolean> {
   const client = publicClient(options.rpcUrl);

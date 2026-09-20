@@ -1,24 +1,23 @@
-import type { Hex, HexAddress, SettlementHash } from "@settle-kit/core";
-import type { Address, Hash } from "viem";
+import type { Address, Hex, SettlementHash } from "@settle-kit/core";
+import type { Hash, Address as ViemAddress } from "viem";
 
 declare const settlement: SettlementHash;
-declare const address: HexAddress;
-declare const viemAddress: Address;
+declare const address: Address;
+declare const viemAddress: ViemAddress;
 declare const viemHash: Hash;
 declare const plain: `0x${string}`;
 
-// ── viem interop must keep working: the brands are optional, so anything
-// ── structurally `0x${string}` still flows in and out unchanged.
-export const fromViemAddress: HexAddress = viemAddress;
+// Brands are optional: viem `Address` / `Hash` and plain `0x${string}` assign in both directions.
+export const fromViemAddress: Address = viemAddress;
 export const fromViemHash: SettlementHash = viemHash;
-export const fromPlain: HexAddress = plain;
-export const fromLiteral: HexAddress = "0x1111111111111111111111111111111111111111";
-export const toViemAddress: Address = address;
+export const fromPlain: Address = plain;
+export const fromLiteral: Address = "0x1111111111111111111111111111111111111111";
+export const toViemAddress: ViemAddress = address;
 export const toViemHash: Hash = settlement;
 export const toHex: Hex = address;
 
-// ── but the two must not be interchangeable: a settlement hash is not a payee.
+// Address and SettlementHash are not interchangeable.
 // @ts-expect-error a SettlementHash must never satisfy an address position
-export const hashAsAddress: HexAddress = settlement;
+export const hashAsAddress: Address = settlement;
 // @ts-expect-error an address must never satisfy a settlement-hash position
 export const addressAsHash: SettlementHash = address;

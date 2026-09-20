@@ -122,7 +122,6 @@ describe("checkout payment safety", () => {
   it("checks expiry again after wallet acquisition", async () => {
     const quote = makeQuote();
     const f = fixture({ quote: async () => quote }, async () => {
-      // The accepted quote is frozen; use a controllable clock for the delayed wallet.
       clock = quote.expiresAt + 1;
       return { address: destination.recipient, sendTransaction: async () => hash };
     });

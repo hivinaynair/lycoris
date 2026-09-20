@@ -1,5 +1,5 @@
 import { WEATHER_AMOUNT_ATOMIC } from "@repo/shared/demo";
-import { BASE_SEPOLIA_USDC_ADDRESS, type HexAddress } from "@settle-kit/core";
+import { type Address, BASE_SEPOLIA_USDC_ADDRESS } from "@settle-kit/core";
 import type { Hex } from "viem";
 import { checkSponsorship, type SponsorshipPolicy } from "./sponsorship-policy";
 
@@ -35,7 +35,7 @@ const POLICY_CHECKED_METHODS = new Set([
   "pm_getPaymasterData",
 ]);
 
-export const demoSponsorshipPolicy = (merchant: HexAddress): SponsorshipPolicy => ({
+export const demoSponsorshipPolicy = (merchant: Address): SponsorshipPolicy => ({
   asset: BASE_SEPOLIA_USDC_ADDRESS,
   merchant,
   amount: BigInt(WEATHER_AMOUNT_ATOMIC),

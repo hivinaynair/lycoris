@@ -1,11 +1,10 @@
-import { parseUsdcAmount } from "./amounts";
-import { assertDestination } from "./destination";
-import { SettleKitError } from "./errors";
-import { type Destination, type Quote, SETTLE_METHOD_IDS, type SettleMethodId } from "./types";
+import { parseUsdcAmount } from "./amounts.ts";
+import { assertDestination } from "./destination.ts";
+import { SettleKitError } from "./errors.ts";
+import { type Destination, type Quote, SETTLE_METHOD_IDS, type SettleMethodId } from "./types.ts";
 
-function isSettleMethodId(value: unknown): value is SettleMethodId {
-  return typeof value === "string" && (SETTLE_METHOD_IDS as readonly string[]).includes(value);
-}
+const isSettleMethodId = (value: unknown): value is SettleMethodId =>
+  typeof value === "string" && (SETTLE_METHOD_IDS as readonly string[]).includes(value);
 
 function sameDestination(a: Destination, b: Destination): boolean {
   return (
@@ -15,14 +14,11 @@ function sameDestination(a: Destination, b: Destination): boolean {
   );
 }
 
-function mismatchedQuote(): never {
-  throw new SettleKitError("transfer_failed", "Quote does not match the requested USDC amount");
-}
-
 /**
- * Quotes are external data. Bind the display and transfer to the purchase request.
- * `method` is the adapter this quote must settle through; a mismatch is rejected,
- * never renamed.
+ * Validate an untrusted quote against the purchase request.
+ *
+ * Display amount, atomic amount, method, and destination must match. Pass
+ * `method` so a quote can only settle through the adapter that issued it.
  */
 export function validateQuote(
   value: unknown,
@@ -30,26 +26,28 @@ export function validateQuote(
   requested?: Destination,
   method?: SettleMethodId,
 ): Quote {
-  if (!value || typeof value !== "object") mismatchedQuote();
+  const invalid = () =>
+    new SettleKitError("transfer_failed", "Quote does not match the requested USDC amount");
+  if (!value || typeof value !== "object") throw invalid();
   const body = value as Partial<Quote>;
-  if (typeof body.requestId !== "string" || !body.requestId.trim()) mismatchedQuote();
-  if (typeof body.amountUsdc !== "string") mismatchedQuote();
-  if (typeof body.amountAtomic !== "string" || !/^[1-9]\d*$/.test(body.amountAtomic)) {
-    mismatchedQuote();
-  }
-  const expiresAt = body.expiresAt;
-  if (typeof expiresAt !== "number" || !Number.isSafeInteger(expiresAt) || expiresAt <= 0) {
-    mismatchedQuote();
-  }
-  if (!isSettleMethodId(body.method)) mismatchedQuote();
-  if (method !== undefined && body.method !== method) mismatchedQuote();
+  if (
+    typeof body.requestId !== "string" ||
+    !body.requestId.trim() ||
+    typeof body.amountUsdc !== "string" ||
+    typeof body.amountAtomic !== "string" ||
+    !/^[1-9]\d*$/.test(body.amountAtomic) ||
+    !Number.isSafeInteger(body.expiresAt) ||
+    (body.expiresAt ?? 0) <= 0 ||
+    !isSettleMethodId(body.method) ||
+    (method !== undefined && body.method !== method)
+  )
+    throw invalid();
   try {
     const expected = parseUsdcAmount(amountUsdc);
-    if (parseUsdcAmount(body.amountUsdc) !== expected || body.amountAtomic !== expected) {
-      mismatchedQuote();
-    }
+    if (parseUsdcAmount(body.amountUsdc) !== expected || body.amountAtomic !== expected)
+      throw invalid();
   } catch {
-    mismatchedQuote();
+    throw invalid();
   }
   let destination: Destination | undefined;
   if (body.destination !== undefined) {
@@ -68,15 +66,14 @@ export function validateQuote(
       );
     }
   }
-  const quote: Quote = {
+  return Object.freeze({
     requestId: body.requestId,
     amountUsdc: body.amountUsdc,
     amountAtomic: body.amountAtomic,
-    expiresAt,
+    expiresAt: body.expiresAt as number,
     method: body.method,
-  };
-  if (destination) quote.destination = destination;
-  return Object.freeze(quote);
+    ...(destination ? { destination } : {}),
+  });
 }
 
 export async function fetchQuote(

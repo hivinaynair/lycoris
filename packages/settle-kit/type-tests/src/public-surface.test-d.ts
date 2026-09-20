@@ -19,8 +19,7 @@ declare const maybeString: string | undefined;
 declare const maybeNumber: number | undefined;
 declare const maybeMethods: SettleAdapter[] | undefined;
 
-// ── A host builds option bags out of optional data. None of these may force the
-// ── caller into a conditional spread just to satisfy exactOptionalPropertyTypes.
+// Option bags accept `T | undefined`. Callers must not need a conditional spread.
 export const config = createSettleConfig({
   getSigner,
   destination: maybeDestination,
@@ -68,8 +67,7 @@ export const agenticOptions: AgenticPaymentOptions = {
   description: maybeString,
 };
 
-// ── A host writing a custom adapter PRODUCES a Quote, and may or may not have a
-// ── server-supplied destination to forward.
+// Custom adapters may omit `destination` on the produced quote.
 export const adapter: SettleAdapter = {
   id: "usdc",
   quote: async (): Promise<Quote> => ({
@@ -84,13 +82,11 @@ export const adapter: SettleAdapter = {
   confirm: async () => "success",
 };
 
-// ── SettleConfig is the normalized STORED form, not an option bag. Building it by
-// ── hand skips the validation createSettleConfig performs, so it stays strict on
-// ── purpose. If this ever stops erroring, that decision was reverted by accident.
+// SettleConfig is the validated result of createSettleConfig, not an option bag.
 // @ts-expect-error construct a SettleConfig through createSettleConfig, not by hand
 export const handBuilt: SettleConfig = { getSigner, methods: [], destination: maybeDestination };
 
-// ── What each status guarantees, so a consumer's branch never null-checks.
+// Discriminated statuses: awaiting_payment has quote+destination; settled has txHash.
 export function narrowing(state: CheckoutState) {
   if (state.status === "awaiting_payment") {
     const bound: { quote: Quote; destination: Destination } = state;
@@ -103,11 +99,9 @@ export function narrowing(state: CheckoutState) {
   return undefined;
 }
 
-// ── SettlementHash is public API. If this import breaks, the rename regressed.
+export type PinnedAddress = import("@settle-kit/core").Address;
 export type PinnedSettlementHash = import("@settle-kit/core").SettlementHash;
 
-// ── A second method is the point of the `methods` array. Until 4337 there was
-// ── never one, and the literal `"usdc"` hid that the array could hold only one.
 export const smartAccountAdapter: SettleAdapter = {
   id: "usdc-4337",
   quote: async (): Promise<Quote> => ({
@@ -121,8 +115,7 @@ export const smartAccountAdapter: SettleAdapter = {
   confirm: async () => "success",
 };
 
-// ── Settlement discriminates on which key is present. A branded union could not:
-// ── an unbranded hex string satisfies both arms, so nothing narrows.
+// Settlement is exclusive: transactionHash or userOpHash, never both.
 export function readSettlement(settlement: import("@settle-kit/core").Settlement) {
   return settlement.userOpHash ? `op:${settlement.userOpHash}` : `tx:${settlement.transactionHash}`;
 }

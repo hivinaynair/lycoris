@@ -1,50 +1,53 @@
 import { decodePaymentRequiredHeader, decodePaymentResponseHeader } from "@x402/core/http";
-import type { PaidFetch, PaidFetchFn } from "./create-paid-fetch";
-import { asRecord, asString } from "./decode";
-import { explorerUrl } from "./quote-resource";
-import type { AgentPaymentResult } from "./types";
-import { challengeFromPaymentRequired, paymentRequiredHeader } from "./x402-decode";
+import type { PaidFetch, PaidFetchFn } from "./create-paid-fetch.ts";
+import { asRecord, asString } from "./decode.ts";
+import { explorerUrl } from "./quote-resource.ts";
+import type { AgentPaymentResult } from "./types.ts";
+import { challengeFromPaymentRequired } from "./x402-decode.ts";
 
 function summarizeNonJsonResponse(url: string, response: Response, text: string) {
   const contentType = response.headers.get("content-type") ?? "unknown content type";
-  const status = `${response.status} ${response.statusText}`;
-  const looksLikeHtml =
+  const title = text
+    .match(/<title[^>]*>(.*?)<\/title>/is)?.[1]
+    ?.replace(/\s+/g, " ")
+    .trim();
+
+  if (
     contentType.includes("text/html") ||
     /^\s*<!doctype html/i.test(text) ||
-    /^\s*<html/i.test(text);
-
-  if (looksLikeHtml) {
-    const title = text
-      .match(/<title[^>]*>(.*?)<\/title>/is)?.[1]
-      ?.replace(/\s+/g, " ")
-      .trim();
-    if (title) return `Upstream returned HTML for ${url} (${status}): ${title}`;
-    return `Upstream returned HTML for ${url} (${status})`;
+    /^\s*<html/i.test(text)
+  ) {
+    return title
+      ? `Upstream returned HTML for ${url} (${response.status} ${response.statusText}): ${title}`
+      : `Upstream returned HTML for ${url} (${response.status} ${response.statusText})`;
   }
 
   const summary = text.replace(/\s+/g, " ").trim();
-  if (summary) {
-    return `Upstream returned ${status} for ${url}: ${summary.slice(0, 240)}`;
-  }
-  return `Upstream returned ${contentType} for ${url} (${status})`;
+  return summary
+    ? `Upstream returned ${response.status} ${response.statusText} for ${url}: ${summary.slice(0, 240)}`
+    : `Upstream returned ${contentType} for ${url} (${response.status} ${response.statusText})`;
 }
 
-/** The error this exchange reported, from the challenge or the upstream body. */
 function wireError(status: number, body: unknown, challengeError?: string) {
   if (challengeError) return challengeError;
   if (status < 400) return undefined;
   const error = asRecord(body)?.error;
-  if (error === undefined || error === null) return undefined;
-  return String(error);
+  return error === undefined || error === null ? undefined : String(error);
 }
 
+/**
+ * Fetch a URL with `paidFetch` and return settlement metadata.
+ *
+ * Uses response-scoped metadata from `createPaidFetch` when available.
+ */
 export async function payForResource(input: {
   url: string;
   paidFetch: PaidFetch | PaidFetchFn;
 }): Promise<AgentPaymentResult> {
   const response = await input.paidFetch(input.url);
   const paymentHeader = response.headers.get("PAYMENT-RESPONSE");
-  const requiredHeader = paymentRequiredHeader(response.headers);
+  const paymentRequiredHeader =
+    response.headers.get("PAYMENT-REQUIRED") ?? response.headers.get("X-PAYMENT-REQUIRED");
 
   let txHash: string | undefined;
   if (paymentHeader) {
@@ -65,10 +68,11 @@ export async function payForResource(input: {
     "getPaymentMetadata" in input.paidFetch
       ? input.paidFetch.getPaymentMetadata(response)
       : undefined;
-  let challenge = metadata?.challenge;
-  if (challenge === undefined && requiredHeader) {
-    challenge = challengeFromPaymentRequired(decodePaymentRequiredHeader(requiredHeader));
-  }
+  const challenge =
+    metadata?.challenge ??
+    (paymentRequiredHeader
+      ? challengeFromPaymentRequired(decodePaymentRequiredHeader(paymentRequiredHeader))
+      : undefined);
 
   return {
     httpStatus: response.status,

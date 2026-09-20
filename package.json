@@ -5,31 +5,16 @@
     "build": "turbo run build",
     "dev": "turbo run dev --filter=lycoris... --filter=facilitator... --filter=agent...",
     "dev:ui": "turbo run dev --filter=lycoris...",
-    "dev:facilitator": "turbo run dev --filter=facilitator...",
-    "dev:agent": "turbo run dev --filter=agent...",
     "format-and-lint": "biome check .",
     "format-and-lint:fix": "biome check . --write",
     "check-types": "turbo run check-types",
     "test": "bun test",
-    "check-boundaries": "bun scripts/check-boundaries.mjs && bun scripts/check-settle-kit.mjs",
-    "check-tokens": "bun scripts/check-tokens.mjs",
+    "check-boundaries": "bun scripts/check/boundaries.mjs && bun scripts/check/settle-kit.mjs",
+    "check-tokens": "bun scripts/check/tokens.mjs",
     "ui:add": "turbo run add --filter=@repo/ui",
     "db:push": "turbo run db:push --filter=@repo/db",
-    "lycoris:compile-contracts": "bun packages/scripts/compile-contracts.ts",
-    "lycoris:deploy-contracts": "bun --env-file=packages/scripts/.env.local packages/scripts/deploy-contracts.ts",
-    "lycoris:fund-wallet": "bun --env-file=packages/scripts/.env.local packages/scripts/fund-wallet.ts",
-    "lycoris:refresh-mandates": "bun --env-file=packages/scripts/.env.local packages/scripts/demo-bootstrap/refresh-mandates.ts",
-    "lycoris:bootstrap": "bun --env-file=packages/scripts/.env.local packages/scripts/demo-bootstrap/index.ts",
     "preinstall": "[ -n \"$CI$VERCEL\" ] || bunx only-allow@1.2.2 bun",
-    "prepare": "lefthook install || true",
-    "smoke:settle-kit": "bun scripts/smoke-settle-kit-next.mjs",
-    "measure:settle-kit": "bun scripts/measure-settle-kit.mjs",
-    "pack:settle-kit": "bun scripts/pack-settle-kit.mjs",
-    "check:settle-kit-package": "bun scripts/check-settle-kit-package.mjs",
-    "version:settle-kit": "bun scripts/version-settle-kit.mjs",
-    "lycoris:setup-sponsored-checkout": "bun --env-file=packages/scripts/.env.local packages/scripts/setup-sponsored-checkout.ts",
-    "lycoris:migrate-4337": "bun --env-file=apps/lycoris/.env.local packages/scripts/migrate-sponsored-checkout-4337.ts",
-    "lycoris:migrate-budget": "bun --env-file=apps/lycoris/.env.local packages/scripts/migrate-sponsored-budget.ts"
+    "prepare": "lefthook install || true"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
@@ -61,7 +46,15 @@
     "apps/*",
     "packages/*",
     "packages/settle-kit/*",
+    "e2e/*",
     "tooling/*"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "@coinbase/cdp-sdk": "^1.51.2",
+    "@repo/db": "workspace:*",
+    "@repo/shared": "workspace:*",
+    "drizzle-orm": "^0.45.2",
+    "solc": "^0.8.35",
+    "viem": "^2.54.3"
+  }
 }

@@ -11,6 +11,7 @@ function digest(parts: string[]): string {
   return createHash("sha256").update(parts.join("\0")).digest("hex").slice(0, 32);
 }
 
+/** Stable payment id for an agent, resource, amount, and quote nonce. */
 export function derivePaymentId(event: PaymentEvent): string {
   return `pay_${digest([
     event.agent.toLowerCase(),

@@ -2,12 +2,12 @@
 
 import type { CheckoutManager, Destination, PaymentSigner, SettleAdapter } from "@settle-kit/core";
 import { createContext } from "react";
-import type { CheckoutAppearance } from "./appearance";
+import type { CheckoutAppearance } from "./appearance.ts";
 
 export type SettleAppConfig = {
   appName: string;
   getSigner: () => Promise<PaymentSigner>;
-  /** Optional default. `begin`/`payNow` input or the quote server may supply it instead. */
+  /** Default recipient. `begin` / `payNow` input or the quote server may supply it instead. */
   destination?: Destination | undefined;
   methods?: SettleAdapter[] | undefined;
   quoteUrl?: string | undefined;
@@ -16,6 +16,7 @@ export type SettleAppConfig = {
 export type BeginCheckoutInput = {
   amountUsdc: string;
   destination?: Destination | undefined;
+  /** Label shown by the default UI for this purchase. */
   title?: string | undefined;
 };
 

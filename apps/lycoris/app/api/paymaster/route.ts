@@ -1,4 +1,4 @@
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 import { env } from "@/env";
 import { checkProxyRequest, demoSponsorshipPolicy } from "@/server/paymaster-proxy";
 import { sameOrigin } from "@/server/sponsored-request";
@@ -24,7 +24,7 @@ export async function POST(request: Request) {
   if (!env.CDP_PAYMASTER_URL)
     return Response.json({ error: "Sponsored checkout is not configured." }, { status: 503 });
 
-  const verdict = checkProxyRequest(body, demoSponsorshipPolicy(env.PAY_TO_ADDRESS as HexAddress));
+  const verdict = checkProxyRequest(body, demoSponsorshipPolicy(env.PAY_TO_ADDRESS as Address));
   if (!verdict.ok) {
     console.error("Paymaster refused a request:", verdict.reason);
     // A JSON-RPC error rather than an HTTP status: viem surfaces it to the caller

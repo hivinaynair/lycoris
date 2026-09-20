@@ -5,23 +5,25 @@ import {
   type CheckoutState,
   createCheckout,
   createSettleConfig,
+  type Destination,
 } from "@settle-kit/core";
 import { type ReactNode, useMemo, useRef, useState } from "react";
-import type { CheckoutAppearance } from "./appearance";
-import { type BeginCheckoutInput, type SettleAppConfig, SettleContext } from "./context";
+import type { CheckoutAppearance } from "./appearance.ts";
+import { type SettleAppConfig, SettleContext } from "./context.ts";
 
-type SettleProviderProps = {
+/**
+ * Provides checkout configuration to `useCheckout` and `Checkout`.
+ * Mount once above the purchases that share this config.
+ */
+export function SettleProvider({
+  config,
+  appearance,
+  children,
+}: {
   config: SettleAppConfig;
   appearance?: CheckoutAppearance;
   children: ReactNode;
-};
-
-type CheckoutHooks = {
-  onSettled?: (state: Extract<CheckoutState, { status: "settled" }>) => void;
-  onFailed?: (state: Extract<CheckoutState, { status: "failed" }>) => void;
-};
-
-export function SettleProvider({ config, appearance, children }: SettleProviderProps) {
+}) {
   const managerRef = useRef<CheckoutManager | null>(null);
   const [manager, setManager] = useState<CheckoutManager | null>(null);
   const [title, setTitle] = useState<string | undefined>(undefined);
@@ -47,9 +49,12 @@ export function SettleProvider({ config, appearance, children }: SettleProviderP
 
 export function startCheckout(
   config: SettleAppConfig,
-  input: BeginCheckoutInput,
-  hooks?: CheckoutHooks,
-): CheckoutManager {
+  input: { amountUsdc: string; destination?: Destination | undefined },
+  hooks?: {
+    onSettled?: (state: Extract<CheckoutState, { status: "settled" }>) => void;
+    onFailed?: (state: Extract<CheckoutState, { status: "failed" }>) => void;
+  },
+) {
   return createCheckout(
     createSettleConfig({
       destination: input.destination ?? config.destination,

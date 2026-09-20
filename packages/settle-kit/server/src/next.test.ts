@@ -13,7 +13,6 @@ const calls: { path: string; mandate: string | null; body: unknown }[] = [];
 let mode = "success";
 let handlerCalls = 0;
 
-// Exercise the real x402 middleware and client against intercepted facilitator HTTP.
 const facilitatorHandler = http.all("http://facilitator.test/*", async ({ request }) => {
   const path = new URL(request.url).pathname;
   const mandate = request.headers.get("X-AP2-Mandate");
@@ -27,7 +26,7 @@ const facilitatorHandler = http.all("http://facilitator.test/*", async ({ reques
       signers: {},
     });
   }
-  // Yield so concurrent requests can overlap between verify and settle.
+  // Let concurrent requests overlap between verify and settle.
   await Promise.resolve();
   if (path === "/verify") {
     return HttpResponse.json(

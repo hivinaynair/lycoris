@@ -1,51 +1,47 @@
 declare const brand: unique symbol;
+
 /**
- * The brand is **optional**, which is the whole trick: anything structurally
- * `0x${string}` — a viem `Address`, a `Hash`, a literal — still flows in and out
- * unchanged, so the SDK stays interoperable with the library it is built on. But a
- * value already carrying one brand cannot satisfy the other, so a settlement hash
- * can never land in a payee position. See `@settle-kit/type-tests`.
+ * A 20-byte EVM address. Accepts any `0x${string}`, including viem's `Address`.
+ * Distinct from {@link SettlementHash}: a hash cannot be passed as a payee.
  */
-export type HexAddress = `0x${string}` & { readonly [brand]?: "HexAddress" };
-/** The hash that identifies a settlement: a transaction hash, or a userOpHash under ERC-4337. */
+export type Address = `0x${string}` & { readonly [brand]?: "Address" };
+
+/**
+ * Identifier for a confirmed settlement: a transaction hash, or a userOpHash
+ * under ERC-4337.
+ */
 export type SettlementHash = `0x${string}` & { readonly [brand]?: "SettlementHash" };
-/** Deliberately unbranded: arbitrary calldata, not an identity. */
+
+/** Hex-encoded bytes. Not an identity; use {@link Address} or {@link SettlementHash} for those. */
 export type Hex = `0x${string}`;
 
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
-export const BASE_SEPOLIA_USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as HexAddress;
+/** Circle USDC on Base Sepolia. */
+export const BASE_SEPOLIA_USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as Address;
 export const BASE_SEPOLIA_EXPLORER = "https://sepolia.basescan.org";
 export const USDC_DECIMALS = 6;
+/** Default quote lifetime: 5 minutes. */
 export const DEFAULT_QUOTE_TTL_MS = 5 * 60 * 1000;
 
-/**
- * The payment methods an adapter can be.
- *
- * This was the literal `"usdc"` until a second method existed, which made
- * `SettleConfig.methods` an array that could hold exactly one thing and
- * `selectMethod` a function with nothing to select. Confirming a user operation
- * needs its own adapter — a different receipt client, a hash that is not a
- * transaction hash — so the literal had to go.
- */
+/** Supported payment method ids. */
 export const SETTLE_METHOD_IDS = ["usdc", "usdc-4337"] as const;
 export type SettleMethodId = (typeof SETTLE_METHOD_IDS)[number];
 
 /**
- * What a settlement is identified by, once a payer might be a smart account.
+ * How a settlement was identified.
  *
- * Mutual exclusion rather than a branded union: the hex brands are optional
- * phantom properties, so `TransactionHash | UserOpHash` would admit any hex
- * string and narrow to nothing. `?: never` makes the two shapes genuinely
- * incompatible and lets a consumer branch on which key is present.
+ * Branch on which key is present. A settlement carries a transaction hash or a
+ * userOpHash, never both.
  */
 export type Settlement =
   | { transactionHash: SettlementHash; userOpHash?: never }
   | { userOpHash: SettlementHash; transactionHash?: never };
 
+/** Where USDC is sent. v1 supports Base Sepolia Circle USDC only. */
 export type Destination = {
   targetChain: typeof BASE_SEPOLIA_CHAIN_ID;
-  targetAsset: HexAddress;
-  recipient: HexAddress;
+  targetAsset: Address;
+  recipient: Address;
 };
 
 export type SettleErrorCode =
@@ -59,25 +55,40 @@ export type SettleErrorCode =
 
 export type SettleError = {
   code: SettleErrorCode;
+  /** Copy safe to show a buyer. */
   message: string;
 };
 
+/** Wallet used to submit the USDC transfer. */
 export type PaymentSigner = {
-  address: HexAddress;
-  sendTransaction: (tx: { to: HexAddress; data: Hex }) => Promise<SettlementHash>;
+  address: Address;
+  sendTransaction: (tx: { to: Address; data: Hex }) => Promise<SettlementHash>;
+  /** When provided, checked against `destination.targetChain` before sending. */
   getChainId?: () => Promise<number>;
 };
 
 export type Quote = {
   requestId: string;
+  /** Display amount, e.g. `"12.50"`. */
   amountUsdc: string;
+  /** Amount in USDC atomic units (6 decimals). */
   amountAtomic: string;
+  /** Unix timestamp in milliseconds. */
   expiresAt: number;
   method: SettleMethodId;
-  /** Set by the quote server when the recipient belongs to the resource, not the app. */
+  /**
+   * Recipient for this purchase. Set by the quote server when the payee belongs
+   * to the resource rather than the host app.
+   */
   destination?: Destination | undefined;
 };
 
+/**
+ * Lifecycle of a checkout session. Discriminate on `status`.
+ *
+ * `awaiting_payment` always includes `quote` and `destination`. `settled` always
+ * includes `txHash`.
+ */
 export type CheckoutState =
   | { status: "idle" }
   | { status: "quoting"; amountUsdc: string }
@@ -98,6 +109,9 @@ export type CheckoutState =
       txHash?: SettlementHash;
     };
 
+/**
+ * A payment method. Implement this to add a custom USDC adapter (EOA, ERC-4337, etc.).
+ */
 export type SettleAdapter = {
   id: SettleMethodId;
   quote: (input: { amountUsdc: string; destination?: Destination | undefined }) => Promise<Quote>;
@@ -106,7 +120,12 @@ export type SettleAdapter = {
     destination: Destination;
     signer: PaymentSigner;
   }) => Promise<SettlementHash>;
-  /** Confirm the submitted hash. Throws mean unknown outcome, never permission to resend. */
+  /**
+   * Confirm the submitted hash.
+   *
+   * Return `"success"` or `"reverted"` from a receipt. Throw when the outcome is
+   * unknown — never treat that as permission to send again.
+   */
   confirm: (input: {
     txHash: SettlementHash;
     quote: Quote;
@@ -115,7 +134,9 @@ export type SettleAdapter = {
 };
 
 export type SettleConfig = {
-  /** Optional default. Per-checkout input or the quote may supply it instead. */
+  /**
+   * Default recipient. Per-checkout input or the quote may supply it instead.
+   */
   destination?: Destination;
   getSigner: () => Promise<PaymentSigner>;
   methods: SettleAdapter[];
@@ -132,8 +153,12 @@ export type CreateCheckoutInput = {
 export type CheckoutManager = {
   getState: () => CheckoutState;
   subscribe: (listener: () => void) => () => void;
+  /** Quote the given method. Requires `idle`. */
   selectMethod: (id: string) => Promise<void>;
+  /** Submit the quoted payment. Requires `awaiting_payment`. */
   pay: () => Promise<void>;
+  /** Retry receipt lookup only. Never resubmits. */
   retryConfirmation: () => Promise<void>;
+  /** Return to idle. Refused while `settling`. */
   reset: () => void;
 };

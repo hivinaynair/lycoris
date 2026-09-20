@@ -24,7 +24,7 @@ const value: MandateHeaderValue = {
 
 type Loose = { agentId: unknown; signature: unknown; payload: Record<string, unknown> };
 
-/** Serialize, then swap one field for something a hostile caller might send. */
+/** Serialize a valid header, then mutate one field. */
 function tampered(mutate: (body: Loose) => void) {
   const body = JSON.parse(serializeMandateHeader(value)) as Loose;
   mutate(body);
@@ -74,7 +74,6 @@ describe("parseMandateHeader", () => {
   });
 
   it("rejects an empty amount instead of reading it as zero", () => {
-    // BigInt("") is 0n, so an empty ceiling must be refused rather than silently allowed.
     expect(
       parseMandateHeader(
         tampered((b) => {

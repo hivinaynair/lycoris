@@ -1,6 +1,6 @@
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 import { verifyTypedData } from "viem";
-import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES, type SignedMandate } from "./eip712";
+import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES, type SignedMandate } from "./eip712.ts";
 
 function sameAddress(left: string, right: string) {
   return left.toLowerCase() === right.toLowerCase();
@@ -13,16 +13,15 @@ export type MandateVerifyResult =
       reason: "expired" | "agent_mismatch" | "recipient_mismatch" | "invalid_signature";
     };
 
+/**
+ * Verify an AP2 mandate locally: expiry, optional agent/payee binding, and EIP-712 signature.
+ */
 export async function verifyMandateLocal(
   mandate: SignedMandate,
   opts?: {
-    agent?: HexAddress;
-    /**
-     * Who the payment actually pays. Supply it: a mandate names a merchant, and
-     * checking the signature without checking the recipient accepts a mandate
-     * issued for somebody else's resource.
-     */
-    payTo?: HexAddress;
+    agent?: Address;
+    /** Expected payee. When set, a mandate for a different merchant is rejected. */
+    payTo?: Address;
     now?: number;
   },
 ): Promise<MandateVerifyResult> {

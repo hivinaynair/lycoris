@@ -1,19 +1,19 @@
 export const localInstall = `# In the Lycoris repository
 bun install
-bun run pack:settle-kit
+bun run build --filter=@settle-kit/core --filter=@settle-kit/react
 
 # Add the entries below to your host package.json, then run in the host:
 bun install`;
 
 export const localManifest = `{
   "dependencies": {
-    "@settle-kit/core": "file:/path/to/lycoris/dist/settle-kit/core.tgz",
-    "@settle-kit/react": "file:/path/to/lycoris/dist/settle-kit/react.tgz",
+    "@settle-kit/core": "file:/path/to/lycoris/packages/settle-kit/core",
+    "@settle-kit/react": "file:/path/to/lycoris/packages/settle-kit/react",
     "react": "^19.2.0",
     "viem": "^2"
   },
   "overrides": {
-    "@settle-kit/core": "file:/path/to/lycoris/dist/settle-kit/core.tgz"
+    "@settle-kit/core": "file:/path/to/lycoris/packages/settle-kit/core"
   }
 }`;
 

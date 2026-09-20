@@ -5,8 +5,8 @@ out of the way:
 
 ```ts
 type PaymentSigner = {
-  address: HexAddress;
-  sendTransaction: (tx: { to: HexAddress; data: Hex }) => Promise<SettlementHash>;
+  address: Address;
+  sendTransaction: (tx: { to: Address; data: Hex }) => Promise<SettlementHash>;
   getChainId?: () => Promise<number>;
 };
 ```
@@ -63,7 +63,7 @@ not want a second abstraction over it.
 ```ts
 import { CdpClient } from "@coinbase/cdp-sdk";
 
-export function cdpSigner(address: HexAddress): PaymentSigner {
+export function cdpSigner(address: Address): PaymentSigner {
   const cdp = new CdpClient();
   return {
     address,

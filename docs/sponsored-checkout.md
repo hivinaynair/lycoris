@@ -1,54 +1,80 @@
 # Sponsored Base Sepolia checkout
 
-The public checkout makes real transfers of Circle test USDC. It uses a dedicated
-CDP server wallet, not the visitor's wallet or the developer's personal wallet.
-The demo pays gas. No signup, wallet popup, or report-ownership signature is needed.
+The visitor clicks Pay without connecting a personal wallet. The browser creates
+a disposable Coinbase smart account using a locally stored burner key. A dedicated
+CDP server wallet funds it with 0.1 Circle test USDC. That smart account pays the
+merchant through an ERC-4337 user operation, with gas sponsored by a CDP paymaster.
+The faucet transfer, user operation, and enclosing bundle transaction are distinct.
 
 ## Setup
 
-1. Set DATABASE_URL and CDP_API_KEY_ID, CDP_API_KEY_SECRET, CDP_WALLET_SECRET in
-   packages/scripts/.env.local.
-2. Run `bun run lycoris:setup-sponsored-checkout`. This creates only the sponsored
-   payment table/reservation function and a named CDP wallet. It prints its address.
-3. Add that address as SPONSORED_WALLET_ADDRESS to apps/lycoris/.env.local, with the
-   same server-only CDP credentials and database.
-4. Fund the new wallet using `bun run lycoris:fund-wallet ADDRESS --token usdc`
-   and `bun run lycoris:fund-wallet ADDRESS --token eth`.
-5. Restart the app. For deployment, configure the same server environment variables.
+1. Configure DATABASE_URL and the server-only CDP credentials in
+   `scripts/.env.local`.
+2. Run `bun --env-file=scripts/.env.local scripts/demo/setup-sponsored-checkout.ts`. It creates the reservation
+   table/function and a named CDP wallet, then prints its address.
+3. Set that address as SPONSORED_WALLET_ADDRESS in `apps/lycoris/.env.local`, along
+   with DATABASE_URL, PAY_TO_ADDRESS, the CDP credentials, and CDP_PAYMASTER_URL.
+   The latter is the combined bundler/paymaster endpoint and stays server-side.
+4. Fund the dedicated server wallet with test USDC and test ETH for faucet gas.
+   The full funding allowance is 5 test USDC; a smaller balance supports fewer runs.
+5. Restart the app. Apply the same configuration and schema to the deployment.
 
-Never add CDP secrets to NEXT_PUBLIC variables or import server wallet code into a
-client component. Do not import a personal wallet private key for this demo.
+Fresh setup uses a **50-purchase** reservation cap. Changing the UI constant alone
+does not change an existing database function. Inspect the configured database with
+`bun --env-file=apps/lycoris/.env.local scripts/demo/check-sponsored-config.ts`; this check reads the function, columns,
+and reservation count without creating purchases or sending funds.
+
+CDP keys and the paymaster URL must never be NEXT_PUBLIC variables. The browser’s
+burner key is intentionally disposable and is not suitable for personal funds.
 
 ## Payment and recovery
 
-The browser persists an opaque purchase UUID before sending. The server accepts
-only that UUID, never arbitrary calldata, recipients, chains or amounts. It checks
-the sponsor's USDC balance before the first reservation and constructs exactly one
-0.1 USDC transfer on Base Sepolia.
+The browser persists a purchase UUID before requesting funds. `/api/checkout/fund`
+accepts that ID and a payer address; the server fixes the token, amount, chain, and
+merchant. A database advisory lock serializes reservations across instances. The
+cap is **50 funded purchases / 5 test USDC per sponsor**, including pending or failed
+reservations. It is a faucet cap, not a limit on all possible paymaster gas spend.
 
-A database function serializes reservations across instances and caps this sponsor
-at **10 purchases total (1 USDC)**. Pending or failed reservations also count.
-The same purchase UUID is used as the CDP idempotency key, so uncertain requests can
-retry without a second transfer. The submitted hash is stored in the database.
-Unresolved reservations older than one hour require operator review; they are not
-resubmitted. Do not delete real reservation records to reset the budget.
+The UUID is also the CDP funding idempotency key. The server waits for the funding
+receipt and records its hash and payer. The browser waits for its RPC to see the
+funded balance, submits the smart-account operation, and saves its hash. Funding
+reservations older than the one-hour provider retry window require operator review;
+the browser rotates stale records without a submitted operation after 50 minutes.
+Do not delete uncertain reservations to reset the budget.
 
-The SDK confirms the receipt, and the report endpoint independently verifies the
-transaction calldata, sender, recipient, token and Transfer event. A purchase UUID
-is a bearer access capability for its report; access expires 15 minutes after payment.
-Report retries do not send payments.
+`/api/paymaster` forwards only allowed RPC methods. Requests that estimate, sponsor,
+or submit an operation must encode one exact 0.1 USDC transfer to the configured
+merchant. Batches, approvals, other recipients, amounts, and ETH value are refused.
+This policy limits what this proxy sponsors; it does not restrict what a burner
+owner could submit through another provider with their own gas.
 
-No faucet refill occurs automatically. Exhaustion is a real unavailable state,
-never a fallback simulation. The budget is intentionally small for this demo.
-Origin checks prevent casual cross-site submissions, but this anonymous endpoint
-is not bot-proof: a visitor can consume the remaining budget. Broader public use
-needs per-visitor abuse controls and an explicit budget/refill policy.
+The SDK reads the user operation’s own success flag. A successful bundle transaction
+can contain a reverted operation. Explorer links use the enclosing transaction
+hash, while payment recovery uses the operation hash.
+
+The report endpoint independently verifies the operation’s sender against the
+server-recorded payer and checks the USDC Transfer event’s token, sender, recipient,
+amount, and age. A unique operation claim prevents one payment being used for two
+purchases. Report access expires 15 minutes after confirmation; retrying report
+delivery does not send another payment.
+
+## Operational limits
+
+Core sessions are in memory. The host saves purchase IDs and hashes, but this is
+not a durable reconciliation service. Losing browser storage or crashing between
+submission and saving a hash can still require manual investigation. A faucet
+reservation does not provide exactly-once guarantees for every later operation.
+
+No automatic faucet refill occurs. Funding failures currently share an unavailable
+message; do not infer budget exhaustion from that message alone. The operator must
+distinguish funding, configuration, provider, and budget failures. Anonymous visitors
+can consume the faucet budget, and gas sponsorship needs its own provider controls.
+Broader deployment needs abuse controls, monitoring, and a replenishment policy.
 
 ## Verification
 
-`bun --env-file=packages/scripts/.env.local packages/scripts/check-sponsored-budget.ts`
-checks concurrent reservations and duplicate IDs in the configured database,
-then removes only its own test rows. It never submits a payment.
+`bun --env-file=apps/lycoris/.env.local scripts/demo/check-sponsored-config.ts` is read-only.
+It does not submit a payment.
 
-Browser tests mock the sponsor and RPC endpoints so automated test runs do not
-consume funds. A separately performed live payment verifies the actual CDP path.
+Browser fixtures mock the faucet, bundler, paymaster, and report endpoints. Those
+tests prove UI behavior; a separate live testnet run checks provider integration.

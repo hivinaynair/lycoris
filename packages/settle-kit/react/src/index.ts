@@ -6,8 +6,8 @@ export type {
   PaymentSigner,
   SettleError,
 } from "@settle-kit/core";
-export type { CheckoutAppearance } from "./appearance";
-export type { BeginCheckoutInput, SettleAppConfig } from "./context";
-export { SettleProvider } from "./provider";
-export type { CheckoutCallbacks, UseCheckoutResult } from "./use-checkout";
-export { useCheckout } from "./use-checkout";
+export type { CheckoutAppearance } from "./appearance.ts";
+export type { BeginCheckoutInput, SettleAppConfig } from "./context.ts";
+export { SettleProvider } from "./provider.tsx";
+export type { CheckoutCallbacks, UseCheckoutResult } from "./use-checkout.ts";
+export { useCheckout } from "./use-checkout.ts";

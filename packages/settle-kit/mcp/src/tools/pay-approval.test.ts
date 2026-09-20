@@ -3,20 +3,20 @@ import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/cli
 import { createMcpHandler, isInputRequiredResult } from "@modelcontextprotocol/server";
 import type { ResourceQuote } from "@settle-kit/agents";
 import { serializeMandateHeader, signMandate } from "@settle-kit/agents";
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createSettleMcpServer } from "../create-server";
 import type { SettleMcpOptions } from "../options";
 import { createMemoryStore } from "../store";
 
-const MERCHANT = "0x9999999999999999999999999999999999999999" as HexAddress;
+const MERCHANT = "0x9999999999999999999999999999999999999999" as Address;
 const RESOURCE = "https://example.test/api/weather/public";
 
 function quote(amountAtomic: string): ResourceQuote {
   return { amountAtomic, payTo: MERCHANT, challenge: { network: "eip155:84532" } };
 }
 
-async function mandate(agent: HexAddress) {
+async function mandate(agent: Address) {
   const delegator = privateKeyToAccount(generatePrivateKey());
   const payload = {
     agent,
@@ -50,7 +50,7 @@ async function connect(options: SettleMcpOptions) {
 
 function heldOptions(input: {
   header: string;
-  address: HexAddress;
+  address: Address;
   quotes: ResourceQuote[];
   ttlSeconds?: number;
 }) {

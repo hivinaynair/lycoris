@@ -3,20 +3,17 @@ import { Client, StreamableHTTPClientTransport } from "@modelcontextprotocol/cli
 import { StdioClientTransport } from "@modelcontextprotocol/client/stdio";
 import { createMcpHandler } from "@modelcontextprotocol/server";
 import { serializeMandateHeader, signMandate } from "@settle-kit/agents";
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { createSettleMcpServer } from "./create-server";
 import type { SettleMcpOptions } from "./options";
 
 /**
- * `@modelcontextprotocol/conformance@0.1.16` tests HTTP servers via
- * `server --url` and its default scenarios assume a 2025-era `initialize`.
- * This package is stdio + modern-only, so the era pin and the legacy rejection
- * below are the executable conformance for the decision the design recorded.
+ * Protocol pin: stdio, 2026-07-28 only. Legacy `initialize` is rejected.
  */
 
 const RESOURCE = "https://example.test/api/weather/public";
-const MERCHANT = "0x9999999999999999999999999999999999999999" as HexAddress;
+const MERCHANT = "0x9999999999999999999999999999999999999999" as Address;
 
 async function testOptions(): Promise<SettleMcpOptions> {
   const agent = privateKeyToAccount(generatePrivateKey());

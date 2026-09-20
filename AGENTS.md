@@ -1,15 +1,10 @@
 # lycoris
 
-Bun-only Turborepo for an **agentic USDC payment** demo. Read [README.md](README.md)
-for layout and commands. This file is the short version agents need before
-touching anything.
-
+Bun-only Turborepo for an **agentic USDC payment** demo.
 ## Constraints
 
 - **Bun only.** `bun`, `bunx`, `bun test`. `only-allow bun` fails other installs.
   Do not add npm/pnpm/yarn, Vitest, or ESLint.
-- **Demo scope.** Keep the x402 agent → facilitator → Lycoris path. Do not
-  reintroduce Sietch ZK / guest / T-bill / desk code.
 - **shadcn/ui lives in `packages/ui`** (`@repo/ui`). Never install components
   into an app. Add with `bun run ui:add -- <component>`.
 - **Env vars** are validated per app (`env.ts` / `@t3-oss/env-*`). Prefer those
@@ -29,16 +24,3 @@ touching anything.
 ```sh
 bun run check-types && bun run check-boundaries && bun run check-tokens && bun test
 ```
-
-## Settle Kit
-
-Packages: `@settle-kit/core`, `@settle-kit/react`, `@settle-kit/agents`,
-`@settle-kit/server`, `@settle-kit/mcp`.
-Host demo: Lycoris `/checkout`. Spec:
-[docs/plans/2026-09-07-settle-kit-design.md](docs/plans/2026-09-07-settle-kit-design.md).
-Do not skip the package split, USDC-only path, or balance preflight.
-
-## Out of scope
-
-ViperNxt playbook (`/next`, shape, journeys, homework) was stripped on purpose.
-Do not restore it here.

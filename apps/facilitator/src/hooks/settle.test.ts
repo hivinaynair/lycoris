@@ -110,7 +110,7 @@ const SETTLEMENT_TX = "0xsettlementtxhash";
 
 function makePayload(nonce?: string) {
   return {
-    resource: "http://localhost:3000/api/premium-risk-report",
+    resource: { url: "http://localhost:3003/api/weather/public", mimeType: "application/json" },
     payload: { from: PAYER, authorization: { from: PAYER, nonce } },
     accepted: {
       amount: "10000000",
@@ -232,6 +232,7 @@ describe("onAfterSettle", () => {
         decisionRecord: expect.objectContaining({
           payer: PAYER,
           settlementTxHash: SETTLEMENT_TX,
+          route: { path: "/api/weather/public", price: "0.1 USDC" },
         }),
         commitment: expect.stringMatching(/^0x/),
         commitmentSalt: expect.stringMatching(/^0x/),

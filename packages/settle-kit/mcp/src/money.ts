@@ -1,5 +1,6 @@
 import { formatUsdcAmount } from "@settle-kit/core";
 
+/** USDC amount as decimal, atomic units, and display copy. Never a JSON number. */
 export type Money = {
   decimal: string;
   atomic: string;
@@ -9,6 +10,7 @@ export type Money = {
 
 const ATOMIC = /^(0|[1-9]\d*)$/;
 
+/** Parse atomic USDC units into a {@link Money} object. */
 export function toMoney(amountAtomic: string): Money {
   if (typeof amountAtomic !== "string" || !ATOMIC.test(amountAtomic)) {
     throw new Error(`Expected atomic USDC units, received ${JSON.stringify(amountAtomic)}`);
@@ -22,7 +24,7 @@ export function toMoney(amountAtomic: string): Money {
   };
 }
 
-/** Mandate caps are whole USDC; money on the wire is always atomic. */
+/** Convert whole USDC (mandate cap) to {@link Money}. Wire amounts are always atomic. */
 export function wholeUsdcToMoney(whole: bigint | string): Money {
   return toMoney((BigInt(whole) * 1_000_000n).toString());
 }

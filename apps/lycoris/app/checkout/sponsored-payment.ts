@@ -1,9 +1,9 @@
 "use client";
 import { WEATHER_PRICE_USDC } from "@repo/shared/demo";
 import {
+  type Address,
   BASE_SEPOLIA_USDC_ADDRESS,
   createUsdcMethod,
-  type HexAddress,
   type SettleAdapter,
   SettleKitError,
 } from "@settle-kit/core";
@@ -69,7 +69,7 @@ async function burnerAccount() {
  * fail with insufficient USDC for money that was already there. It now uses
  * this same `chain` instance (passed into `createUsdcMethod`).
  */
-async function waitForFunding(payer: HexAddress, required: bigint) {
+async function waitForFunding(payer: Address, required: bigint) {
   for (let attempt = 0; attempt < 15; attempt++) {
     const balance = await chain.readContract({
       address: BASE_SEPOLIA_USDC_ADDRESS,
@@ -83,7 +83,7 @@ async function waitForFunding(payer: HexAddress, required: bigint) {
   // Let the SDK's own preflight raise the shaped `insufficient_usdc` error.
 }
 
-export function createSponsoredPayment(recipient: HexAddress) {
+export function createSponsoredPayment(recipient: Address) {
   const method = createUsdcMethod({
     // A second method, so `methods` and `selectMethod` finally mean something.
     id: "usdc-4337",

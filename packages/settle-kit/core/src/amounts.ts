@@ -1,8 +1,9 @@
-import { invalidConfig } from "./errors";
-import { USDC_DECIMALS } from "./types";
+import { invalidConfig } from "./errors.ts";
+import { USDC_DECIMALS } from "./types.ts";
 
 const AMOUNT_PATTERN = /^(0|[1-9]\d*)(?:\.(\d+))?$/;
 
+/** Parse a decimal USDC amount (max 6 places) into atomic units. */
 export function parseUsdcAmount(amountUsdc: string): string {
   if (typeof amountUsdc !== "string") invalidConfig("amountUsdc must be a string");
   const trimmed = amountUsdc.trim();
@@ -25,6 +26,7 @@ export function parseUsdcAmount(amountUsdc: string): string {
   return atomic;
 }
 
+/** Format atomic USDC units as a decimal string. */
 export function formatUsdcAmount(amountAtomic: string): string {
   const digits = amountAtomic.replace(/^0+(?=\d)/, "") || "0";
   const padded = digits.padStart(USDC_DECIMALS + 1, "0");

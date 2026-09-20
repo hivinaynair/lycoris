@@ -1,6 +1,6 @@
 import { createPublicClient, http, type PublicClient } from "viem";
 import { baseSepolia } from "viem/chains";
-import { SettleKitError } from "../errors";
+import { SettleKitError } from "../errors.ts";
 
 export function getUsdcPublicClient(
   chainId: number,

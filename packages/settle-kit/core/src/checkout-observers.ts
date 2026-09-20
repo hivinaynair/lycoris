@@ -1,11 +1,11 @@
-import type { CheckoutState, SettleConfig } from "./types";
+import type { CheckoutState, SettleConfig } from "./types.ts";
 
 export function notifyCheckout(
   listeners: Set<() => void>,
   next: CheckoutState,
   config: SettleConfig,
 ) {
-  // Observers cannot interrupt payment bookkeeping or change its outcome.
+  // Isolate observer failures so they cannot change payment outcome.
   for (const listener of listeners) {
     try {
       listener();

@@ -5,7 +5,8 @@ import { cn } from "@repo/ui/lib/utils";
 import { ArrowUpRight, Asterisk } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { type ReactNode, Suspense } from "react";
+import { DemoTour } from "./demo-tour";
 
 export function AppShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -35,6 +36,7 @@ export function AppShell({ children }: { children: ReactNode }) {
             className="flex flex-wrap items-center gap-x-5 gap-y-3 text-sm"
           >
             {[
+              ["/walkthrough", "Start here"],
               ["/checkout", "Playground"],
               ["/demo", "Agent demo"],
               ["/feed", "Feed"],
@@ -65,10 +67,18 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </header>
       <div id="main-content" tabIndex={-1}>
+        <Suspense>
+          <DemoTour />
+        </Suspense>
         {children}
       </div>
       <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-3 border-t border-border px-5 py-6 text-xs text-muted-foreground sm:px-7">
-        <p>Built by Vinay Nair · An independent SDK exploration</p>
+        <p>
+          Built by Vinay Nair ·{" "}
+          <Link href="/case-study" className="underline underline-offset-4">
+            Engineering case study
+          </Link>
+        </p>
         <p>Base Sepolia only. Test USDC. No mainnet payments.</p>
       </footer>
     </div>

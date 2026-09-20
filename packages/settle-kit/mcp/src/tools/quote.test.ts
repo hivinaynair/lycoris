@@ -1,12 +1,12 @@
 import { describe, expect, it } from "bun:test";
 import type { ResourceQuote } from "@settle-kit/agents";
 import { serializeMandateHeader, signMandate } from "@settle-kit/agents";
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { SettleMcpOptions } from "../options";
 import { quoteResourceTool } from "./quote";
 
-const MERCHANT = "0x9999999999999999999999999999999999999999" as HexAddress;
+const MERCHANT = "0x9999999999999999999999999999999999999999" as Address;
 const URL = "https://example.test/api/weather/public";
 
 const quote: ResourceQuote = {
@@ -15,7 +15,7 @@ const quote: ResourceQuote = {
   challenge: { network: "eip155:84532", maxAmountRequired: "100000" },
 };
 
-async function headerFor(agent: HexAddress) {
+async function headerFor(agent: Address) {
   const delegator = privateKeyToAccount(generatePrivateKey());
   const payload = {
     agent,
@@ -31,7 +31,7 @@ async function headerFor(agent: HexAddress) {
 
 function options(input: {
   header: string;
-  address: HexAddress;
+  address: Address;
   allowlist?: string[];
   quote?: ResourceQuote | undefined;
   facilitator?: typeof fetch;

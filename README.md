@@ -9,6 +9,8 @@ Lycoris is the working demo: a person and an AI agent buy the same weather repor
 
 [Try checkout](https://lycoris.vinaynair.dev/checkout) · [Watch an agent pay](https://lycoris.vinaynair.dev/demo) · [Documentation](https://lycoris.vinaynair.dev/docs) · [Payment feed](https://lycoris.vinaynair.dev/feed)
 
+[Start with the guided tour](https://lycoris.vinaynair.dev/walkthrough) · [Engineering case study](docs/case-study.md)
+
 **Base Sepolia · Test USDC · Experimental SDK · Not published to npm**
 
 </div>
@@ -28,16 +30,23 @@ forecast for **0.1 test USDC**, from the same merchant, down two different paths
 
 ## See it working
 
+Follow one path: **buy a report → let an agent buy it → see an over-limit purchase
+refused → inspect the decision evidence**. The [guided tour](https://lycoris.vinaynair.dev/walkthrough)
+links each step and explains what to look for. Its overview takes about 90 seconds;
+live purchases also wait for the agent and network. [Walkthrough script](docs/plans/2026-09-08-demo-proof.md).
+
 | Page | Try | Shows |
 | --- | --- | --- |
 | [Checkout](https://lycoris.vinaynair.dev/checkout) | Click **Pay**, read the report, swap checkout styles | A confirmed transfer and replaceable UI around one session |
 | [Agent demo](https://lycoris.vinaynair.dev/demo) | Pick a scenario, hit **Get me the report** | An agent buying over x402, through identity, mandate and balance gates |
 | [Feed](https://lycoris.vinaynair.dev/feed) | Browse commitments and disclosed evidence | How the facilitator records what it decided, and why |
 
-No signup, no wallet connection. A server wallet supplies test USDC and gas — real
-testnet transactions, never the visitor's money. The sponsor is capped at **10
-purchases / 1 USDC total** and report access lasts 15 minutes. When the budget runs
-out, checkout says so. It does not quietly switch to a simulation.
+No signup or personal wallet connection. A CDP server faucet funds a browser-owned
+smart account; the account pays the merchant with gas sponsored by a paymaster.
+These are real testnet transactions, never the visitor's money. The faucet reserves
+at most **50 funded purchases / 5 test USDC per sponsor**; gas sponsorship has separate
+provider limits. Report access lasts 15 minutes. Exhaustion makes checkout
+unavailable; it does not switch to a simulation. See [setup and recovery](docs/sponsored-checkout.md).
 
 ## Packages
 
@@ -55,9 +64,9 @@ speaks protocol revision 2026-07-28 and refuses older clients.
 
 ## Add checkout
 
-Packages ship as local tarballs for now — `bun run pack:settle-kit`, then point
-`package.json` at `dist/settle-kit/*.tgz` with a matching `overrides` entry. Then
-mount one provider:
+Packages live in this workspace. After `bun run build --filter=@settle-kit/react`,
+point a host `package.json` at `packages/settle-kit/*` with a matching `overrides`
+entry. Then mount one provider:
 
 ```tsx
 "use client";
@@ -321,8 +330,9 @@ normalised: a `SettleKitError` keeps its code, and an EIP-1193 `4001` becomes
 ```mermaid
 flowchart LR
   Person[Person clicks Pay] --> React[React + core]
-  React --> USDC[Base Sepolia USDC]
-  USDC --> Receipt[Verify receipt]
+  React --> Faucet[Server faucet funds smart account]
+  Faucet --> USDC[Smart account pays merchant in USDC]
+  USDC --> Receipt[Verify user operation and transfer]
   Receipt --> Report[Report released]
 
   Agent[AI agent] --> PaidFetch[Agents: paid fetch]
@@ -357,11 +367,11 @@ bun run dev      # + Eve agent + facilitator
 
 Configuration lives per app: [Lycoris](apps/lycoris/.env.example),
 [Agent](apps/agent/.env.example), [Facilitator](apps/facilitator/.env.example),
-[Database](packages/db/.env.example), [Scripts](packages/scripts/.env.example).
+[Database](packages/db/.env.example), [Scripts](scripts/.env.example).
 The web and agent apps must share `LYCORIS_AGENT_SHARED_SECRET`. Keep private keys
 and CDP credentials server-side. For sponsored checkout see
 [the wallet and database setup](docs/sponsored-checkout.md); for agent scenarios
-run `bun run lycoris:bootstrap`.
+run `bun --env-file=scripts/.env.local scripts/demo/bootstrap/index.ts`.
 
 Deploys as three Vercel projects — roots `apps/lycoris`, `apps/agent`,
 `apps/facilitator`, with the Next.js, Eve and Hono presets. Each `vercel.json`
@@ -373,19 +383,15 @@ carries its own install and build commands.
 bun run check-types && bun run check-boundaries && bun run check-tokens && bun test
 ```
 
-Distribution is checked outside the workspace too — `bun run pack:settle-kit`,
-`check:settle-kit-package`, then `smoke:settle-kit` installs the packed SDKs into a
-separate Next.js app and drives checkout in Chromium with a mocked wallet. Those
-tests spend nothing; live demo transactions are separate evidence.
-
 Keep changes small and the package boundaries intact. Shared shadcn components go
 in `packages/ui`, and each app has a validated env helper — use it. See
 [AGENTS.md](AGENTS.md) and the [design system](packages/ui/README.md).
 
 ```text
 apps/       lycoris (storefront, docs, demo, feed) · agent (Eve) · facilitator
-packages/   settle-kit/{core,react,agents,server,mcp} · shared · db · ui · scripts
-scripts/    pack/check/smoke fixtures for Settle Kit consumers
+packages/   settle-kit/{core,react,agents,server,mcp} · shared · db · ui
+scripts/    repo checks and demo operator tools
+e2e/        browser tests
 ```
 
 ## Scope, stated plainly
@@ -401,10 +407,9 @@ implementation. Transaction-replacement reconciliation is out of scope. The spon
 has a small fixed budget and no refill; wider use needs a real abuse and funding
 policy.
 
-**No npm release has happened.** Packing, validation, versioning and release
-tooling exist; scope ownership, credentials and a license decision do not. No
-open-source license is granted — do not assume MIT. Read the
-[release guide](docs/settle-kit-releases.md) before distributing anything.
+**No npm release has happened.** Scope ownership, credentials and a license
+decision do not exist. No open-source license is granted — do not assume MIT.
+Read the [release notes](docs/settle-kit-releases.md) before distributing anything.
 
 ---
 

@@ -102,8 +102,6 @@ describe("validateQuote destination binding", () => {
 
 describe("validateQuote method binding", () => {
   it("accepts a smart-account quote and keeps its id", () => {
-    // This rejected every ERC-4337 quote: the check was pinned to the literal
-    // "usdc", so checkout failed in selectMethod, long before pay().
     const quote = validateQuote(body({ method: "usdc-4337" }), "12.50");
     expect(quote.method).toBe("usdc-4337");
   });

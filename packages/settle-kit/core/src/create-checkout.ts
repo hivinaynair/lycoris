@@ -1,18 +1,24 @@
-import { parseUsdcAmount } from "./amounts";
-import { notifyCheckout } from "./checkout-observers";
-import { confirmPayment } from "./confirm-payment";
-import { assertDestination } from "./destination";
-import { invalidConfig, SettleKitError, toSettleError } from "./errors";
-import { fetchQuote, validateQuote } from "./quote-client";
-import { type CheckoutAction, IDLE_STATE, reduce } from "./state";
+import { parseUsdcAmount } from "./amounts.ts";
+import { notifyCheckout } from "./checkout-observers.ts";
+import { confirmPayment } from "./confirm-payment.ts";
+import { assertDestination } from "./destination.ts";
+import { invalidConfig, SettleKitError, toSettleError } from "./errors.ts";
+import { fetchQuote, validateQuote } from "./quote-client.ts";
+import { type CheckoutAction, IDLE_STATE, reduce } from "./state.ts";
 import type {
   CheckoutManager,
   CheckoutState,
   CreateCheckoutInput,
   SettleAdapter,
   SettleConfig,
-} from "./types";
+} from "./types.ts";
 
+/**
+ * Start a checkout session for a USDC amount.
+ *
+ * Call `selectMethod` to quote, then `pay` to submit. The manager is in-memory:
+ * keep the page open until confirmation.
+ */
 export function createCheckout(config: SettleConfig, input: CreateCheckoutInput): CheckoutManager {
   const requested = input.destination ?? config.destination;
   const destination = requested ? assertDestination(requested) : undefined;

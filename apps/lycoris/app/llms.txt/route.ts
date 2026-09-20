@@ -33,6 +33,8 @@ payment is attempted.
 
 ## Docs
 
+- /walkthrough: guided checkout, agent purchase, refusal, and evidence tour
+- /case-study: engineering decisions, ownership, validation, and production limits
 - /docs: SDK reference, React, wallet, agent and server examples
 - /checkout: a working checkout, sponsored, no wallet required
 - /demo: an agent buying the same resource over x402

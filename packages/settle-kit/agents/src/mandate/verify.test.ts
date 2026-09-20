@@ -57,8 +57,6 @@ describe("verifyMandateLocal", () => {
   });
 });
 
-// A mandate names a merchant. Checking the signature without checking the
-// recipient accepts one issued for somebody else's resource.
 describe("verifyMandateLocal recipient binding", () => {
   async function signed() {
     const account = privateKeyToAccount(generatePrivateKey());

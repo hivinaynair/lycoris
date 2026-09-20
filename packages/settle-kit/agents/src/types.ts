@@ -1,6 +1,6 @@
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 
-/** A decoded x402 challenge. Absent and undefined mean the same thing: the server did not say. */
+/** Decoded x402 payment-required terms. Absent fields were not provided by the server. */
 export type ResourceChallenge = {
   scheme?: string | undefined;
   network?: string | undefined;
@@ -12,8 +12,8 @@ export type ResourceChallenge = {
 
 export type ResourceQuote = {
   amountAtomic: string;
-  /** Absent when the challenge named no recipient. */
-  payTo?: HexAddress;
+  /** Payee from the challenge, when the server named one. */
+  payTo?: Address;
   challenge: ResourceChallenge;
 };
 
@@ -22,7 +22,7 @@ export type AgentPaymentResult = {
   body: unknown;
   txHash?: string | undefined;
   authorizationNonce?: string | undefined;
-  /** The challenge error, else an upstream error body. Read this instead of re-deriving. */
+  /** Challenge error, or an upstream error body. */
   error?: string | undefined;
   basescan?: string | undefined;
   challenge?: ResourceChallenge | undefined;

@@ -1,10 +1,10 @@
 import type { AgentPaymentResult, createPaidFetch, ResourceQuote } from "@settle-kit/agents";
-import type { HexAddress } from "@settle-kit/core";
-import type { PaymentStore } from "./store";
+import type { Address } from "@settle-kit/core";
+import type { PaymentStore } from "./store.ts";
 
 export type SettleMcpSigner = {
-  address: HexAddress;
-  /** The x402 scheme client (ExactEvmScheme or compatible). */
+  address: Address;
+  /** x402 scheme client (`ExactEvmScheme` or compatible). */
   client: unknown;
 };
 
@@ -13,23 +13,32 @@ export type SettleMcpPorts = {
   quoteResource?: (url: string, fetchImpl?: typeof fetch) => Promise<ResourceQuote | undefined>;
   payForResource?: (input: { url: string; paidFetch: unknown }) => Promise<AgentPaymentResult>;
   createPaidFetch?: typeof createPaidFetch;
-  readUsdcBalance?: (address: HexAddress) => Promise<bigint>;
-  lookupRegistered?: (input: { agentId: bigint; address: HexAddress }) => Promise<boolean>;
+  readUsdcBalance?: (address: Address) => Promise<bigint>;
+  lookupRegistered?: (input: { agentId: bigint; address: Address }) => Promise<boolean>;
   now?: () => number;
 };
 
+/**
+ * Configuration for `createSettleMcpServer`.
+ *
+ * Wallet, mandate, facilitator, and allowlist come from the host — never from
+ * model arguments.
+ */
 export type SettleMcpOptions = {
   getSigner: () => Promise<SettleMcpSigner>;
   getMandate: () => Promise<string>;
   facilitatorUrl: string;
+  /** Resource URLs this process may pay. */
   allowlist: string[];
+  /** Idempotency store. Defaults to a per-process in-memory store. */
   store?: PaymentStore;
   requestStateKey?: Uint8Array;
   requestStateTtlSeconds?: number;
   rpcUrl?: string;
-  registryAddress?: HexAddress;
+  registryAddress?: Address;
   ports?: SettleMcpPorts;
 };
 
 export const BASE_SEPOLIA_CAIP2 = "eip155:84532";
-export const ERC8004_REGISTRY = "0x8004A818BFB912233c491871b3d84c89A494BD9e" as HexAddress;
+/** ERC-8004 identity registry on Base Sepolia. */
+export const ERC8004_REGISTRY = "0x8004A818BFB912233c491871b3d84c89A494BD9e" as Address;

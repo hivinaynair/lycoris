@@ -40,9 +40,10 @@ function WalletSection() {
         Base Sepolia ETH for gas.
       </p>
       <p className="text-muted-foreground">
-        The public demo uses a separate sponsored adapter: a server wallet pays the fixed merchant
-        with test funds. Visitors never connect a wallet. This browser-wallet example is for apps
-        where customers pay from their own balances.
+        The public demo uses a separate sponsored adapter: a server faucet funds a browser-owned
+        smart account with test USDC, and a paymaster sponsors its payment to the fixed merchant.
+        Visitors never connect a personal wallet. This browser-wallet example is for apps where
+        customers pay from their own balances.
       </p>
       <CodeExample title="wallet.ts" code={examples.walletAdapter} language="typescript" />
       <p className="text-muted-foreground">

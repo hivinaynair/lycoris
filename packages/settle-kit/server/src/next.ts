@@ -6,29 +6,27 @@ import { type NextRequest, NextResponse } from "next/server";
 import { isAddress, zeroAddress } from "viem";
 
 export type AgenticPaymentOptions = {
-  /** Decimal USDC amount, e.g. "0.10". Never a floating-point number. */
+  /** Decimal USDC amount, e.g. `"0.10"`. Must be a string, not a number. */
   priceUsdc: string;
-  /** This first release supports Base Sepolia USDC only. */
+  /** Base Sepolia only. */
   network: "eip155:84532";
   payTo: string;
-  /** Use a facilitator that enforces ERC-8004, AP2 mandates, and balance checks. */
+  /** Facilitator that enforces ERC-8004, AP2 mandates, and balance checks. */
   facilitatorUrl: string;
   description?: string | undefined;
 };
 
 /**
- * Protect a Next.js App Router resource with x402 and per-request AP2 forwarding.
+ * Protect a Next.js App Router route with x402 and per-request AP2 forwarding.
  *
- * Options are validated eagerly and throw `SettleKitError("invalid_config")`. Each request
- * builds and initializes its own facilitator client and resource server: a buyer's mandate
- * is never shared with a simultaneous buyer, at the cost of that setup per request.
+ * Options are validated at wrap time and throw `SettleKitError("invalid_config")`.
+ * Each request builds its own facilitator client so buyers' mandates stay isolated.
  */
 export function withAgenticPayment<Args extends unknown[] = []>(
   handler: (request: NextRequest, ...args: Args) => Response | Promise<Response>,
   options: AgenticPaymentOptions,
 ): (request: NextRequest, ...args: Args) => Promise<NextResponse> {
   const { amount, facilitatorUrl } = validatePaymentOptions(options);
-  // An explicit asset amount avoids dollar-price conversion or token selection.
   const routeConfig = {
     accepts: {
       scheme: "exact",
@@ -66,7 +64,7 @@ export function withAgenticPayment<Args extends unknown[] = []>(
       response.headers.set("Cache-Control", "private, no-store");
       return response;
     } catch {
-      // Do not expose facilitator URLs, credentials, or upstream exception text.
+      // Generic 500: do not leak facilitator URLs or upstream exception text.
       return NextResponse.json(
         { error: "agentic_payment_request_failed" },
         { status: 500, headers: { "Cache-Control": "private, no-store" } },
@@ -100,7 +98,6 @@ function validatePaymentOptions(options: AgenticPaymentOptions) {
 function requestFacilitator(request: NextRequest, facilitatorUrl: string) {
   const mandate = request.headers.get("X-AP2-Mandate");
   const mandateHeaders: Record<string, string> = mandate ? { "X-AP2-Mandate": mandate } : {};
-  // Never share a mutable mandate/client across simultaneous buyers.
   const facilitator = new HTTPFacilitatorClient({
     url: facilitatorUrl,
     createAuthHeaders: async () => ({

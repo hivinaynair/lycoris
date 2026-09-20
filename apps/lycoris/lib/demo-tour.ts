@@ -1,0 +1,35 @@
+export const DEMO_TOUR = [
+  {
+    title: "Buy a report",
+    href: "/checkout?tour=1",
+    action: "Try checkout",
+    description:
+      "Click Pay to unlock Melbourne’s weather report for 0.1 test USDC. The demo supplies the funds and gas; you don’t need a wallet.",
+    evidence: "A confirmed payment, a transaction link, and the purchased report.",
+  },
+  {
+    title: "Let an agent buy it",
+    href: "/demo?scenario=0&tour=1",
+    action: "Try the agent",
+    description:
+      "Choose Get me the report. The agent requests the paid API, checks its permission to spend, and buys the same report over x402.",
+    evidence: "The request, payment terms, permission checks, and settlement in one trace.",
+  },
+  {
+    title: "See a purchase refused",
+    href: "/demo?scenario=1&tour=1",
+    action: "Try the spending limit",
+    description:
+      "Request the report with the spending-limit scenario. This agent’s mandate cannot cover the price, so the purchase is refused before signing.",
+    evidence: "A spending-limit explanation and no settlement transaction.",
+  },
+  {
+    title: "Inspect the evidence",
+    href: "/feed?view=auditor&tour=1",
+    action: "Open the decision feed",
+    description:
+      "Open a decision to inspect its recorded checks. Compare approved and blocked attempts, then inspect the available on-chain proof.",
+    evidence:
+      "Readable decision records and commitment verification. Viewer roles are a demo, not access control.",
+  },
+] as const;

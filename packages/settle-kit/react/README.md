@@ -98,11 +98,8 @@ be lightweight and must not initiate another payment automatically.
 Tarballs ship compiled ESM JavaScript and TypeScript declarations. Install React 19
 and viem 2. No `transpilePackages` configuration is needed. Both React entry points
 preserve `"use client"` for Next.js. Bun uses the included source entry points.
-Run package `build` before packing; `prepack` also builds automatically. Within
-this workspace, type checks build dependencies first.
-
-Run `bun run smoke:settle-kit` from the repository for an independent, packed-package
-Next production build and browser smoke. It uses a simulated wallet, not a live payment.
+Run package `build` before consuming the package from another app; `prepack` also
+builds automatically. Within this workspace, type checks build dependencies first.
 
 ## Limits
 

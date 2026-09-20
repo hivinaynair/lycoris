@@ -7,7 +7,7 @@ const userOpHash =
 const bundleHash =
   "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" as SettlementHash;
 
-/** Shaped like viem's UserOperationReceiptNotFoundError, which is matched by name. */
+/** Matches viem's `UserOperationReceiptNotFoundError` by `name`. */
 function notFoundError() {
   const error = new Error(`User Operation receipt with hash "${userOpHash}" could not be found.`);
   error.name = "UserOperationReceiptNotFoundError";
@@ -17,7 +17,6 @@ function notFoundError() {
 describe("createUserOpReceiptClient", () => {
   test("reports reverted when the userOp failed inside a bundle that succeeded", async () => {
     const client = createUserOpReceiptClient({
-      // The bundle transaction mined fine; only `success` records what the userOp did.
       getUserOperationReceipt: async () => ({
         success: false,
         receipt: { transactionHash: bundleHash },
@@ -64,8 +63,6 @@ describe("createUserOpReceiptClient", () => {
       timeout: 1_000,
     });
 
-    // confirm() compares this against the hash settle() returned — a userOpHash.
-    // Handing back the bundle hash would read as a replaced transaction.
     expect(receipt.transactionHash).toBe(userOpHash);
     expect(receipt.transactionHash).not.toBe(bundleHash);
   });
@@ -97,7 +94,6 @@ describe("createUserOpReceiptClient", () => {
     let calls = 0;
     const client = createUserOpReceiptClient(
       {
-        // viem's getUserOperationReceipt throws for a pending op; it never returns null.
         getUserOperationReceipt: async () => {
           calls += 1;
           if (calls < 3) throw notFoundError();
@@ -136,7 +132,6 @@ describe("createUserOpReceiptClient", () => {
         timeout: 1_000,
       }),
     ).rejects.toThrow(/bundler unreachable/);
-    // Surfaced on the first poll, not swallowed until the deadline.
     expect(calls).toBe(1);
   });
 

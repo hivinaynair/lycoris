@@ -1,14 +1,14 @@
 import { describe, expect, it } from "bun:test";
 import type { AgentPaymentResult, ResourceQuote } from "@settle-kit/agents";
 import { serializeMandateHeader, signMandate } from "@settle-kit/agents";
-import type { HexAddress } from "@settle-kit/core";
+import type { Address } from "@settle-kit/core";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { SettleMcpOptions } from "../options";
 import { createMemoryStore } from "../store";
 import { payForResourceTool } from "./pay";
 
-const MERCHANT = "0x9999999999999999999999999999999999999999" as HexAddress;
-const OTHER = "0x8888888888888888888888888888888888888888" as HexAddress;
+const MERCHANT = "0x9999999999999999999999999999999999999999" as Address;
+const OTHER = "0x8888888888888888888888888888888888888888" as Address;
 const URL = "https://example.test/api/weather/public";
 const ELSEWHERE = "https://elsewhere.test/x";
 
@@ -18,7 +18,7 @@ const quote: ResourceQuote = {
   challenge: { network: "eip155:84532" },
 };
 
-async function mandate(agent: HexAddress, payTo: HexAddress = MERCHANT) {
+async function mandate(agent: Address, payTo: Address = MERCHANT) {
   const delegator = privateKeyToAccount(generatePrivateKey());
   const payload = {
     agent,
@@ -36,7 +36,7 @@ async function mandate(agent: HexAddress, payTo: HexAddress = MERCHANT) {
 
 function harness(input: {
   header: string;
-  address: HexAddress;
+  address: Address;
   allowlist?: string[];
   quote?: ResourceQuote;
   pay?: AgentPaymentResult;

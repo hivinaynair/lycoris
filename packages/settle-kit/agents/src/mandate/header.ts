@@ -1,6 +1,6 @@
 import { isHex } from "viem";
-import { asAddress, asBigInt, asRecord, asString } from "../decode";
-import type { MandatePayload, SignedMandate } from "./eip712";
+import { asAddress, asBigInt, asRecord, asString } from "../decode.ts";
+import type { MandatePayload, SignedMandate } from "./eip712.ts";
 
 export type MandateHeaderValue = {
   agentId: bigint;
@@ -20,25 +20,24 @@ export type SerializedMandateHeader = {
   signature: string;
 };
 
+/** Serialize a mandate for the `X-AP2-Mandate` request header. */
 export function serializeMandateHeader(value: MandateHeaderValue): string {
-  const { payload, signature } = value.mandate;
   return JSON.stringify({
     agentId: value.agentId.toString(),
     payload: {
-      agent: payload.agent,
-      delegator: payload.delegator,
-      payTo: payload.payTo,
-      maxAmountUsdc: payload.maxAmountUsdc.toString(),
-      expiry: payload.expiry.toString(),
-      nonce: payload.nonce.toString(),
+      agent: value.mandate.payload.agent,
+      delegator: value.mandate.payload.delegator,
+      payTo: value.mandate.payload.payTo,
+      maxAmountUsdc: value.mandate.payload.maxAmountUsdc.toString(),
+      expiry: value.mandate.payload.expiry.toString(),
+      nonce: value.mandate.payload.nonce.toString(),
     },
-    signature,
+    signature: value.mandate.signature,
   } satisfies SerializedMandateHeader);
 }
 
 /**
- * A mandate header is presented by whoever made the request. Every field is checked:
- * a verifier checks the signature against `delegator`, so a malformed one must not pass.
+ * Parse an `X-AP2-Mandate` header. Returns `undefined` when any field is malformed.
  */
 export function parseMandateHeader(json: string): MandateHeaderValue | undefined {
   let parsed: unknown;
@@ -59,17 +58,9 @@ export function parseMandateHeader(json: string): MandateHeaderValue | undefined
   const expiry = asBigInt(body?.expiry);
   const nonce = asBigInt(body?.nonce);
 
-  if (
-    agentId === undefined ||
-    maxAmountUsdc === undefined ||
-    expiry === undefined ||
-    nonce === undefined ||
-    agent === undefined ||
-    delegator === undefined
-  ) {
-    return undefined;
-  }
-  // A mandate with no recipient is valid everywhere. Refuse the old shape.
+  if (agentId === undefined || maxAmountUsdc === undefined) return undefined;
+  if (expiry === undefined || nonce === undefined) return undefined;
+  if (agent === undefined || delegator === undefined) return undefined;
   if (payTo === undefined) return undefined;
   if (!isHex(signature)) return undefined;
 

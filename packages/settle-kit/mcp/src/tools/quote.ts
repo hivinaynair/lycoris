@@ -1,9 +1,9 @@
 import { parseMandateHeader, quoteResource } from "@settle-kit/agents";
-import { preclear } from "../facilitator";
-import { prefixedId, quoteNonceFor } from "../ids";
-import { toMoney } from "../money";
-import type { SettleMcpOptions } from "../options";
-import { jsonError, jsonResult } from "../result";
+import { preclear } from "../facilitator.ts";
+import { prefixedId, quoteNonceFor } from "../ids.ts";
+import { toMoney } from "../money.ts";
+import type { SettleMcpOptions } from "../options.ts";
+import { jsonError, jsonResult } from "../result.ts";
 
 export function isAllowlisted(url: string, allowlist: string[]): boolean {
   return allowlist.includes(url);
