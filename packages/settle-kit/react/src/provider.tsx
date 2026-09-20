@@ -4,7 +4,6 @@ import {
   type CheckoutManager,
   type CheckoutState,
   createCheckout,
-  createSettleConfig,
   type Destination,
 } from "@settle-kit/core";
 import { type ReactNode, useMemo, useRef, useState } from "react";
@@ -55,15 +54,13 @@ export function startCheckout(
     onFailed?: (state: Extract<CheckoutState, { status: "failed" }>) => void;
   },
 ) {
-  return createCheckout(
-    createSettleConfig({
-      destination: input.destination ?? config.destination,
-      getSigner: config.getSigner,
-      methods: config.methods,
-      quoteUrl: config.quoteUrl,
-      onSettled: hooks?.onSettled,
-      onFailed: hooks?.onFailed,
-    }),
-    { amountUsdc: input.amountUsdc, destination: input.destination },
-  );
+  return createCheckout({
+    amountUsdc: input.amountUsdc,
+    destination: input.destination ?? config.destination,
+    getSigner: config.getSigner,
+    methods: config.methods,
+    quoteUrl: config.quoteUrl,
+    onSettled: hooks?.onSettled,
+    onFailed: hooks?.onFailed,
+  });
 }

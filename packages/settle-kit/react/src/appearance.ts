@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 
 /**
- * Theme tokens for the default checkout UI.
+ * Theme tokens for the default checkout card.
  *
  * Provider values merge with per-component values; component values win.
  */
@@ -21,20 +21,6 @@ export type CheckoutAppearance = {
     borderRadius: string;
     controlBorderRadius: string;
   }>;
-  elements?: Partial<
-    Record<
-      | "card"
-      | "header"
-      | "amount"
-      | "paymentMethod"
-      | "primaryButton"
-      | "status"
-      | "details"
-      | "footer"
-      | "error",
-      string
-    >
-  >;
 };
 
 const variableNames = {
@@ -58,11 +44,8 @@ export function resolveAppearance(global?: CheckoutAppearance, local?: CheckoutA
     const value = variables[key];
     if (value !== undefined) style[variableNames[key]] = value;
   }
-  const elements = { ...global?.elements, ...local?.elements };
   return {
     theme: local?.theme ?? global?.theme ?? "inherit",
     style: Object.keys(style).length ? style : undefined,
-    classFor: (element: keyof NonNullable<CheckoutAppearance["elements"]>, base: string) =>
-      [base, elements[element]].filter(Boolean).join(" "),
   };
 }

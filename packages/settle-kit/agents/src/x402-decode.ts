@@ -1,7 +1,8 @@
+import { BASE_SEPOLIA_CAIP2 } from "@settle-kit/core";
 import { asAmount, asRecord, asString } from "./decode.ts";
 import type { ResourceChallenge } from "./types.ts";
 
-export const BASE_SEPOLIA_CAIP2 = "eip155:84532";
+export { BASE_SEPOLIA_CAIP2 };
 
 /** Read a decoded PAYMENT-REQUIRED body. Unreadable fields are omitted. */
 export function challengeFromPaymentRequired(decoded: unknown): ResourceChallenge {

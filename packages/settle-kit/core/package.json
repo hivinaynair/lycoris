@@ -9,11 +9,6 @@
       "bun": "./src/index.ts",
       "default": "./dist/index.js"
     },
-    "./account-abstraction": {
-      "types": "./dist/methods/user-op-receipt.d.ts",
-      "bun": "./src/methods/user-op-receipt.ts",
-      "default": "./dist/methods/user-op-receipt.js"
-    },
     "./package.json": "./package.json"
   },
   "scripts": {

@@ -1,32 +1,25 @@
-import { parseMandateHeader, serializeMandateHeader, verifyMandateLocal } from "@settle-kit/agents";
-import type { Address } from "@settle-kit/core";
-import { lookupRegistered, readUsdcBalance } from "../chain.ts";
-import { prefixedId } from "../ids.ts";
-import { toMoney, wholeUsdcToMoney } from "../money.ts";
+import { parseMandateHeader, verifyMandateLocal } from "@settle-kit/agents";
+import { type Address, formatUsdcAmount } from "@settle-kit/core";
+import { readUsdcBalance } from "../chain.ts";
+import { toMoney } from "../money.ts";
 import type { SettleMcpOptions } from "../options.ts";
 import { jsonError, jsonResult } from "../result.ts";
-import type { PaymentStore } from "../store.ts";
 
 export async function getAgentIdentity(options: SettleMcpOptions) {
   const [signer, mandateHeader] = await Promise.all([options.getSigner(), options.getMandate()]);
   const parsed = parseMandateHeader(mandateHeader);
   const agentId = parsed?.agentId ?? 0n;
-  const registered = await (
-    options.ports?.lookupRegistered ??
-    ((input: { agentId: bigint; address: Address }) => lookupRegistered(input, options))
-  )({
-    agentId,
-    address: signer.address,
-  });
+  const registered = options.ports?.lookupRegistered
+    ? await options.ports.lookupRegistered({ agentId, address: signer.address })
+    : false;
   return jsonResult({
     address: signer.address,
-    agentId: prefixedId("agt", signer.address.toLowerCase()),
     registryId: agentId.toString(),
     registered,
   });
 }
 
-export async function getMandate(options: SettleMcpOptions, store: PaymentStore) {
+export async function getMandate(options: SettleMcpOptions) {
   const [signer, mandateHeader] = await Promise.all([options.getSigner(), options.getMandate()]);
   const parsed = parseMandateHeader(mandateHeader);
   if (!parsed) return jsonError("mandate_invalid", { reason: "mandate_invalid" });
@@ -34,18 +27,13 @@ export async function getMandate(options: SettleMcpOptions, store: PaymentStore)
   const now = options.ports?.now?.() ?? Math.floor(Date.now() / 1000);
   const local = await verifyMandateLocal(parsed.mandate, { agent: signer.address, now });
   const expired = local.ok === false && local.reason === "expired";
-  const cap = wholeUsdcToMoney(parsed.mandate.payload.maxAmountUsdc);
-  const spentAtomic = await spentFromStore(store, signer.address);
-  const remainingAtomic = BigInt(cap.atomic) > spentAtomic ? BigInt(cap.atomic) - spentAtomic : 0n;
+  const capAtomic = (parsed.mandate.payload.maxAmountUsdc * 1_000_000n).toString();
 
   return jsonResult({
-    id: prefixedId("mdt", serializeMandateHeader(parsed)),
     delegator: parsed.mandate.payload.delegator,
     agent: parsed.mandate.payload.agent,
     merchant: parsed.mandate.payload.payTo,
-    cap,
-    spent: toMoney(spentAtomic.toString() === "0" ? "0" : spentAtomic.toString()),
-    remaining: toMoney(remainingAtomic.toString() === "0" ? "0" : remainingAtomic.toString()),
+    cap: { atomic: capAtomic, display: `${formatUsdcAmount(capAtomic)} USDC` },
     expiry: parsed.mandate.payload.expiry.toString(),
     expired,
     valid: local.ok,
@@ -62,11 +50,4 @@ export async function getBalance(options: SettleMcpOptions) {
     address: signer.address,
     balance: toMoney(atomic.toString()),
   });
-}
-
-async function spentFromStore(store: PaymentStore, agent: string): Promise<bigint> {
-  void agent;
-  void store;
-  // Default store has no aggregate index; spent reports zero.
-  return 0n;
 }

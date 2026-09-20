@@ -23,8 +23,3 @@ export function toMoney(amountAtomic: string): Money {
     display: `${decimal} USDC`,
   };
 }
-
-/** Convert whole USDC (mandate cap) to {@link Money}. Wire amounts are always atomic. */
-export function wholeUsdcToMoney(whole: bigint | string): Money {
-  return toMoney((BigInt(whole) * 1_000_000n).toString());
-}

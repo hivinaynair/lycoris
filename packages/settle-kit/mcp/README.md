@@ -83,8 +83,8 @@ Six of the seven are read-only. Money is one object, never a JSON number:
 
 | Tool | Returns |
 | --- | --- |
-| `get_agent_identity` | payer address, `agt_`, ERC-8004 registry id, whether registered |
-| `get_mandate` | `mdt_`, delegator, cap, expiry, bound merchant, spent, remaining |
+| `get_agent_identity` | payer address, ERC-8004 registry id, whether registered |
+| `get_mandate` | delegator, cap, expiry, bound merchant |
 | `get_balance` | USDC balance as a money object |
 | `quote_resource(url)` | x402 terms **and a preclear verdict** |
 | `pay_for_resource(url)` | derived `pay_` id, settlement hash, explorer link |

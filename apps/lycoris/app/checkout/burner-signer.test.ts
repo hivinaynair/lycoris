@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  type Address,
-  BASE_SEPOLIA_CHAIN_ID,
-  type Hex,
-  type SettlementHash,
-} from "@settle-kit/core";
+import type { Address, Hex, SettlementHash } from "@settle-kit/core";
 import { toPaymentSigner, type UserOperationSender } from "./burner-signer";
 
 const smartAccount = { address: "0x1111111111111111111111111111111111111111" as Address };
@@ -21,7 +16,6 @@ function recordingSender() {
   const sent: SentUserOperation[] = [];
   const sender: UserOperationSender = {
     account: smartAccount,
-    chainId: BASE_SEPOLIA_CHAIN_ID,
     sendUserOperation: async (args) => {
       sent.push(args);
       return userOpHash;
@@ -63,18 +57,9 @@ describe("toPaymentSigner", () => {
     expect(hash).toBe(userOpHash);
   });
 
-  test("reports the configured chain id so the SDK's wrong-network check still runs", async () => {
-    const { sender } = recordingSender();
-
-    // `getChainId` is optional on `PaymentSigner`; leaving it off would silently
-    // switch the wrong-network check off for every 4337 buyer.
-    expect(await toPaymentSigner(sender).getChainId?.()).toBe(BASE_SEPOLIA_CHAIN_ID);
-  });
-
   test("propagates a submission failure, which never yielded a hash to report", async () => {
     const sender: UserOperationSender = {
       account: smartAccount,
-      chainId: BASE_SEPOLIA_CHAIN_ID,
       sendUserOperation: async () => {
         throw new Error("bundler rejected the user operation");
       },

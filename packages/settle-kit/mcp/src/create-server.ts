@@ -50,10 +50,10 @@ export function createSettleMcpServer(options: SettleMcpOptions): McpServer {
     "get_mandate",
     {
       title: "Mandate",
-      description: "The configured AP2 mandate: cap, expiry, bound merchant, spent and remaining.",
+      description: "The configured AP2 mandate: cap, expiry, and bound merchant.",
       inputSchema: z.object({}),
     },
-    async () => getMandate(options, store),
+    async () => getMandate(options),
   );
 
   server.registerTool(

@@ -1,33 +1,122 @@
 import { parseUsdcAmount } from "./amounts.ts";
-import { notifyCheckout } from "./checkout-observers.ts";
-import { confirmPayment } from "./confirm-payment.ts";
 import { assertDestination } from "./destination.ts";
 import { invalidConfig, SettleKitError, toSettleError } from "./errors.ts";
+import { createUsdcMethod } from "./methods/usdc.ts";
 import { fetchQuote, validateQuote } from "./quote-client.ts";
 import { type CheckoutAction, IDLE_STATE, reduce } from "./state.ts";
-import type {
-  CheckoutManager,
-  CheckoutState,
-  CreateCheckoutInput,
-  SettleAdapter,
-  SettleConfig,
+import {
+  type CheckoutManager,
+  type CheckoutState,
+  type CreateCheckoutInput,
+  SETTLE_METHOD_IDS,
+  type SettleAdapter,
+  type SettleConfig,
+  type SettlementHash,
 } from "./types.ts";
+
+function resolveConfig(input: CreateCheckoutInput): SettleConfig {
+  if (typeof input.getSigner !== "function") {
+    invalidConfig("getSigner is required");
+  }
+  const destination = input.destination ? assertDestination(input.destination) : undefined;
+  const methods = input.methods ?? [createUsdcMethod()];
+  if (methods.length === 0) invalidConfig("Provide at least one payment method");
+  if (methods.length > 1) invalidConfig("v1 supports one payment method");
+  const method = methods[0];
+  if (!method || !(SETTLE_METHOD_IDS as readonly string[]).includes(method.id))
+    invalidConfig(`Unknown payment method: ${method?.id}`);
+  if (
+    typeof method.quote !== "function" ||
+    typeof method.settle !== "function" ||
+    typeof method.confirm !== "function"
+  )
+    invalidConfig(`Method ${method.id} needs quote, settle, and confirm`);
+  return {
+    ...(destination ? { destination } : {}),
+    getSigner: input.getSigner,
+    methods,
+    ...(input.quoteUrl !== undefined ? { quoteUrl: input.quoteUrl } : {}),
+    ...(input.onSettled ? { onSettled: input.onSettled } : {}),
+    ...(input.onFailed ? { onFailed: input.onFailed } : {}),
+  };
+}
+
+function requireAdapter(methods: SettleAdapter[]): SettleAdapter {
+  const method = methods[0];
+  if (!method) invalidConfig("Provide at least one payment method");
+  return method;
+}
+
+function notifyCheckout(listeners: Set<() => void>, next: CheckoutState, config: SettleConfig) {
+  for (const listener of listeners) {
+    try {
+      listener();
+    } catch (error) {
+      console.error("Settle Kit subscriber failed", error);
+    }
+  }
+  try {
+    if (next.status === "settled") config.onSettled?.(next);
+    if (next.status === "failed") config.onFailed?.(next);
+  } catch (error) {
+    console.error("Settle Kit callback failed", error);
+  }
+}
+
+async function confirmPayment(
+  adapter: SettleAdapter,
+  current: Extract<CheckoutState, { status: "settling" }>,
+  txHash: SettlementHash,
+  setState: (action: CheckoutAction) => void,
+) {
+  try {
+    const result = await adapter.confirm({
+      txHash,
+      quote: current.quote,
+      destination: current.destination,
+    });
+    if (result === "success") setState({ type: "SETTLED", txHash });
+    else if (result === "reverted")
+      setState({
+        type: "FAILED",
+        error: {
+          code: "transfer_failed",
+          message: "The transaction reverted. No USDC was transferred.",
+        },
+      });
+    else throw new Error("Unexpected receipt result");
+  } catch {
+    setState({
+      type: "CONFIRMATION_UNKNOWN",
+      error: {
+        code: "transfer_failed",
+        message:
+          "Confirmation is unavailable. Check this transaction again; do not send another payment.",
+      },
+    });
+  }
+}
 
 /**
  * Start a checkout session for a USDC amount.
  *
- * Call `selectMethod` to quote, then `pay` to submit. The manager is in-memory:
- * keep the page open until confirmation.
+ * Call `quote` to price, then `pay` to submit — or just `pay()` from idle to
+ * do both. The manager is in-memory: keep the page open until confirmation.
  */
-export function createCheckout(config: SettleConfig, input: CreateCheckoutInput): CheckoutManager {
-  const requested = input.destination ?? config.destination;
-  const destination = requested ? assertDestination(requested) : undefined;
+export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
+  const config = resolveConfig(input);
+  const destination = config.destination;
   parseUsdcAmount(input.amountUsdc);
   const amountUsdc = input.amountUsdc.trim();
+  const adapter = requireAdapter(config.methods);
   let state: CheckoutState = IDLE_STATE;
   const listeners = new Set<() => void>();
   let generation = 0;
   let confirming = false;
+
+  function getState(): CheckoutState {
+    return state;
+  }
 
   function setState(action: CheckoutAction) {
     const next = reduce(state, action);
@@ -36,18 +125,34 @@ export function createCheckout(config: SettleConfig, input: CreateCheckoutInput)
     notifyCheckout(listeners, next, config);
   }
 
-  function getAdapter(id: string): SettleAdapter {
-    const adapter = config.methods.find((method) => method.id === id);
-    if (!adapter)
-      invalidConfig(
-        `No configured method has id ${id}; this session has ${config.methods.map((m) => m.id).join(", ")}`,
-      );
-    return adapter;
-  }
-
   function checkExpiry(expiresAt: number) {
     if (expiresAt <= Date.now())
       throw new SettleKitError("quote_expired", "Quote expired before payment");
+  }
+
+  async function quote() {
+    if (state.status !== "idle")
+      invalidConfig(`quote() requires idle; current status is ${state.status}`);
+    const token = ++generation;
+    setState({ type: "QUOTING", amountUsdc });
+    try {
+      const value = config.quoteUrl
+        ? await fetchQuote(config.quoteUrl, { amountUsdc, destination, method: adapter.id })
+        : await adapter.quote({ amountUsdc, destination });
+      if (token !== generation) return;
+      const quoted = validateQuote(value, amountUsdc, destination, adapter.id);
+      const settleTo = quoted.destination ?? destination;
+      if (!settleTo) {
+        invalidConfig(
+          "destination is required: set it on the checkout or return it from the quote",
+        );
+      }
+      setState({ type: "QUOTE_OK", quote: quoted, destination: settleTo });
+    } catch (error) {
+      if (token !== generation) return;
+      setState({ type: "QUOTE_FAILED", error: toSettleError(error) });
+      if (error instanceof SettleKitError && error.code === "invalid_config") throw error;
+    }
   }
 
   async function confirm() {
@@ -59,68 +164,48 @@ export function createCheckout(config: SettleConfig, input: CreateCheckoutInput)
     confirming = true;
     setState({ type: "CONFIRMING" });
     try {
-      await confirmPayment(() => getAdapter(current.quote.method), current, txHash, setState);
+      await confirmPayment(adapter, current, txHash, setState);
     } finally {
       confirming = false;
     }
   }
 
+  async function pay() {
+    if (state.status === "idle") await quote();
+    const current = getState();
+    if (current.status !== "awaiting_payment") {
+      if (current.status === "failed") return;
+      invalidConfig(`pay() requires idle or awaiting_payment; current status is ${current.status}`);
+    }
+    setState({ type: "SETTLING" });
+    try {
+      checkExpiry(current.quote.expiresAt);
+      const signer = await config.getSigner();
+      checkExpiry(current.quote.expiresAt);
+      const txHash = await adapter.settle({
+        quote: current.quote,
+        destination: current.destination,
+        signer,
+      });
+      setState({ type: "SUBMITTED", txHash });
+    } catch (error) {
+      setState({ type: "FAILED", error: toSettleError(error) });
+      if (error instanceof SettleKitError && error.code === "invalid_config") throw error;
+      return;
+    }
+    await confirm();
+  }
+
   return {
-    getState: () => state,
+    getState,
     subscribe(listener) {
       listeners.add(listener);
       return () => {
         listeners.delete(listener);
       };
     },
-    async selectMethod(id) {
-      const adapter = getAdapter(id);
-      if (state.status !== "idle")
-        invalidConfig(`selectMethod requires idle; current status is ${state.status}`);
-      const token = ++generation;
-      setState({ type: "QUOTING", amountUsdc });
-      try {
-        const value = config.quoteUrl
-          ? await fetchQuote(config.quoteUrl, { amountUsdc, destination, method: adapter.id })
-          : await adapter.quote({ amountUsdc, destination });
-        if (token !== generation) return;
-        const quote = validateQuote(value, amountUsdc, destination, adapter.id);
-        const settleTo = quote.destination ?? destination;
-        if (!settleTo) {
-          invalidConfig(
-            "destination is required: set it on the config, pass it to the checkout, or return it from the quote",
-          );
-        }
-        setState({ type: "QUOTE_OK", quote, destination: settleTo });
-      } catch (error) {
-        if (token !== generation) return;
-        setState({ type: "QUOTE_FAILED", error: toSettleError(error) });
-        if (error instanceof SettleKitError && error.code === "invalid_config") throw error;
-      }
-    },
-    async pay() {
-      if (state.status !== "awaiting_payment")
-        invalidConfig(`pay() requires awaiting_payment; current status is ${state.status}`);
-      const current = state;
-      const adapter = getAdapter(current.quote.method);
-      setState({ type: "SETTLING" });
-      try {
-        checkExpiry(current.quote.expiresAt);
-        const signer = await config.getSigner();
-        checkExpiry(current.quote.expiresAt);
-        const txHash = await adapter.settle({
-          quote: current.quote,
-          destination: current.destination,
-          signer,
-        });
-        setState({ type: "SUBMITTED", txHash });
-      } catch (error) {
-        setState({ type: "FAILED", error: toSettleError(error) });
-        if (error instanceof SettleKitError && error.code === "invalid_config") throw error;
-        return;
-      }
-      await confirm();
-    },
+    quote,
+    pay,
     retryConfirmation: confirm,
     reset() {
       if (state.status === "settling")

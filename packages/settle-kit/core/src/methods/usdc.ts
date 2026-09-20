@@ -1,4 +1,5 @@
-import { encodeFunctionData } from "viem";
+import { createPublicClient, encodeFunctionData, http } from "viem";
+import { baseSepolia } from "viem/chains";
 import { parseUsdcAmount } from "../amounts.ts";
 import { assertDestination } from "../destination.ts";
 import { SettleKitError } from "../errors.ts";
@@ -55,10 +56,7 @@ export type UsdcMethodOptions = {
   quoteTtlMs?: number | undefined;
   now?: (() => number) | undefined;
   requestId?: (() => string) | undefined;
-  /**
-   * Adapter id. Defaults to `"usdc"`. Use `"usdc-4337"` (or a distinct id) when
-   * configuring more than one method so `selectMethod` can tell them apart.
-   */
+  /** Adapter id. Defaults to `"usdc"`. Pass `"usdc-4337"` with a `receiptClient`. */
   id?: SettleMethodId | undefined;
 };
 
@@ -90,15 +88,6 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
     async settle({ quote, destination, signer }) {
       assertDestination(destination);
       validateQuote(quote, quote.amountUsdc, destination, id);
-      if (signer.getChainId) {
-        const chainId = await signer.getChainId();
-        if (chainId !== destination.targetChain) {
-          throw new SettleKitError(
-            "wrong_network",
-            `Wallet is on chain ${chainId}; destination is ${destination.targetChain}`,
-          );
-        }
-      }
 
       const required = BigInt(quote.amountAtomic);
       const request = {
@@ -109,7 +98,7 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
       } as const;
       const balance = options.client
         ? await options.client.readContract(request)
-        : await (await importPublicClient(destination.targetChain)).readContract(request);
+        : await getUsdcPublicClient(destination.targetChain).readContract(request);
 
       if (balance < required) {
         throw new SettleKitError(
@@ -133,7 +122,7 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
       });
     },
     async confirm({ txHash, destination }) {
-      const client = options.receiptClient ?? (await importPublicClient(destination.targetChain));
+      const client = options.receiptClient ?? getUsdcPublicClient(destination.targetChain);
       const receipt = await client.waitForTransactionReceipt({
         hash: txHash,
         confirmations: 1,
@@ -146,7 +135,9 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
   };
 }
 
-async function importPublicClient(chainId: number) {
-  const { getUsdcPublicClient } = await import("./usdc-client.ts");
-  return getUsdcPublicClient(chainId);
+function getUsdcPublicClient(chainId: number) {
+  if (chainId !== baseSepolia.id) {
+    throw new SettleKitError("wrong_network", `No public client for chain ${chainId}`);
+  }
+  return createPublicClient({ chain: baseSepolia, transport: http() });
 }

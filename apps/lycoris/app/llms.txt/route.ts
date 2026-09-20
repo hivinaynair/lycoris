@@ -13,9 +13,9 @@ const body = `# Lycoris · Settle Kit
 
 ## Packages
 
-- @settle-kit/core: headless checkout sessions, USDC balance preflight, transfer submission, receipt confirmation. No React, DOM, wagmi or x402.
-- @settle-kit/react: SettleProvider, useCheckout, and an optional checkout UI. React 19 and viem 2.
-- @settle-kit/agents: x402 paid fetch and AP2 mandate helpers.
+- @settle-kit/core: createCheckout({ amountUsdc, getSigner, destination }). pay() quotes and submits; settled waits for a receipt. No React, DOM, wagmi or x402.
+- @settle-kit/react: SettleProvider, useCheckout (begin / pay / payNow), optional Checkout card. React 19 and viem 2.
+- @settle-kit/agents: createPaidFetch + payForResource, AP2 mandate helpers, facilitator preclear.
 - @settle-kit/server: a Next.js paid-route wrapper.
 - @settle-kit/mcp: a local stdio MCP server that buys x402-gated resources. Modern-only (2026-07-28). bunx @settle-kit/mcp does not work yet; nothing is published.
 
@@ -42,8 +42,8 @@ payment is attempted.
 
 ## Writing a signer
 
-The SDK ships no wallet library. A host implements three fields — address,
-sendTransaction, getChainId — and keeps its own wallet stack. ERC-4337 smart
+The SDK ships no wallet library. A host implements two fields — address and
+sendTransaction — and keeps its own wallet stack. ERC-4337 smart
 accounts satisfy the same interface; the hash they return is a userOpHash, and
 confirmation must read UserOperationEvent.success rather than the bundle
 transaction's status.

@@ -35,9 +35,9 @@ function WalletSection() {
   return (
     <DocsSection id="wallet" title="Bring your wallet">
       <p>
-        The host owns wallet connection. PaymentSigner needs an address and sendTransaction; provide
-        getChainId so the SDK can check the network before sending. The buyer needs test USDC and
-        Base Sepolia ETH for gas.
+        The host owns wallet connection and the network. PaymentSigner needs an address and
+        sendTransaction. Put the wallet on Base Sepolia before pay() — the SDK does not ask for a
+        chain id. The buyer needs test USDC and Base Sepolia ETH for gas.
       </p>
       <p className="text-muted-foreground">
         The public demo uses a separate sponsored adapter: a server faucet funds a browser-owned
@@ -99,9 +99,7 @@ function AppearanceSection() {
       </p>
       <CodeExample title="Appearance configuration" code={examples.appearance} />
       <p className="text-muted-foreground">
-        variables set inline CSS custom properties; elements add classes to slots such as card and
-        primaryButton. For a CSP that forbids style attributes, use classes and an external
-        stylesheet instead.
+        variables set CSS custom properties on the card. Use className for extra host styles.
       </p>
     </DocsSection>
   );

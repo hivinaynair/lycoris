@@ -20,9 +20,8 @@ export type SerializedMandateHeader = {
   signature: string;
 };
 
-/** Serialize a mandate for the `X-AP2-Mandate` request header. */
-export function serializeMandateHeader(value: MandateHeaderValue): string {
-  return JSON.stringify({
+export function toSerializedMandateHeader(value: MandateHeaderValue): SerializedMandateHeader {
+  return {
     agentId: value.agentId.toString(),
     payload: {
       agent: value.mandate.payload.agent,
@@ -33,21 +32,19 @@ export function serializeMandateHeader(value: MandateHeaderValue): string {
       nonce: value.mandate.payload.nonce.toString(),
     },
     signature: value.mandate.signature,
-  } satisfies SerializedMandateHeader);
+  };
+}
+
+/** Serialize a mandate for the `X-AP2-Mandate` request header. */
+export function serializeMandateHeader(value: MandateHeaderValue): string {
+  return JSON.stringify(toSerializedMandateHeader(value));
 }
 
 /**
  * Parse an `X-AP2-Mandate` header. Returns `undefined` when any field is malformed.
  */
-export function parseMandateHeader(json: string): MandateHeaderValue | undefined {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(json);
-  } catch {
-    return undefined;
-  }
-
-  const value = asRecord(parsed);
+export function parseSerializedMandateHeader(raw: unknown): MandateHeaderValue | undefined {
+  const value = asRecord(raw);
   const body = asRecord(value?.payload);
   const agentId = asBigInt(value?.agentId);
   const signature = asString(value?.signature);
@@ -66,4 +63,12 @@ export function parseMandateHeader(json: string): MandateHeaderValue | undefined
 
   const payload: MandatePayload = { agent, delegator, payTo, maxAmountUsdc, expiry, nonce };
   return { agentId, mandate: { payload, signature } };
+}
+
+export function parseMandateHeader(json: string): MandateHeaderValue | undefined {
+  try {
+    return parseSerializedMandateHeader(JSON.parse(json));
+  } catch {
+    return undefined;
+  }
 }

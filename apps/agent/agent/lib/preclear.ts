@@ -1,6 +1,11 @@
 import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES } from "@repo/shared/mandate";
 import type { MandateHeaderValue } from "@repo/shared/mandate-header";
 import type { DecisionRecord, RawMandate } from "@repo/shared/types";
+import {
+  type PreclearResult,
+  getDecisionRecord as pollDecisionRecord,
+  preclear,
+} from "@settle-kit/agents";
 
 export function toRawMandate(entry: MandateHeaderValue): RawMandate {
   return {
@@ -27,7 +32,7 @@ export function toRawMandate(entry: MandateHeaderValue): RawMandate {
   };
 }
 
-export type PreclearResult = { ok: true } | { ok: false; reason: string };
+export type { PreclearResult };
 
 export async function preclearPayment(input: {
   amountAtomic: bigint;
@@ -35,29 +40,15 @@ export async function preclearPayment(input: {
   payer: string;
   resource: string;
 }): Promise<PreclearResult> {
-  const baseUrl = process.env.FACILITATOR_URL?.replace(/\/+$/, "");
-  if (!baseUrl) return { ok: false, reason: "facilitator_unreachable" };
-
-  const response = await fetch(`${baseUrl}/preclear`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "X-AP2-Mandate": input.mandateHeader,
-    },
-    body: JSON.stringify({
-      payer: input.payer,
-      amountAtomic: input.amountAtomic.toString(),
-      resource: input.resource,
-    }),
-  }).catch(() => undefined);
-
-  if (!response?.ok) {
-    return { ok: false, reason: "facilitator_unreachable" };
-  }
-
-  const body = (await response.json().catch(() => undefined)) as PreclearResult | undefined;
-  if (!body) return { ok: false, reason: "facilitator_unreachable" };
-  return body;
+  const facilitatorUrl = process.env.FACILITATOR_URL;
+  if (!facilitatorUrl) return { ok: false, reason: "facilitator_unreachable" };
+  return preclear({
+    facilitatorUrl,
+    amountAtomic: input.amountAtomic.toString(),
+    mandateHeader: input.mandateHeader,
+    payer: input.payer,
+    resource: input.resource,
+  });
 }
 
 export async function getDecisionRecord(
@@ -68,6 +59,8 @@ export async function getDecisionRecord(
   },
   retries = 5,
 ): Promise<DecisionRecord | undefined> {
-  const { getDecisionRecord: poll } = await import("@repo/shared/facilitator");
-  return poll({ ...input, facilitatorUrl: process.env.FACILITATOR_URL }, retries);
+  return pollDecisionRecord(
+    { ...input, facilitatorUrl: process.env.FACILITATOR_URL },
+    retries,
+  ) as Promise<DecisionRecord | undefined>;
 }

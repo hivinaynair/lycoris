@@ -5,11 +5,8 @@ import type { SettleError, SettleErrorCode } from "./types.ts";
 export class SettleKitError extends BaseError {
   readonly code: SettleErrorCode;
 
-  constructor(code: SettleErrorCode, message: string, options: { docsPath?: string } = {}) {
-    super(message, {
-      name: "SettleKitError",
-      ...(options.docsPath ? { docsPath: options.docsPath } : {}),
-    });
+  constructor(code: SettleErrorCode, message: string) {
+    super(message, { name: "SettleKitError" });
     this.code = code;
   }
 }

@@ -4,10 +4,10 @@ import {
   type Address,
   BASE_SEPOLIA_USDC_ADDRESS,
   createUsdcMethod,
+  createUserOpReceiptClient,
   type SettleAdapter,
   SettleKitError,
 } from "@settle-kit/core";
-import { createUserOpReceiptClient } from "@settle-kit/core/account-abstraction";
 import { createPublicClient, erc20Abi, http } from "viem";
 import { createBundlerClient, toCoinbaseSmartAccount } from "viem/account-abstraction";
 import { privateKeyToAccount } from "viem/accounts";
@@ -85,7 +85,6 @@ async function waitForFunding(payer: Address, required: bigint) {
 
 export function createSponsoredPayment(recipient: Address) {
   const method = createUsdcMethod({
-    // A second method, so `methods` and `selectMethod` finally mean something.
     id: "usdc-4337",
     // Same client waitForFunding polls. A second `http()` is a different
     // load-balanced node, and preflight then fails with insufficient USDC for a
@@ -169,7 +168,6 @@ export function createSponsoredPayment(recipient: Address) {
       const account = await burnerAccount();
       return toPaymentSigner({
         account,
-        chainId: baseSepolia.id,
         sendUserOperation: (args) => bundler.sendUserOperation(args),
       });
     },

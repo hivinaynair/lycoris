@@ -228,6 +228,8 @@
       "name": "@repo/shared",
       "version": "0.0.1",
       "dependencies": {
+        "@settle-kit/agents": "workspace:*",
+        "@settle-kit/core": "workspace:*",
         "viem": "^2",
       },
       "devDependencies": {

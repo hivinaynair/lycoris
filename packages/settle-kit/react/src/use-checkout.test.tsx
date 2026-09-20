@@ -144,13 +144,7 @@ it("keeps actions stable and uses the latest committed callbacks during a paymen
       <Buyer callback={first} />
     </SettleProvider>,
   );
-  const actions = [
-    checkout.begin,
-    checkout.pay,
-    checkout.reset,
-    checkout.selectMethod,
-    checkout.retryConfirmation,
-  ];
+  const actions = [checkout.begin, checkout.pay, checkout.reset, checkout.retryConfirmation];
   expect(checkout.canPay).toBe(false);
   await act(async () => {
     await checkout.begin({ amountUsdc: "4" });
@@ -167,13 +161,9 @@ it("keeps actions stable and uses the latest committed callbacks during a paymen
       <Buyer callback={latest} />
     </SettleProvider>,
   );
-  expect([
-    checkout.begin,
-    checkout.pay,
-    checkout.reset,
-    checkout.selectMethod,
-    checkout.retryConfirmation,
-  ]).toEqual(actions);
+  expect([checkout.begin, checkout.pay, checkout.reset, checkout.retryConfirmation]).toEqual(
+    actions,
+  );
   await act(async () => {
     confirm({ status: "success", transactionHash: hash });
     await payment;
@@ -209,16 +199,15 @@ it("supports UI labels, className, destination override and lifecycle callbacks"
         amountUsdc="7"
         destination={override}
         className="merchant-brand"
-        labels={{ buy: "Review order", pay: "Confirm order", reset: "Try again" }}
         onFailed={onFailed}
       />
     </SettleProvider>,
   );
-  expect(
-    screen.getByRole("button", { name: "Review order" }).closest("section")?.className,
-  ).toContain("merchant-brand");
+  expect(screen.getByRole("button", { name: "Buy" }).closest("section")?.className).toContain(
+    "merchant-brand",
+  );
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Review order" }));
+    fireEvent.click(screen.getByRole("button", { name: "Buy" }));
   });
   expect(observer.state).toMatchObject({
     status: "awaiting_payment",
@@ -226,10 +215,10 @@ it("supports UI labels, className, destination override and lifecycle callbacks"
     quote: { amountUsdc: "7" },
   });
   await act(async () => {
-    fireEvent.click(screen.getByRole("button", { name: "Confirm order" }));
+    fireEvent.click(screen.getByRole("button", { name: "Pay 7 USDC" }));
   });
   expect(onFailed).toHaveBeenCalledTimes(1);
-  expect(screen.getByRole("button", { name: "Try again" })).toBeTruthy();
+  expect(screen.getByRole("button", { name: "Reset" })).toBeTruthy();
 });
 
 it("merges Provider appearance with local overrides without resetting a checkout", async () => {
@@ -249,7 +238,6 @@ it("merges Provider appearance with local overrides without resetting a checkout
       appearance={{
         theme,
         variables: { borderRadius: "24px", colorPrimary: "red" },
-        elements: { card: "host-card", primaryButton: "host-button" },
       }}
     >
       <Observer />
@@ -257,7 +245,6 @@ it("merges Provider appearance with local overrides without resetting a checkout
         amountUsdc="4"
         appearance={{
           variables: { colorPrimary: "blue" },
-          elements: { primaryButton: "local-button" },
         }}
       />
     </SettleProvider>
@@ -267,9 +254,6 @@ it("merges Provider appearance with local overrides without resetting a checkout
   if (!card) throw new Error("Checkout card not rendered");
   expect(card.style.getPropertyValue("--sk-radius")).toBe("24px");
   expect(card.style.getPropertyValue("--sk-primary")).toBe("blue");
-  expect(card.className).toContain("host-card");
-  expect(screen.getByRole("button", { name: "Buy" }).className).toContain("local-button");
-  expect(screen.getByRole("button", { name: "Buy" }).className).not.toContain("host-button");
   await act(async () => {
     await checkout.begin({ amountUsdc: "4" });
   });

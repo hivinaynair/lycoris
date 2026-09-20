@@ -1,11 +1,9 @@
-import type { Address } from "@settle-kit/core";
-
-export const MANDATE_CHAIN_ID = 84532;
+import { type Address, BASE_SEPOLIA_CHAIN_ID } from "@settle-kit/core";
 
 export const MANDATE_EIP712_DOMAIN = {
   name: "AP2Mandate",
   version: "1",
-  chainId: MANDATE_CHAIN_ID,
+  chainId: BASE_SEPOLIA_CHAIN_ID,
 } as const;
 
 export const MANDATE_EIP712_TYPES = {

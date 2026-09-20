@@ -1,5 +1,5 @@
 import type { AgentPaymentResult, createPaidFetch, ResourceQuote } from "@settle-kit/agents";
-import type { Address } from "@settle-kit/core";
+import { type Address, BASE_SEPOLIA_CAIP2 } from "@settle-kit/core";
 import type { PaymentStore } from "./store.ts";
 
 export type SettleMcpSigner = {
@@ -39,6 +39,6 @@ export type SettleMcpOptions = {
   ports?: SettleMcpPorts;
 };
 
-export const BASE_SEPOLIA_CAIP2 = "eip155:84532";
+export { BASE_SEPOLIA_CAIP2 };
 /** ERC-8004 identity registry on Base Sepolia. */
 export const ERC8004_REGISTRY = "0x8004A818BFB912233c491871b3d84c89A494BD9e" as Address;

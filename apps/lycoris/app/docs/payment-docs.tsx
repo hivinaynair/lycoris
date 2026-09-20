@@ -44,9 +44,8 @@ function CoreSection() {
   return (
     <DocsSection id="core" title="Use the headless engine">
       <p>
-        Core works without React. Subscribe to the manager, render from getState(), and call the
-        payment actions from your host UI. Unlike React’s begin, the core API requires
-        selectMethod("usdc") before pay().
+        Core works without React. Subscribe to the manager, render from getState(), and call pay()
+        from idle to quote and submit, or quote() then pay() if you want a review step.
       </p>
       <CodeExample title="payment.ts" code={examples.headless} language="typescript" />
     </DocsSection>
@@ -112,7 +111,7 @@ function LimitsSection() {
         </li>
         <li>
           The playground makes real Base Sepolia transfers from a dedicated demo wallet. Its
-          lifetime budget is ten purchases (1 test USDC); report access lasts 15 minutes.
+          lifetime budget is 50 purchases (5 test USDC); report access lasts 15 minutes.
         </li>
         <li>
           The SDK is not published to npm. Local tarballs and an independent consumer are the

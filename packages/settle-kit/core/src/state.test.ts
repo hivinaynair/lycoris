@@ -1,7 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import { createCheckout } from "./create-checkout";
-import { createSettleConfig } from "./create-settle-config";
-import { SettleKitError } from "./errors";
 import { IDLE_STATE, reduce } from "./state";
 import {
   BASE_SEPOLIA_CHAIN_ID,
@@ -57,22 +55,19 @@ describe("checkout reducer", () => {
   });
 
   it("maps an expired quote to failed without settling", async () => {
-    const checkout = createCheckout(
-      createSettleConfig({
-        destination,
-        getSigner: async () => {
-          throw new Error("signer should not be requested");
-        },
-        methods: [
-          adapter({
-            quote: async () => ({ ...quote, expiresAt: Date.now() - 1 }),
-          }),
-        ],
-      }),
-      { amountUsdc: "12.50" },
-    );
+    const checkout = createCheckout({
+      destination,
+      amountUsdc: "12.50",
+      getSigner: async () => {
+        throw new Error("signer should not be requested");
+      },
+      methods: [
+        adapter({
+          quote: async () => ({ ...quote, expiresAt: Date.now() - 1 }),
+        }),
+      ],
+    });
 
-    await checkout.selectMethod("usdc");
     await checkout.pay();
     const state = checkout.getState();
     expect(state.status).toBe("failed");
@@ -81,43 +76,36 @@ describe("checkout reducer", () => {
     }
   });
 
-  it("throws invalid_config when pay() is called while idle", async () => {
-    const checkout = createCheckout(
-      createSettleConfig({
-        destination,
-        getSigner: async () => {
-          throw new Error("unused");
-        },
-        methods: [adapter()],
+  it("quotes and pays from idle in one call", async () => {
+    const checkout = createCheckout({
+      destination,
+      amountUsdc: "12.50",
+      getSigner: async () => ({
+        address: "0x2222222222222222222222222222222222222222",
+        sendTransaction: async () =>
+          "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
       }),
-      { amountUsdc: "12.50" },
-    );
+      methods: [adapter()],
+    });
 
     expect(checkout.getState().status).toBe("idle");
-    try {
-      await checkout.pay();
-      throw new Error("expected pay() to throw");
-    } catch (error) {
-      expect(error).toBeInstanceOf(SettleKitError);
-      expect((error as SettleKitError).code).toBe("invalid_config");
-    }
+    await checkout.pay();
+    expect(checkout.getState().status).toBe("settled");
   });
 
-  it("reaches settled through the manager", async () => {
-    const checkout = createCheckout(
-      createSettleConfig({
-        destination,
-        getSigner: async () => ({
-          address: "0x2222222222222222222222222222222222222222",
-          sendTransaction: async () =>
-            "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
-        }),
-        methods: [adapter()],
+  it("reaches settled through quote then pay", async () => {
+    const checkout = createCheckout({
+      destination,
+      amountUsdc: "12.50",
+      getSigner: async () => ({
+        address: "0x2222222222222222222222222222222222222222",
+        sendTransaction: async () =>
+          "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
       }),
-      { amountUsdc: "12.50" },
-    );
+      methods: [adapter()],
+    });
 
-    await checkout.selectMethod("usdc");
+    await checkout.quote();
     await checkout.pay();
     const state = checkout.getState();
     expect(state.status).toBe("settled");

@@ -55,7 +55,6 @@ export async function getSigner(provider: EIP1193Provider): Promise<PaymentSigne
   if (!account) throw new Error("Connect a wallet first.");
   return {
     address: account,
-    getChainId: () => wallet.getChainId(),
     sendTransaction: ({ to, data }) => wallet.sendTransaction({
       account, chain: baseSepolia, to, data,
     }),
@@ -88,12 +87,14 @@ export function BuyReport() {
   }
 }`;
 
-export const appearance = `<SettleProvider config={config} appearance={{
-  theme: "inherit", // also "light" or "dark"
-  variables: { borderRadius: "16px", controlBorderRadius: "8px" },
-  elements: { primaryButton: "your-button-class" },
-}}>
-  <Checkout amountUsdc="0.1" labels={{ buy: "Review order" }} />
+export const appearance = `<SettleProvider
+  config={config}
+  appearance={{
+    theme: "inherit", // also "light" or "dark"
+    variables: { borderRadius: "16px", colorPrimary: "var(--primary)" },
+  }}
+>
+  <Checkout amountUsdc="0.1" className="your-checkout" />
 </SettleProvider>`;
 
 export const paidFetch = `import { createPaidFetch, payForResource } from "@settle-kit/agents";
@@ -124,10 +125,11 @@ export const GET = withAgenticPayment(
   },
 );`;
 
-export const headless = `import { createCheckout, createSettleConfig, type PaymentSigner } from "@settle-kit/core";
+export const headless = `import { createCheckout, type PaymentSigner } from "@settle-kit/core";
 
 export function preparePayment(getSigner: () => Promise<PaymentSigner>) {
-  const config = createSettleConfig({
+  return createCheckout({
+    amountUsdc: "0.1",
     getSigner,
     destination: {
       targetChain: 84532,
@@ -135,10 +137,8 @@ export function preparePayment(getSigner: () => Promise<PaymentSigner>) {
       recipient: "0x1111111111111111111111111111111111111111", // replace
     },
   });
-  const checkout = createCheckout(config, { amountUsdc: "0.1" });
-  return checkout;
 }
 
-// Subscribe to getState(), then await checkout.selectMethod("usdc").
-// After the buyer confirms your review UI, await checkout.pay().
-// Unsubscribe when the host view is disposed.`;
+// checkout.subscribe(() => render(checkout.getState()));
+// await checkout.pay(); // quotes, submits, waits for a receipt
+// or: await checkout.quote(); then await checkout.pay();`;

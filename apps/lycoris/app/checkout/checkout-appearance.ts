@@ -26,7 +26,6 @@ export const appearances: Record<Look, CheckoutAppearance> = {
       borderRadius: "var(--radius)",
       controlBorderRadius: "var(--radius)",
     },
-    elements: { primaryButton: "tracking-[0.02em]" },
   },
   custom: { theme: "inherit" },
 };

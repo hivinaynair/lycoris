@@ -1,13 +1,12 @@
 # Writing a `PaymentSigner`
 
-Settle Kit ships no wallet library. It asks the host for three things and stays
+Settle Kit ships no wallet library. It asks the host for two things and stays
 out of the way:
 
 ```ts
 type PaymentSigner = {
   address: Address;
   sendTransaction: (tx: { to: Address; data: Hex }) => Promise<SettlementHash>;
-  getChainId?: () => Promise<number>;
 };
 ```
 
@@ -28,7 +27,6 @@ export const wagmiSigner = (client: WalletClient): PaymentSigner => ({
   address: client.account.address,
   sendTransaction: (tx) =>
     client.sendTransaction({ ...tx, account: client.account, chain: null }),
-  getChainId: () => client.getChainId(),
 });
 ```
 
@@ -51,7 +49,6 @@ const [address] = await client.requestAddresses();
 const signer: PaymentSigner = {
   address,
   sendTransaction: (tx) => client.sendTransaction({ ...tx, account: address, chain: null }),
-  getChainId: () => client.getChainId(),
 };
 ```
 
@@ -75,7 +72,6 @@ export function cdpSigner(address: Address): PaymentSigner {
       });
       return transactionHash;
     },
-    getChainId: async () => 84532,
   };
 }
 ```
@@ -93,7 +89,6 @@ const signer: PaymentSigner = {
   address: account.address,
   sendTransaction: ({ to, data }) =>
     bundler.sendUserOperation({ account, calls: [{ to, value: 0n, data }] }),
-  getChainId: async () => baseSepolia.id,
 };
 ```
 
@@ -139,9 +134,10 @@ including the poll loop viem's throwing not-found error requires.
 
 ## What the SDK does with your signer
 
-`settle` checks the chain id if you supplied `getChainId`, reads the payer's USDC
-balance before sending anything, and only then calls `sendTransaction`. The hash
-you return is handed to `confirm`, which decides `success` or `reverted`.
+`settle` reads the payer's USDC balance before sending anything, then calls
+`sendTransaction`. The hash you return is handed to `confirm`, which decides
+`success` or `reverted`. Put the wallet on Base Sepolia before `pay()` — the
+SDK does not ask for a chain id.
 
 Throwing from `sendTransaction` means the payment was not submitted. Returning a
 hash means it was, and nothing more — settlement is `confirm`'s answer to give.

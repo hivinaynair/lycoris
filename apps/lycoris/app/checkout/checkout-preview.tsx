@@ -33,15 +33,12 @@ export function CheckoutPreview({ look }: { look: Look }) {
             amountUsdc={WEATHER_PRICE_USDC}
             title={WEATHER_TITLE}
             transactionUrl={settlementUrl}
-            labels={{
-              buy: `Pay ${WEATHER_PRICE_USDC} USDC`,
+            copy={{
               paymentMethod: "Demo wallet",
               networkFee: "Paid by the demo in test ETH. Your wallet is never charged.",
               recoveryDescription:
                 "Your purchase is saved in this browser. If interrupted, return here to check the same payment without sending it again.",
               idleDescription: "We cover this payment and network fees. Just click Pay.",
-              // The two real waits, named as they happen: a static line here reads as
-              // a frozen screen, and this is the only evidence a smart account exists.
               pendingWallet: phase ? SETTLE_PHASE_LABEL[phase] : "Sending your sponsored payment…",
               reviewDescription: "Paid by the demo wallet on Base Sepolia.",
             }}

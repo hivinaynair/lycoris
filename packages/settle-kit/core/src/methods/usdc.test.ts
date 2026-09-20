@@ -1,6 +1,5 @@
 import { describe, expect, it } from "bun:test";
 import { createCheckout } from "../create-checkout";
-import { createSettleConfig } from "../create-settle-config";
 import { SettleKitError } from "../errors";
 import {
   BASE_SEPOLIA_CHAIN_ID,
@@ -77,26 +76,23 @@ describe("createUsdcMethod", () => {
 
   it("records failed insufficient_usdc on the session without sending a tx", async () => {
     let sent = false;
-    const checkout = createCheckout(
-      createSettleConfig({
-        destination,
-        getSigner: async () => ({
-          address: "0x2222222222222222222222222222222222222222",
-          sendTransaction: async () => {
-            sent = true;
-            return "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca";
-          },
-        }),
-        methods: [
-          createUsdcMethod({
-            client: { readContract: async () => 0n },
-          }),
-        ],
+    const checkout = createCheckout({
+      destination,
+      amountUsdc: "12.50",
+      getSigner: async () => ({
+        address: "0x2222222222222222222222222222222222222222",
+        sendTransaction: async () => {
+          sent = true;
+          return "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca";
+        },
       }),
-      { amountUsdc: "12.50" },
-    );
+      methods: [
+        createUsdcMethod({
+          client: { readContract: async () => 0n },
+        }),
+      ],
+    });
 
-    await checkout.selectMethod("usdc");
     await checkout.pay();
     const state = checkout.getState();
     expect(state.status).toBe("failed");

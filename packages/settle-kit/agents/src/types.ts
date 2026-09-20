@@ -24,7 +24,6 @@ export type AgentPaymentResult = {
   authorizationNonce?: string | undefined;
   /** Challenge error, or an upstream error body. */
   error?: string | undefined;
-  basescan?: string | undefined;
   challenge?: ResourceChallenge | undefined;
 };
 

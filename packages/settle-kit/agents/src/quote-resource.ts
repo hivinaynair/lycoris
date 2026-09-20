@@ -1,8 +1,8 @@
-import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
+import { BASE_SEPOLIA_CAIP2 } from "@settle-kit/core";
 import { decodePaymentRequiredHeader } from "@x402/core/http";
 import { asAddress, asAmount, asRecord, asString } from "./decode.ts";
 import type { ResourceQuote } from "./types.ts";
-import { BASE_SEPOLIA_CAIP2, challengeFromPaymentRequired } from "./x402-decode.ts";
+import { challengeFromPaymentRequired } from "./x402-decode.ts";
 
 /**
  * Discover x402 terms for a URL without paying.
@@ -36,8 +36,4 @@ export async function quoteResource(
     ...(payTo ? { payTo } : {}),
     challenge: challengeFromPaymentRequired(decoded),
   };
-}
-
-export function explorerUrl(txHash?: string) {
-  return txHash ? `${BASE_SEPOLIA_EXPLORER}/tx/${txHash}` : undefined;
 }

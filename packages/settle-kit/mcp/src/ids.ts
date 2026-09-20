@@ -21,10 +21,6 @@ export function derivePaymentId(event: PaymentEvent): string {
   ])}`;
 }
 
-export function prefixedId(prefix: "agt" | "mdt" | "qte", value: string): string {
-  return `${prefix}_${digest([value])}`;
-}
-
 export function quoteNonceFor(input: {
   amountAtomic: string;
   payTo?: string | undefined;

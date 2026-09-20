@@ -1,4 +1,4 @@
-import { BASE_SEPOLIA_EXPLORER } from "@settle-kit/core";
+import { explorerUrl } from "@settle-kit/core";
 import type { DecisionRecord } from "./facilitator.ts";
 import type { Money } from "./money.ts";
 
@@ -22,9 +22,7 @@ export type PaymentStore = {
   put(payId: string, record: PaymentRecord): Promise<void>;
 };
 
-export function explorerUrl(hash?: string): string | undefined {
-  return hash ? `${BASE_SEPOLIA_EXPLORER}/tx/${hash}` : undefined;
-}
+export { explorerUrl };
 
 /** In-memory idempotency store. Completions are forgotten on process restart. */
 export function createMemoryStore(): PaymentStore {

@@ -1,6 +1,5 @@
 import { describe, expect, it, mock } from "bun:test";
 import { createCheckout } from "./create-checkout";
-import { createSettleConfig } from "./create-settle-config";
 import { createUsdcMethod } from "./methods/usdc";
 import { validateQuote } from "./quote-client";
 import {
@@ -37,14 +36,16 @@ function fixture(overrides: Partial<SettleAdapter> = {}, getSigner?: () => Promi
   const onSettled = mock(() => {});
   const settle = mock(async () => hash);
   const confirm = mock(async () => "success" as const);
-  const config = createSettleConfig({
+  const config = {
     destination,
     getSigner: getSigner ?? (async () => signer),
-    methods: [{ id: "usdc", quote: async () => makeQuote(), settle, confirm, ...overrides }],
+    methods: [
+      { id: "usdc" as const, quote: async () => makeQuote(), settle, confirm, ...overrides },
+    ],
     onSettled,
-  });
+  };
   return {
-    manager: createCheckout(config, { amountUsdc: "12.50" }),
+    manager: createCheckout({ ...config, amountUsdc: "12.50" }),
     config,
     settle,
     confirm,
@@ -58,7 +59,7 @@ describe("checkout payment safety", () => {
   it("does not settle or call the host before the receipt succeeds", async () => {
     const receipt = deferred<"success">();
     const f = fixture({ confirm: () => receipt.promise });
-    await f.manager.selectMethod("usdc");
+    await f.manager.quote();
     const payment = f.manager.pay();
     await Promise.resolve();
     await Promise.resolve();
@@ -78,7 +79,7 @@ describe("checkout payment safety", () => {
         return "success";
       },
     });
-    await f.manager.selectMethod("usdc");
+    await f.manager.quote();
     await f.manager.pay();
     expect(f.manager.getState()).toMatchObject({
       status: "settling",
@@ -94,7 +95,7 @@ describe("checkout payment safety", () => {
 
   it("keeps a reverted receipt hash and does not claim success", async () => {
     const f = fixture({ confirm: async () => "reverted" });
-    await f.manager.selectMethod("usdc");
+    await f.manager.quote();
     await f.manager.pay();
     expect(f.manager.getState()).toMatchObject({
       status: "failed",
@@ -109,7 +110,7 @@ describe("checkout payment safety", () => {
   it("rejects reset and duplicate pay while acquiring a signer", async () => {
     const pending = deferred<PaymentSigner>();
     const f = fixture({}, () => pending.promise);
-    await f.manager.selectMethod("usdc");
+    await f.manager.quote();
     const payment = f.manager.pay();
     expect(() => f.manager.reset()).toThrow("Cannot reset");
     await expect(f.manager.pay()).rejects.toMatchObject({ code: "invalid_config" });
@@ -129,7 +130,7 @@ describe("checkout payment safety", () => {
     let clock = original();
     Date.now = () => clock;
     try {
-      await f.manager.selectMethod("usdc");
+      await f.manager.quote();
       await f.manager.pay();
       expect(f.settle).not.toHaveBeenCalled();
       expect(f.manager.getState()).toMatchObject({
@@ -149,7 +150,7 @@ describe("checkout payment safety", () => {
       { quote: async () => ({ ...makeQuote(), amountAtomic: "99000000" }) },
       getSigner,
     );
-    await f.manager.selectMethod("usdc");
+    await f.manager.quote();
     expect(f.manager.getState()).toMatchObject({ status: "failed" });
     expect(getSigner).not.toHaveBeenCalled();
   });
@@ -157,7 +158,7 @@ describe("checkout payment safety", () => {
   it("ignores a quote response from a reset session", async () => {
     const pending = deferred<Quote>();
     const f = fixture({ quote: () => pending.promise });
-    const selecting = f.manager.selectMethod("usdc");
+    const selecting = f.manager.quote();
     f.manager.reset();
     pending.resolve(makeQuote());
     await selecting;
@@ -167,15 +168,16 @@ describe("checkout payment safety", () => {
   it("validates amounts, token, chain and per-purchase overrides synchronously", () => {
     const f = fixture();
     for (const amountUsdc of ["abc", "0", "-1", "1.0000001", "1".repeat(90)]) {
-      expect(() => createCheckout(f.config, { amountUsdc })).toThrow();
+      expect(() => createCheckout({ ...f.config, amountUsdc })).toThrow();
     }
     for (const invalid of [
       { ...destination, targetAsset: destination.recipient },
       { ...destination, targetChain: 1 as 84532 },
       { ...destination, recipient: `0x${"0".repeat(40)}` as const },
     ]) {
-      expect(() => createSettleConfig({ ...f.config, destination: invalid })).toThrow();
-      expect(() => createCheckout(f.config, { amountUsdc: "1", destination: invalid })).toThrow();
+      expect(() =>
+        createCheckout({ ...f.config, amountUsdc: "1", destination: invalid }),
+      ).toThrow();
     }
   });
 
@@ -242,7 +244,7 @@ it("maps wallet rejection to data without invoking the transfer adapter", async 
   const f = fixture({}, async () => {
     throw { code: 4001, message: "Request declined" };
   });
-  await f.manager.selectMethod("usdc");
+  await f.manager.quote();
   await f.manager.pay();
   expect(f.manager.getState()).toMatchObject({
     status: "failed",
@@ -251,70 +253,55 @@ it("maps wallet rejection to data without invoking the transfer adapter", async 
   expect(f.settle).not.toHaveBeenCalled();
 });
 
-it("rejects a wrong-network signer before balance or send", async () => {
-  const readContract = mock(async () => 100000000n);
-  const sendTransaction = mock(async () => hash);
-  const method = createUsdcMethod({ client: { readContract } });
-  await expect(
-    method.settle({
-      quote: makeQuote(),
-      destination,
-      signer: { address: destination.recipient, getChainId: async () => 1, sendTransaction },
-    }),
-  ).rejects.toMatchObject({ code: "wrong_network" });
-  expect(readContract).not.toHaveBeenCalled();
-  expect(sendTransaction).not.toHaveBeenCalled();
-});
-
 describe("destination resolution", () => {
-  const withoutDestination = (quote: Partial<Quote> = {}) =>
-    createSettleConfig({
-      getSigner: async () => ({
-        address: destination.recipient,
-        sendTransaction: async () => hash,
-      }),
-      methods: [
-        {
-          id: "usdc",
-          quote: async () => ({ ...makeQuote(), ...quote }),
-          settle: async () => hash,
-          confirm: async () => "success" as const,
-        },
-      ],
-    });
+  const withoutDestination = (quote: Partial<Quote> = {}) => ({
+    getSigner: async () => ({
+      address: destination.recipient,
+      sendTransaction: async () => hash,
+    }),
+    methods: [
+      {
+        id: "usdc" as const,
+        quote: async () => ({ ...makeQuote(), ...quote }),
+        settle: async () => hash,
+        confirm: async () => "success" as const,
+      },
+    ],
+    amountUsdc: "12.50",
+  });
 
   it("pays the destination the quote returned when the app configured none", async () => {
-    const manager = createCheckout(withoutDestination({ destination }), { amountUsdc: "12.50" });
-    await manager.selectMethod("usdc");
+    const manager = createCheckout(withoutDestination({ destination }));
+    await manager.quote();
     expect(manager.getState()).toMatchObject({ status: "awaiting_payment", destination });
   });
 
   it("fails the quote when no destination resolves at all", async () => {
-    const manager = createCheckout(withoutDestination(), { amountUsdc: "12.50" });
-    await expect(manager.selectMethod("usdc")).rejects.toThrow(/destination is required/);
+    const manager = createCheckout(withoutDestination());
+    await expect(manager.quote()).rejects.toThrow(/destination is required/);
     expect(manager.getState()).toMatchObject({
       status: "failed",
       error: { code: "invalid_config" },
     });
   });
 
-  it("still rejects a malformed app destination when the session is created", () => {
+  it("still rejects a malformed destination when the session is created", () => {
     expect(() =>
-      createCheckout(withoutDestination(), {
-        amountUsdc: "12.50",
+      createCheckout({
+        ...withoutDestination(),
         destination: { ...destination, recipient: "0xnope" as never },
       }),
     ).toThrow(/recipient/);
   });
 
-  it("prefers the per-checkout destination over the app default", async () => {
+  it("uses the destination passed to createCheckout", async () => {
     const perCheckout = {
       ...destination,
       recipient: "0x3333333333333333333333333333333333333333" as const,
     };
     const f = fixture();
-    const manager = createCheckout(f.config, { amountUsdc: "12.50", destination: perCheckout });
-    await manager.selectMethod("usdc");
+    const manager = createCheckout({ ...f.config, amountUsdc: "12.50", destination: perCheckout });
+    await manager.quote();
     expect(manager.getState()).toMatchObject({
       status: "awaiting_payment",
       destination: perCheckout,

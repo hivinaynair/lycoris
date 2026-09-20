@@ -23,8 +23,6 @@ export type UseCheckoutResult = {
   begin: (input: BeginCheckoutInput) => Promise<void>;
   /** Quote and submit from one click. */
   payNow: (input: BeginCheckoutInput) => Promise<void>;
-  /** Low-level quote. `begin` already selects a method. */
-  selectMethod: (id: string) => Promise<void>;
   /** Submit the quoted payment. Requires `awaiting_payment`. */
   pay: () => Promise<void>;
   /** Retry receipt lookup only. Never resubmits. */
@@ -80,8 +78,7 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
     });
     ctx.managerRef.current?.reset();
     ctx.setSession(manager, input.title);
-    const [method] = ctx.config.methods ?? [];
-    await manager.selectMethod(method?.id ?? "usdc");
+    await manager.quote();
     return manager;
   }, []);
 
@@ -110,10 +107,6 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
     [beginSession],
   );
 
-  const selectMethod = useCallback(async (id: string) => {
-    await requireManager(latest.current.ctx.managerRef.current, "selectMethod").selectMethod(id);
-  }, []);
-
   const pay = useCallback(async () => {
     await requireManager(latest.current.ctx.managerRef.current, "pay").pay();
   }, []);
@@ -138,7 +131,6 @@ export function useCheckout(options?: CheckoutCallbacks): UseCheckoutResult {
     title: ctx.title,
     begin,
     payNow,
-    selectMethod,
     pay,
     retryConfirmation,
     reset,

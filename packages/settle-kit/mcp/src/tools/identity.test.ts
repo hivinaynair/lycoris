@@ -3,7 +3,6 @@ import { type MandatePayload, serializeMandateHeader, signMandate } from "@settl
 import type { Address } from "@settle-kit/core";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import type { SettleMcpOptions } from "../options";
-import { createMemoryStore } from "../store";
 import { getAgentIdentity, getBalance, getMandate } from "./identity";
 
 const MERCHANT = "0x9999999999999999999999999999999999999999" as Address;
@@ -52,11 +51,9 @@ describe("identity tools", () => {
     const result = await getAgentIdentity(options(header, agent.address));
     const body = JSON.parse(result.content[0]?.text ?? "{}") as {
       registered: boolean;
-      agentId: string;
       address: string;
     };
     expect(body.registered).toBe(false);
-    expect(body.agentId).toStartWith("agt_");
     expect(body.address).toBe(agent.address);
   });
 
@@ -76,18 +73,13 @@ describe("identity tools", () => {
 
   it("reports an expired mandate rather than throwing", async () => {
     const { agent, header } = await signedMandate({ expiry: 1n });
-    const result = await getMandate(
-      options(header, agent.address, { now: () => 10 }),
-      createMemoryStore(),
-    );
+    const result = await getMandate(options(header, agent.address, { now: () => 10 }));
     expect(result.isError).toBeUndefined();
     const body = JSON.parse(result.content[0]?.text ?? "{}") as {
       expired: boolean;
-      id: string;
       cap: { display: string };
     };
     expect(body.expired).toBe(true);
-    expect(body.id).toStartWith("mdt_");
     expect(body.cap.display).toBe("1.00 USDC");
   });
 });

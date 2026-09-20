@@ -16,26 +16,23 @@ export type SettlementHash = `0x${string}` & { readonly [brand]?: "SettlementHas
 export type Hex = `0x${string}`;
 
 export const BASE_SEPOLIA_CHAIN_ID = 84532;
+/** CAIP-2 id for Base Sepolia. */
+export const BASE_SEPOLIA_CAIP2 = "eip155:84532";
 /** Circle USDC on Base Sepolia. */
 export const BASE_SEPOLIA_USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e" as Address;
 export const BASE_SEPOLIA_EXPLORER = "https://sepolia.basescan.org";
+
+/** Basescan URL for a transaction or user operation hash. */
+export function explorerUrl(txHash?: string) {
+  return txHash ? `${BASE_SEPOLIA_EXPLORER}/tx/${txHash}` : undefined;
+}
 export const USDC_DECIMALS = 6;
 /** Default quote lifetime: 5 minutes. */
 export const DEFAULT_QUOTE_TTL_MS = 5 * 60 * 1000;
 
-/** Supported payment method ids. */
+/** Supported payment method ids. `"usdc-4337"` is the same transfer with a userOp receipt. */
 export const SETTLE_METHOD_IDS = ["usdc", "usdc-4337"] as const;
 export type SettleMethodId = (typeof SETTLE_METHOD_IDS)[number];
-
-/**
- * How a settlement was identified.
- *
- * Branch on which key is present. A settlement carries a transaction hash or a
- * userOpHash, never both.
- */
-export type Settlement =
-  | { transactionHash: SettlementHash; userOpHash?: never }
-  | { userOpHash: SettlementHash; transactionHash?: never };
 
 /** Where USDC is sent. v1 supports Base Sepolia Circle USDC only. */
 export type Destination = {
@@ -59,12 +56,10 @@ export type SettleError = {
   message: string;
 };
 
-/** Wallet used to submit the USDC transfer. */
+/** Wallet used to submit the USDC transfer. The host owns the network. */
 export type PaymentSigner = {
   address: Address;
   sendTransaction: (tx: { to: Address; data: Hex }) => Promise<SettlementHash>;
-  /** When provided, checked against `destination.targetChain` before sending. */
-  getChainId?: () => Promise<number>;
 };
 
 export type Quote = {
@@ -110,7 +105,8 @@ export type CheckoutState =
     };
 
 /**
- * A payment method. Implement this to add a custom USDC adapter (EOA, ERC-4337, etc.).
+ * The payment rail. Hosts usually pass `createUsdcMethod()`; wrap it to add
+ * funding or tracking (see the sponsored checkout demo).
  */
 export type SettleAdapter = {
   id: SettleMethodId;
@@ -148,14 +144,19 @@ export type SettleConfig = {
 export type CreateCheckoutInput = {
   amountUsdc: string;
   destination?: Destination | undefined;
+  getSigner: () => Promise<PaymentSigner>;
+  methods?: SettleAdapter[] | undefined;
+  quoteUrl?: string | undefined;
+  onSettled?: ((state: Extract<CheckoutState, { status: "settled" }>) => void) | undefined;
+  onFailed?: ((state: Extract<CheckoutState, { status: "failed" }>) => void) | undefined;
 };
 
 export type CheckoutManager = {
   getState: () => CheckoutState;
   subscribe: (listener: () => void) => () => void;
-  /** Quote the given method. Requires `idle`. */
-  selectMethod: (id: string) => Promise<void>;
-  /** Submit the quoted payment. Requires `awaiting_payment`. */
+  /** Quote the configured method. Requires `idle`. */
+  quote: () => Promise<void>;
+  /** Quote if idle, then submit. Requires `idle` or `awaiting_payment`. */
   pay: () => Promise<void>;
   /** Retry receipt lookup only. Never resubmits. */
   retryConfirmation: () => Promise<void>;

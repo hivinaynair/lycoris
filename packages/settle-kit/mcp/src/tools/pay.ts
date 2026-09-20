@@ -7,7 +7,6 @@ import {
 import {
   createPaidFetch,
   type PaidFetch,
-  type PaidFetchFn,
   parseMandateHeader,
   payForResource,
   quoteResource,
@@ -245,7 +244,7 @@ async function submitPayment(input: {
     getMandateHeader: () => input.mandateHeader,
     fetch: input.fetchImpl,
   });
-  const paid = await pay({ url: input.url, paidFetch: paidFetch as PaidFetch | PaidFetchFn });
+  const paid = await pay({ url: input.url, paidFetch: paidFetch as PaidFetch });
   const decisionRecord = await getDecisionRecord(
     {
       facilitatorUrl: input.options.facilitatorUrl,
@@ -260,7 +259,7 @@ async function submitPayment(input: {
   const settled = Boolean(
     paid.txHash && paid.httpStatus < 400 && !paid.error && !decisionRecord?.rejectionReason,
   );
-  const explorer = explorerUrl(paid.txHash) ?? paid.basescan;
+  const explorer = explorerUrl(paid.txHash);
   const reason = paid.error ?? decisionRecord?.rejectionReason;
   const gate = failureGateForReason(reason);
   const record: PaymentRecord = {

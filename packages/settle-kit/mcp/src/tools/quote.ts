@@ -1,6 +1,6 @@
 import { parseMandateHeader, quoteResource } from "@settle-kit/agents";
 import { preclear } from "../facilitator.ts";
-import { prefixedId, quoteNonceFor } from "../ids.ts";
+import { quoteNonceFor } from "../ids.ts";
 import { toMoney } from "../money.ts";
 import type { SettleMcpOptions } from "../options.ts";
 import { jsonError, jsonResult } from "../result.ts";
@@ -41,13 +41,12 @@ export async function quoteResourceTool(url: string, options: SettleMcpOptions) 
   });
 
   return jsonResult({
-    id: prefixedId("qte", nonce),
     url,
     amount: toMoney(quoted.amountAtomic),
     payTo: quoted.payTo,
     quoteNonce: nonce,
     challenge: quoted.challenge,
     preclear: verdict,
-    mandateId: parsed ? prefixedId("mdt", mandateHeader) : undefined,
+    mandateValid: Boolean(parsed),
   });
 }
