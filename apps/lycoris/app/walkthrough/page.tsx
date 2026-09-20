@@ -29,9 +29,9 @@ export default function WalkthroughPage() {
         </Link>
       </div>
       <p className="max-w-2xl text-sm text-muted-foreground">
-        No signup or personal wallet. Live runs use Base Sepolia test USDC and can take longer than
-        the overview while the network confirms. Each purchase spends 0.1 test USDC from a demo
-        wallet.
+        Live runs use Base Sepolia test USDC and can take longer than the overview while the network
+        confirms. Checkout defaults to a sponsored demo wallet; you can also pay from Coinbase
+        Wallet or another injected EOA. Each purchase spends 0.1 test USDC.
       </p>
       <ol className="grid gap-px border border-border bg-border md:grid-cols-2">
         {DEMO_TOUR.map((step, index) => (

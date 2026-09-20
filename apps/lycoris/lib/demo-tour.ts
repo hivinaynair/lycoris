@@ -4,7 +4,7 @@ export const DEMO_TOUR = [
     href: "/checkout?tour=1",
     action: "Try checkout",
     description:
-      "Click Pay to unlock Melbourne’s weather report for 0.1 test USDC. The demo supplies the funds and gas; you don’t need a wallet.",
+      "Click Pay to unlock Melbourne’s weather report for 0.1 test USDC. Default rail: the demo supplies funds and gas. Switch to Your wallet to pay from Coinbase Wallet or another injected EOA.",
     evidence: "A confirmed payment, a transaction link, and the purchased report.",
   },
   {

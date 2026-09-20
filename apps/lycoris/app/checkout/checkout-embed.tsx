@@ -5,13 +5,16 @@ import { ArrowDown, ChevronDown, Code2, Copy } from "lucide-react";
 import { useState } from "react";
 import { appearances, type Look } from "./checkout-appearance";
 import styles from "./checkout-layouts";
+import type { CheckoutRail } from "./checkout-rail";
 import { IntegrationCode } from "./integration-code";
 
-export function CheckoutEmbed({ look }: { look: Look }) {
+export function CheckoutEmbed({ look, rail }: { look: Look; rail: CheckoutRail }) {
   const code =
     look === "custom"
       ? `import { useCheckout } from "@settle-kit/react";\n\n// Your components. The same payment lifecycle.\nconst { state, pay } = useCheckout();\n\n// Call from your Pay button.\nawait pay({ amount: "0.1" });\n// State narrows on state.status.`
-      : `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, getSigner }}\n  appearance={${JSON.stringify(appearances[look], null, 2)}}\n>\n  <Checkout amount="0.1" title="Melbourne weather report" />\n</SettleProvider>`;
+      : rail === "wallet"
+        ? `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, getSigner }}\n  appearance={${JSON.stringify(appearances[look], null, 2)}}\n>\n  <Checkout amount="0.1" title="Melbourne weather report" />\n</SettleProvider>`
+        : `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, ...createSponsoredPayment(recipient) }}\n  appearance={${JSON.stringify(appearances[look], null, 2)}}\n>\n  <Checkout amount="0.1" title="Melbourne weather report" />\n</SettleProvider>`;
   return (
     <details className={styles.disclosure} open>
       <summary className={styles.summary}>
@@ -28,14 +31,19 @@ export function CheckoutEmbed({ look }: { look: Look }) {
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 id="embed-heading" className="flex items-center gap-2 text-sm font-medium">
             <Code2 className="size-4" aria-hidden="true" />
-            {look === "custom" ? "Bring your own UI" : "The embed"}
+            {look === "custom"
+              ? "Bring your own UI"
+              : rail === "wallet"
+                ? "Your wallet"
+                : "Sponsored 4337"}
           </h2>
-          <CopyCode key={look} code={code} />
+          <CopyCode key={`${look}:${rail}`} code={code} />
         </div>
         <IntegrationCode code={code} />
         <p className="border-t border-border px-5 py-4 text-[length:var(--font-small-size)] leading-relaxed text-muted-foreground">
-          This example uses your own wallet signer. The live demo instead uses a server-sponsored
-          adapter with a fixed price and spending cap.{" "}
+          {rail === "wallet"
+            ? "This matches the live Your wallet rail: getSigner is a Coinbase Wallet or other injected EOA. pay({ amount }) is unchanged."
+            : "This matches the live Demo pays rail: the host wraps createUsdcMethod for a faucet and a userOp receipt. pay({ amount }) is unchanged."}{" "}
           <a
             className="text-foreground underline underline-offset-4"
             href="https://github.com/hivinaynair/lycoris/tree/main/packages/settle-kit/react"

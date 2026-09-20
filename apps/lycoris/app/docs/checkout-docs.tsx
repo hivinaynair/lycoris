@@ -39,10 +39,9 @@ function WalletSection() {
         chain id. The buyer needs test USDC and Base Sepolia ETH for gas.
       </p>
       <p className="text-muted-foreground">
-        The public demo uses a separate sponsored adapter: a server faucet funds a browser-owned
-        smart account with test USDC, and a paymaster sponsors its payment to the fixed merchant.
-        Visitors never connect a personal wallet. This browser-wallet example is for apps where
-        customers pay from their own balances.
+        The playground has both rails. Demo pays wraps createUsdcMethod for a faucet and a 4337
+        receipt. Your wallet is this injected EOA signer — Coinbase Wallet or any window.ethereum
+        provider. pay() is the same.
       </p>
       <CodeExample title="wallet.ts" code={examples.walletAdapter} language="typescript" />
       <p className="text-muted-foreground">

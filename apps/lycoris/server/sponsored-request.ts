@@ -39,3 +39,11 @@ export async function readReportRequest(request: Request) {
   if (!parsed.success) throw new Error("Provide a valid purchase ID and operation hash.");
   return { purchaseId: parsed.data.purchaseId, userOpHash: parsed.data.userOpHash as Hex };
 }
+
+const walletReport = z.object({ txHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/) }).strict();
+export async function readWalletReportRequest(request: Request) {
+  sameOrigin(request);
+  const parsed = walletReport.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) throw new Error("Provide a valid transaction hash.");
+  return { txHash: parsed.data.txHash as Hex };
+}

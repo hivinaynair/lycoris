@@ -1,6 +1,10 @@
 # Sponsored Base Sepolia checkout
 
-The visitor clicks Pay without connecting a personal wallet. The browser creates
+The playground’s default rail. The visitor clicks Pay without connecting a
+personal wallet. Switch to **Your wallet** on `/checkout` to pay from Coinbase
+Wallet or another injected EOA instead — that path does not use this faucet.
+
+The browser creates
 a disposable Coinbase smart account using a locally stored burner key. A dedicated
 CDP server wallet funds it with 0.1 Circle test USDC. That smart account pays the
 merchant through an ERC-4337 user operation, with gas sponsored by a CDP paymaster.
