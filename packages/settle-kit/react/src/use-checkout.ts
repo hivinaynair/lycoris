@@ -15,7 +15,7 @@ function getIdle() {
 export type UseCheckoutResult = {
   state: CheckoutState;
   title: string | undefined;
-  /** Quote and submit from one click. */
+  /** Prepare and submit from one click. */
   pay: (input: PayInput) => Promise<void>;
   /** Retry receipt lookup only. Never resubmits. */
   retryConfirmation: () => Promise<void>;
@@ -32,7 +32,7 @@ function requireManager(manager: CheckoutManager | null, verb: string): Checkout
 /**
  * Subscribe to the current checkout session.
  *
- * Must be used under `SettleProvider`. `pay({ amount })` quotes and submits.
+ * Must be used under `SettleProvider`. `pay({ amount })` prepares and submits.
  */
 export function useCheckout(): UseCheckoutResult {
   const ctx = useContext(SettleContext);

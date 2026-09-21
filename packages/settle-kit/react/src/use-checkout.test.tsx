@@ -52,7 +52,7 @@ it("supports two SKUs without remounting the Provider", async () => {
     await act(async () => {
       await f.buyer().pay({ amount });
     });
-    expect(f.observer().state).toMatchObject({ status: "settled", quote: { amount } });
+    expect(f.observer().state).toMatchObject({ status: "settled", intent: { amount } });
     await act(async () => {
       f.buyer().reset();
     });
@@ -80,10 +80,10 @@ it("rejects replacing an in-flight session and retains the shared payment", asyn
     resolve({ address: destination.recipient, sendTransaction: f.send });
     await paying;
   });
-  expect(f.observer().state).toMatchObject({ status: "settled", quote: { amount: "12.50" } });
+  expect(f.observer().state).toMatchObject({ status: "settled", intent: { amount: "12.50" } });
 });
 
-it("the default Pay button quotes and settles from one click", async () => {
+it("the default Pay button prepares and settles from one click", async () => {
   setup();
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Pay 12.50 USDC" }));
@@ -179,7 +179,7 @@ it("supports UI labels, className, and destination override", async () => {
   expect(observer.state).toMatchObject({
     status: "failed",
     destination: override,
-    quote: { amount: "7" },
+    intent: { amount: "7" },
   });
   expect(screen.getByRole("button", { name: "Reset" })).toBeTruthy();
 });

@@ -26,7 +26,7 @@ await checkout.pay();
 The transaction `to` is Circle USDC; the merchant is inside `transfer`
 calldata. The host puts the wallet on Base Sepolia.
 
-`pay()` quotes, submits, and waits for a receipt.
+`pay()` prepares, submits, and waits for a receipt.
 
 ## What the session guarantees
 
@@ -34,7 +34,7 @@ calldata. The host puts the wallet on Base Sepolia.
 - A reverted receipt becomes `failed`. A receipt timeout stays `settling`;
   `retryConfirmation()` looks up the same hash and never sends again.
 - Reset and a second `pay()` are refused while `settling`.
-- Buyer-facing errors live on state: `insufficient_usdc`, `quote_expired`,
+- Buyer-facing errors live on state: `insufficient_usdc`, `expired`,
   `wallet_rejected`, `wrong_network`, `transfer_failed`.
 
 Wrap `createUsdcMethod()` when the host needs extra work (funding, tracking).

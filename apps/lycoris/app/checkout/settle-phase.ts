@@ -4,7 +4,7 @@ import { useSyncExternalStore } from "react";
 /**
  * What the demo is doing inside the SDK's `settling` state.
  *
- * The SDK models a payment as quote → settle → confirm, which is the right shape
+ * The SDK models a payment as prepare → settle → confirm, which is the right shape
  * for a payment and says nothing about how this host funds an account first. These
  * are the two real waits a visitor sits through, and they are worth naming because
  * they are the only visible evidence that a smart account is involved at all.

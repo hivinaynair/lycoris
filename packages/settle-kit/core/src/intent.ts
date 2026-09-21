@@ -1,7 +1,7 @@
 import { parseUsdcAmount } from "./amounts.ts";
 import { assertDestination } from "./destination.ts";
 import { SettleKitError } from "./errors.ts";
-import { type Destination, type Quote, SETTLE_METHOD_IDS, type SettleMethodId } from "./types.ts";
+import { type Destination, type Intent, SETTLE_METHOD_IDS, type SettleMethodId } from "./types.ts";
 
 const isSettleMethodId = (value: unknown): value is SettleMethodId =>
   typeof value === "string" && (SETTLE_METHOD_IDS as readonly string[]).includes(value);
@@ -15,21 +15,21 @@ function sameDestination(a: Destination, b: Destination): boolean {
 }
 
 /**
- * Validate an untrusted quote against the purchase request.
+ * Validate untrusted prepare output against the purchase request.
  *
  * Display amount, atomic amount, method, and destination must match. Pass
- * `method` so a quote can only settle through the adapter that issued it.
+ * `method` so an intent can only settle through the adapter that issued it.
  */
-export function validateQuote(
+export function validateIntent(
   value: unknown,
   amount: string,
   requested?: Destination,
   method?: SettleMethodId,
-): Quote {
+): Intent {
   const invalid = () =>
-    new SettleKitError("transfer_failed", "Quote does not match the requested USDC amount");
+    new SettleKitError("transfer_failed", "Intent does not match the requested USDC amount");
   if (!value || typeof value !== "object") throw invalid();
-  const body = value as Partial<Quote>;
+  const body = value as Partial<Intent>;
   if (
     typeof body.requestId !== "string" ||
     !body.requestId.trim() ||
@@ -56,13 +56,13 @@ export function validateQuote(
     } catch {
       throw new SettleKitError(
         "transfer_failed",
-        "Quote destination is not a valid Base Sepolia USDC recipient",
+        "Intent destination is not a valid Base Sepolia USDC recipient",
       );
     }
     if (requested && !sameDestination(destination, requested)) {
       throw new SettleKitError(
         "transfer_failed",
-        "Quote destination does not match the requested recipient",
+        "Intent destination does not match the requested recipient",
       );
     }
   }

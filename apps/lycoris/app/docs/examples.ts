@@ -72,8 +72,6 @@ export function BuyReport() {
       return <button onClick={() => void pay({ amount: "0.1" })}>
         Pay 0.1 USDC
       </button>;
-    case "quoting":
-      return <p>Preparing payment…</p>;
     case "settling":
       return state.confirmationError
         ? <button onClick={() => void retryConfirmation()}>Check payment status</button>

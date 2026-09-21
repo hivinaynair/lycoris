@@ -97,7 +97,7 @@ Evidence: [payment scope](../apps/agent/agent/lib/payment-scope.ts),
 
 ## How I evaluate it
 
-Bun tests cover state transitions, malformed quotes, duplicate calls, refusals,
+Bun tests cover state transitions, malformed intents, duplicate calls, refusals,
 sponsorship policy, report verification, and MCP behavior. Browser fixtures mock
 external payment services; live testnet purchases are separate evidence. The feed
 exposes historical decisions and available chain commitments, with demonstration

@@ -108,7 +108,7 @@ export default function CaseStudyPage() {
         <section className="space-y-3">
           <h2 className="text-2xl font-medium tracking-tight">How I check the work</h2>
           <p className="text-muted-foreground">
-            Bun tests exercise payment states, refusal paths, quote validation, sponsorship policy,
+            Bun tests exercise payment states, refusal paths, intent validation, sponsorship policy,
             and receipt verification. CI also packs the SDK and installs it in a separate Next.js
             consumer. Browser fixtures use mocked payment services; live testnet runs provide
             separate integration evidence. The decision feed lets a reviewer inspect recorded

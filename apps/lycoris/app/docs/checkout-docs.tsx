@@ -57,7 +57,7 @@ function CustomUiSection() {
   return (
     <DocsSection id="custom-ui" title="Use your own components">
       <p>
-        useCheckout exposes the same session to every component under the Provider. pay quotes and
+        useCheckout exposes the same session to every component under the Provider. pay prepares and
         submits from one click. Keep your own buttons, dialogs, and design system.
       </p>
       <CodeExample title="buy-report.tsx" code={examples.customCheckout} />
@@ -66,7 +66,7 @@ function CustomUiSection() {
         rows={[
           [
             "pay({ amount, title?, destination? })",
-            "Quotes and submits. Existing in-flight payments cannot be replaced.",
+            "Submits the transfer and waits for a receipt. Existing in-flight payments cannot be replaced.",
           ],
           [
             "retryConfirmation()",

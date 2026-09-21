@@ -3,8 +3,8 @@ import { SettleKitError, toSettleError } from "./errors";
 
 describe("SettleKitError", () => {
   test("keeps its code and stays an Error", () => {
-    const error = new SettleKitError("quote_expired", "Quote expired");
-    expect(error.code).toBe("quote_expired");
+    const error = new SettleKitError("expired", "Payment expired");
+    expect(error.code).toBe("expired");
     expect(error).toBeInstanceOf(Error);
   });
 
@@ -18,8 +18,8 @@ describe("SettleKitError", () => {
   });
 
   test("surfaces the constructor message, with no version suffix", () => {
-    const error = new SettleKitError("quote_expired", "Quote expired");
-    expect(toSettleError(error).message).toBe("Quote expired");
+    const error = new SettleKitError("expired", "Payment expired");
+    expect(toSettleError(error).message).toBe("Payment expired");
   });
 
   test("never leaks viem's version into a buyer-facing message", () => {

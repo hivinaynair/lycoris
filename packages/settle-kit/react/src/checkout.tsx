@@ -10,7 +10,7 @@ import { useCheckout } from "./use-checkout.ts";
 
 const ERROR_COPY: Record<string, string> = {
   insufficient_usdc: "Not enough USDC to complete this payment.",
-  quote_expired: "The quote expired. Start again.",
+  expired: "This payment expired. Start again.",
   wallet_rejected: "The wallet rejected the transfer.",
   wallet_unavailable: "Open this checkout in a browser with a wallet extension, then try again.",
   wrong_network: "Switch the wallet to Base Sepolia.",
@@ -41,7 +41,7 @@ export type CheckoutProps = {
 /**
  * Default checkout card. Render inside `SettleProvider`.
  *
- * One Pay button quotes and submits.
+ * One Pay button prepares and submits.
  */
 export function Checkout({
   amount: amountProp,
@@ -58,11 +58,13 @@ export function Checkout({
   const visual = resolveAppearance(context?.appearance, appearance);
   const { state } = checkout;
   const amount =
-    "quote" in state
-      ? (state.quote?.amount ?? amountProp)
-      : state.status === "quoting"
-        ? state.amount
-        : amountProp;
+    state.status === "settled"
+      ? state.intent.amount
+      : state.status === "settling"
+        ? (state.intent?.amount ?? state.amount)
+        : state.status === "failed"
+          ? (state.intent?.amount ?? amountProp)
+          : amountProp;
   const recipient =
     "destination" in state
       ? (state.destination?.recipient ?? (destination ?? config?.destination)?.recipient)
@@ -162,9 +164,6 @@ function CheckoutStatus({
       </>
     );
   }
-  if (state.status === "quoting") {
-    return <p>Locking {state.amount} USDC…</p>;
-  }
   if (state.status === "settling") {
     return (
       <div className={`sk-status ${styles.status}`} role="status">
@@ -200,7 +199,7 @@ function CheckoutStatus({
         <span className={`sk-status-icon ${styles.statusIcon}`} aria-hidden="true">
           ✓
         </span>
-        <p>Payment confirmed: {state.quote.amount} USDC.</p>
+        <p>Payment confirmed: {state.intent.amount} USDC.</p>
         {transactionUrl(state.txHash) && (
           <a href={transactionUrl(state.txHash)} target="_blank" rel="noreferrer">
             View transaction

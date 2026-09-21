@@ -17,7 +17,7 @@ function BuyButton() {
     );
   }
   if (state.status === "settled") {
-    return <p>Paid {state.quote.amount} USDC</p>;
+    return <p>Paid {state.intent.amount} USDC</p>;
   }
   return (
     <button onClick={() => void pay({ amount: "0.10", title: "Weather report" })}>
@@ -54,5 +54,5 @@ import "@settle-kit/react/styles.css";
 <Checkout amount="0.10" title="Weather report" />;
 ```
 
-`pay({ amount })` quotes and submits. `retryConfirmation` looks up the same hash
+`pay({ amount })` prepares, submits, and waits for a receipt. `retryConfirmation` looks up the same hash
 and never sends again.

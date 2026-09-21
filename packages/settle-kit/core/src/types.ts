@@ -27,8 +27,8 @@ export function explorerUrl(txHash?: string) {
   return txHash ? `${BASE_SEPOLIA_EXPLORER}/tx/${txHash}` : undefined;
 }
 export const USDC_DECIMALS = 6;
-/** Default quote lifetime: 5 minutes. */
-export const DEFAULT_QUOTE_TTL_MS = 5 * 60 * 1000;
+/** Default session lifetime for a prepared intent: 5 minutes. */
+export const DEFAULT_INTENT_TTL_MS = 5 * 60 * 1000;
 
 /** Supported payment method ids. `"usdc-4337"` is the same transfer with a userOp receipt. */
 export const SETTLE_METHOD_IDS = ["usdc", "usdc-4337"] as const;
@@ -43,7 +43,7 @@ export type Destination = {
 
 export type SettleErrorCode =
   | "insufficient_usdc"
-  | "quote_expired"
+  | "expired"
   | "wallet_rejected"
   | "wallet_unavailable"
   | "wrong_network"
@@ -62,7 +62,14 @@ export type PaymentSigner = {
   sendTransaction: (tx: { to: Address; data: Hex }) => Promise<SettlementHash>;
 };
 
-export type Quote = {
+/**
+ * Frozen terms for one pay() attempt.
+ *
+ * This is not an FX quote: USDC in is USDC out. `prepare` binds amount, method,
+ * and optional destination so settle cannot silently change them. A merchant
+ * server PaymentIntent is a later layer; this object is still created locally.
+ */
+export type Intent = {
   requestId: string;
   /** Display amount, e.g. `"12.50"`. */
   amount: string;
@@ -72,7 +79,7 @@ export type Quote = {
   expiresAt: number;
   method: SettleMethodId;
   /**
-   * Recipient for this purchase. Set by the quote when the payee belongs to the
+   * Recipient for this purchase. Set by prepare when the payee belongs to the
    * resource rather than the host app.
    */
   destination?: Destination | undefined;
@@ -81,23 +88,24 @@ export type Quote = {
 /**
  * Lifecycle of a checkout session. Discriminate on `status`.
  *
- * `settling` includes `quote` and `destination`. `settled` always includes `txHash`.
+ * `pay()` leaves idle for `settling` immediately. `intent` and `destination`
+ * appear once prepare succeeds. `settled` always includes `txHash`.
  */
 export type CheckoutState =
   | { status: "idle" }
-  | { status: "quoting"; amount: string }
   | {
       status: "settling";
-      quote: Quote;
-      destination: Destination;
+      amount: string;
+      intent?: Intent;
+      destination?: Destination;
       txHash?: SettlementHash;
       confirmationError?: SettleError;
     }
-  | { status: "settled"; quote: Quote; destination: Destination; txHash: SettlementHash }
+  | { status: "settled"; intent: Intent; destination: Destination; txHash: SettlementHash }
   | {
       status: "failed";
       error: SettleError;
-      quote?: Quote;
+      intent?: Intent;
       destination?: Destination;
       txHash?: SettlementHash;
     };
@@ -108,9 +116,9 @@ export type CheckoutState =
  */
 export type SettleAdapter = {
   id: SettleMethodId;
-  quote: (input: { amount: string; destination?: Destination | undefined }) => Promise<Quote>;
+  prepare: (input: { amount: string; destination?: Destination | undefined }) => Promise<Intent>;
   settle: (input: {
-    quote: Quote;
+    intent: Intent;
     destination: Destination;
     signer: PaymentSigner;
   }) => Promise<SettlementHash>;
@@ -122,7 +130,7 @@ export type SettleAdapter = {
    */
   confirm: (input: {
     txHash: SettlementHash;
-    quote: Quote;
+    intent: Intent;
     destination: Destination;
   }) => Promise<"success" | "reverted">;
 };
@@ -137,7 +145,7 @@ export type CreateCheckoutInput = {
 export type CheckoutManager = {
   getState: () => CheckoutState;
   subscribe: (listener: () => void) => () => void;
-  /** Quote, submit, then wait for a receipt. Requires `idle`. */
+  /** Prepare, submit, then wait for a receipt. Requires `idle`. */
   pay: () => Promise<void>;
   /** Retry receipt lookup only. Never resubmits. */
   retryConfirmation: () => Promise<void>;
