@@ -15,8 +15,8 @@ export type {
   CreateCheckoutInput,
   Destination,
   Hex,
+  Intent,
   PaymentSigner,
-  Quote,
   SettleAdapter,
   SettleError,
   SettleErrorCode,
@@ -28,7 +28,7 @@ export {
   BASE_SEPOLIA_CHAIN_ID,
   BASE_SEPOLIA_EXPLORER,
   BASE_SEPOLIA_USDC_ADDRESS,
-  DEFAULT_QUOTE_TTL_MS,
+  DEFAULT_INTENT_TTL_MS,
   explorerUrl,
   SETTLE_METHOD_IDS,
 } from "./types.ts";

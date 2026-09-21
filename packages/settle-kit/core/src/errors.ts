@@ -13,7 +13,7 @@ export class SettleKitError extends BaseError {
 
 export const USER_ERROR_CODES: readonly SettleErrorCode[] = [
   "insufficient_usdc",
-  "quote_expired",
+  "expired",
   "wallet_rejected",
   "wallet_unavailable",
   "wrong_network",

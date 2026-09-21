@@ -1,11 +1,11 @@
 import { describe, expect, it, mock } from "bun:test";
 import { createCheckout } from "./create-checkout";
+import { validateIntent } from "./intent";
 import { createUsdcMethod } from "./methods/usdc";
-import { validateQuote } from "./quote-client";
 import {
   BASE_SEPOLIA_USDC_ADDRESS,
+  type Intent,
   type PaymentSigner,
-  type Quote,
   type SettleAdapter,
   type SettlementHash,
 } from "./types";
@@ -16,7 +16,7 @@ const destination = {
   recipient: "0x1111111111111111111111111111111111111111" as const,
 };
 const hash = `0x${"ab".repeat(32)}` as SettlementHash;
-const makeQuote = (): Quote => ({
+const makeIntent = (): Intent => ({
   requestId: "q",
   amount: "12.50",
   amountAtomic: "12500000",
@@ -40,7 +40,7 @@ function fixture(overrides: Partial<SettleAdapter> = {}, getSigner?: () => Promi
     getSigner: getSigner ?? (async () => signer),
     method: {
       id: "usdc" as const,
-      quote: async () => makeQuote(),
+      prepare: async () => makeIntent(),
       settle,
       confirm,
       ...overrides,
@@ -119,9 +119,9 @@ describe("checkout payment safety", () => {
   });
 
   it("checks expiry again after wallet acquisition", async () => {
-    const quote = makeQuote();
-    const f = fixture({ quote: async () => quote }, async () => {
-      clock = quote.expiresAt + 1;
+    const intent = makeIntent();
+    const f = fixture({ prepare: async () => intent }, async () => {
+      clock = intent.expiresAt + 1;
       return { address: destination.recipient, sendTransaction: async () => hash };
     });
     const original = Date.now;
@@ -132,19 +132,19 @@ describe("checkout payment safety", () => {
       expect(f.settle).not.toHaveBeenCalled();
       expect(f.manager.getState()).toMatchObject({
         status: "failed",
-        error: { code: "quote_expired" },
+        error: { code: "expired" },
       });
     } finally {
       Date.now = original;
     }
   });
 
-  it("rejects mismatched adapter quotes before asking for a signer", async () => {
+  it("rejects mismatched adapter intents before asking for a signer", async () => {
     const getSigner = mock(async () => {
       throw Error("unused");
     });
     const f = fixture(
-      { quote: async () => ({ ...makeQuote(), amountAtomic: "99000000" }) },
+      { prepare: async () => ({ ...makeIntent(), amountAtomic: "99000000" }) },
       getSigner,
     );
     await f.manager.pay();
@@ -152,14 +152,14 @@ describe("checkout payment safety", () => {
     expect(getSigner).not.toHaveBeenCalled();
   });
 
-  it("ignores a quote response from a reset session", async () => {
-    const pending = deferred<Quote>();
-    const f = fixture({ quote: () => pending.promise });
+  it("refuses reset while prepare is still in flight", async () => {
+    const pending = deferred<Intent>();
+    const f = fixture({ prepare: () => pending.promise });
     const paying = f.manager.pay();
-    f.manager.reset();
-    pending.resolve(makeQuote());
+    expect(() => f.manager.reset()).toThrow("Cannot reset");
+    pending.resolve(makeIntent());
     await paying;
-    expect(f.manager.getState().status).toBe("idle");
+    expect(f.manager.getState().status).toBe("settled");
   });
 
   it("validates amounts, token, chain and per-purchase overrides synchronously", () => {
@@ -176,7 +176,7 @@ describe("checkout payment safety", () => {
     }
   });
 
-  it("rejects inconsistent, invalid, or changed quote amounts", () => {
+  it("rejects inconsistent, invalid, or changed intent amounts", () => {
     for (const patch of [
       { amountAtomic: "99000000" },
       { amountAtomic: "0" },
@@ -186,30 +186,30 @@ describe("checkout payment safety", () => {
       { expiresAt: NaN },
       { amount: "abc" },
     ]) {
-      expect(() => validateQuote({ ...makeQuote(), ...patch }, "12.50")).toThrow();
+      expect(() => validateIntent({ ...makeIntent(), ...patch }, "12.50")).toThrow();
     }
   });
 
   it("checks expiry after balance preflight and does not send", async () => {
     const sendTransaction = mock(async () => hash);
-    const quote = makeQuote();
-    let now = quote.expiresAt - 1;
+    const intent = makeIntent();
+    let now = intent.expiresAt - 1;
     const method = createUsdcMethod({
       now: () => now,
       client: {
         readContract: async () => {
-          now = quote.expiresAt;
+          now = intent.expiresAt;
           return 100000000n;
         },
       },
     });
     await expect(
       method.settle({
-        quote,
+        intent,
         destination,
         signer: { address: destination.recipient, sendTransaction },
       }),
-    ).rejects.toMatchObject({ code: "quote_expired" });
+    ).rejects.toMatchObject({ code: "expired" });
     expect(sendTransaction).not.toHaveBeenCalled();
   });
 
@@ -219,7 +219,9 @@ describe("checkout payment safety", () => {
       transactionHash: hash,
     }));
     const method = createUsdcMethod({ receiptClient: { waitForTransactionReceipt } });
-    expect(await method.confirm({ txHash: hash, destination, quote: makeQuote() })).toBe("success");
+    expect(await method.confirm({ txHash: hash, destination, intent: makeIntent() })).toBe(
+      "success",
+    );
     expect(waitForTransactionReceipt).toHaveBeenCalledWith({
       hash,
       confirmations: 1,
@@ -229,9 +231,9 @@ describe("checkout payment safety", () => {
       status: "success",
       transactionHash: "0x1234",
     });
-    await expect(method.confirm({ txHash: hash, destination, quote: makeQuote() })).rejects.toThrow(
-      "replaced",
-    );
+    await expect(
+      method.confirm({ txHash: hash, destination, intent: makeIntent() }),
+    ).rejects.toThrow("replaced");
   });
 });
 
@@ -248,27 +250,27 @@ it("maps wallet rejection to data without invoking the transfer adapter", async 
 });
 
 describe("destination resolution", () => {
-  const withoutDestination = (quote: Partial<Quote> = {}) => ({
+  const withoutDestination = (intent: Partial<Intent> = {}) => ({
     getSigner: async () => ({
       address: destination.recipient,
       sendTransaction: async () => hash,
     }),
     method: {
       id: "usdc" as const,
-      quote: async () => ({ ...makeQuote(), ...quote }),
+      prepare: async () => ({ ...makeIntent(), ...intent }),
       settle: async () => hash,
       confirm: async () => "success" as const,
     },
     amount: "12.50",
   });
 
-  it("pays the destination the quote returned when the app configured none", async () => {
+  it("pays the destination prepare returned when the app configured none", async () => {
     const manager = createCheckout(withoutDestination({ destination }));
     await manager.pay();
     expect(manager.getState()).toMatchObject({ status: "settled", destination });
   });
 
-  it("fails the quote when no destination resolves at all", async () => {
+  it("fails prepare when no destination resolves at all", async () => {
     const manager = createCheckout(withoutDestination());
     await expect(manager.pay()).rejects.toThrow(/destination is required/);
     expect(manager.getState()).toMatchObject({
@@ -300,9 +302,9 @@ describe("destination resolution", () => {
     });
   });
 
-  it("refuses to settle a quote bound to a different recipient", async () => {
+  it("refuses to settle an intent bound to a different recipient", async () => {
     const method = createUsdcMethod({ client: { readContract: async () => 100000000n } });
-    const quote = { ...makeQuote(), destination };
+    const intent = { ...makeIntent(), destination };
     const other = {
       ...destination,
       recipient: "0x4444444444444444444444444444444444444444" as const,
@@ -310,7 +312,7 @@ describe("destination resolution", () => {
     const sendTransaction = mock(async () => hash);
     await expect(
       method.settle({
-        quote,
+        intent,
         destination: other,
         signer: { address: other.recipient, sendTransaction },
       }),

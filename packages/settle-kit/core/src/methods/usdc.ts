@@ -3,11 +3,11 @@ import { baseSepolia } from "viem/chains";
 import { parseUsdcAmount } from "../amounts.ts";
 import { assertDestination } from "../destination.ts";
 import { SettleKitError } from "../errors.ts";
-import { validateQuote } from "../quote-client.ts";
+import { validateIntent } from "../intent.ts";
 import {
   type Address,
-  DEFAULT_QUOTE_TTL_MS,
-  type Quote,
+  DEFAULT_INTENT_TTL_MS,
+  type Intent,
   type SettleAdapter,
   type SettleMethodId,
   type SettlementHash,
@@ -53,7 +53,7 @@ export type UsdcMethodOptions = {
         }) => Promise<{ status: "success" | "reverted"; transactionHash: SettlementHash }>;
       }
     | undefined;
-  quoteTtlMs?: number | undefined;
+  ttlMs?: number | undefined;
   now?: (() => number) | undefined;
   requestId?: (() => string) | undefined;
   /** Adapter id. Defaults to `"usdc"`. Pass `"usdc-4337"` with a `receiptClient`. */
@@ -67,29 +67,29 @@ export type UsdcMethodOptions = {
  * a user operation rather than a transaction.
  */
 export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter {
-  const quoteTtlMs = options.quoteTtlMs ?? DEFAULT_QUOTE_TTL_MS;
+  const ttlMs = options.ttlMs ?? DEFAULT_INTENT_TTL_MS;
   const now = options.now ?? Date.now;
   const requestId = options.requestId ?? (() => crypto.randomUUID());
 
   const id = options.id ?? "usdc";
   return {
     id,
-    async quote({ amount }) {
+    async prepare({ amount }) {
       const amountAtomic = parseUsdcAmount(amount);
-      const quote: Quote = {
+      const intent: Intent = {
         requestId: requestId(),
         amount,
         amountAtomic,
-        expiresAt: now() + quoteTtlMs,
+        expiresAt: now() + ttlMs,
         method: id,
       };
-      return quote;
+      return intent;
     },
-    async settle({ quote, destination, signer }) {
+    async settle({ intent, destination, signer }) {
       assertDestination(destination);
-      validateQuote(quote, quote.amount, destination, id);
+      validateIntent(intent, intent.amount, destination, id);
 
-      const required = BigInt(quote.amountAtomic);
+      const required = BigInt(intent.amountAtomic);
       const request = {
         address: destination.targetAsset,
         abi: ERC20_ABI,
@@ -113,8 +113,8 @@ export function createUsdcMethod(options: UsdcMethodOptions = {}): SettleAdapter
         args: [destination.recipient, required],
       });
 
-      if (quote.expiresAt <= now())
-        throw new SettleKitError("quote_expired", "Quote expired before sending the transfer");
+      if (intent.expiresAt <= now())
+        throw new SettleKitError("expired", "Payment expired before it was sent");
 
       return signer.sendTransaction({
         to: destination.targetAsset,

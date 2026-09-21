@@ -25,7 +25,7 @@ const destination: Destination = {
 function mockMethod(id: SettleAdapter["id"] = "usdc"): SettleAdapter {
   return {
     id,
-    quote: async ({ amount }) => ({
+    prepare: async ({ amount }) => ({
       requestId: "q",
       amount,
       amountAtomic: "100000",
@@ -52,7 +52,7 @@ describe("createCheckout config", () => {
     await checkout.pay();
     const state = checkout.getState();
     expect(state.status).toBe("settled");
-    if (state.status === "settled") expect(state.quote.method).toBe("usdc");
+    if (state.status === "settled") expect(state.intent.method).toBe("usdc");
   });
 
   test("accepts a smart-account method", async () => {
@@ -60,7 +60,7 @@ describe("createCheckout config", () => {
     await checkout.pay();
     const state = checkout.getState();
     expect(state.status).toBe("settled");
-    if (state.status === "settled") expect(state.quote.method).toBe("usdc-4337");
+    if (state.status === "settled") expect(state.intent.method).toBe("usdc-4337");
   });
 
   test("refuses an unknown method id", () => {
@@ -69,7 +69,7 @@ describe("createCheckout config", () => {
   });
 
   test("refuses an incomplete adapter", () => {
-    const method = { id: "usdc", quote: () => {} } as unknown as SettleAdapter;
-    expect(() => session(method)).toThrow(/needs quote/);
+    const method = { id: "usdc", prepare: () => {} } as unknown as SettleAdapter;
+    expect(() => session(method)).toThrow(/needs prepare/);
   });
 });

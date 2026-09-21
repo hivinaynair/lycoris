@@ -13,7 +13,7 @@ const body = `# Lycoris · Settle Kit
 
 ## Packages
 
-- @settle-kit/core: createCheckout({ amount, getSigner, destination }). pay() quotes and submits; settled waits for a receipt. No React, DOM, wagmi or x402.
+- @settle-kit/core: createCheckout({ amount, getSigner, destination }). pay() prepares and submits; settled waits for a receipt. No React, DOM, wagmi or x402.
 - @settle-kit/react: SettleProvider, useCheckout().pay({ amount }), optional Checkout card. React 19 and viem 2.
 - @settle-kit/agents: createPaidFetch + payForResource, AP2 mandate helpers, facilitator preclear.
 - @settle-kit/server: a Next.js paid-route wrapper.

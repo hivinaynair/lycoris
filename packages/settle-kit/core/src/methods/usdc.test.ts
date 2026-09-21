@@ -5,8 +5,8 @@ import {
   BASE_SEPOLIA_CHAIN_ID,
   BASE_SEPOLIA_USDC_ADDRESS,
   type Destination,
+  type Intent,
   type PaymentSigner,
-  type Quote,
 } from "../types";
 import { createUsdcMethod } from "./usdc";
 
@@ -16,7 +16,7 @@ const destination: Destination = {
   recipient: "0x1111111111111111111111111111111111111111",
 };
 
-const quote: Quote = {
+const intent: Intent = {
   requestId: "q1",
   amount: "12.50",
   amountAtomic: "12500000",
@@ -42,7 +42,7 @@ describe("createUsdcMethod", () => {
     });
 
     try {
-      await method.settle({ quote, destination, signer });
+      await method.settle({ intent, destination, signer });
       throw new Error("expected insufficient_usdc");
     } catch (error) {
       expect(error).toBeInstanceOf(SettleKitError);
@@ -67,7 +67,7 @@ describe("createUsdcMethod", () => {
       },
     });
 
-    const hash = await method.settle({ quote, destination, signer });
+    const hash = await method.settle({ intent, destination, signer });
     expect(hash.startsWith("0xabc")).toBe(true);
     expect(tx?.to).toBe(BASE_SEPOLIA_USDC_ADDRESS);
     expect(tx?.to).not.toBe(destination.recipient);

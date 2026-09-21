@@ -105,11 +105,10 @@ function MerchantPaymentStatus({
           <p className="text-muted-foreground">{idleCopy(sponsored)}</p>
         </>
       )}
-      {state.status === "quoting" && <p>Preparing your USDC payment…</p>}
       {state.status === "settling" && <p>{settlingCopy(state.txHash, sponsored, phase)}</p>}
       {state.status === "settled" && (
         <p className="rounded-none border border-border bg-muted p-4">
-          Payment confirmed: {state.quote.amount} USDC.
+          Payment confirmed: {state.intent.amount} USDC.
         </p>
       )}
     </div>

@@ -4,8 +4,8 @@ import {
   createCheckout,
   createUsdcMethod,
   type Destination,
+  type Intent,
   type PaymentSigner,
-  type Quote,
   type SettleAdapter,
 } from "@settle-kit/core";
 import type { PayInput, SettleAppConfig } from "@settle-kit/react";
@@ -25,7 +25,7 @@ export const manager = createCheckout({
   amount: "0.1",
 });
 
-export const method = createUsdcMethod({ quoteTtlMs: maybeNumber, now: undefined });
+export const method = createUsdcMethod({ ttlMs: maybeNumber, now: undefined });
 
 export const appConfig: SettleAppConfig = {
   appName: "Store",
@@ -54,10 +54,10 @@ export const agenticOptions: AgenticPaymentOptions = {
   description: maybeString,
 };
 
-// Custom adapters may omit `destination` on the produced quote.
+// Custom adapters may omit `destination` on the produced intent.
 export const adapter: SettleAdapter = {
   id: "usdc",
-  quote: async (): Promise<Quote> => ({
+  prepare: async (): Promise<Intent> => ({
     requestId: "q",
     amount: "0.1",
     amountAtomic: "100000",
@@ -69,15 +69,16 @@ export const adapter: SettleAdapter = {
   confirm: async () => "success",
 };
 
-// Discriminated statuses: settling has quote+destination; settled has txHash.
+// Discriminated statuses: settled has intent+destination+txHash.
 export function narrowing(state: CheckoutState) {
   if (state.status === "settling") {
-    const bound: { quote: Quote; destination: Destination } = state;
-    return bound;
+    const amount: string = state.amount;
+    return amount;
   }
   if (state.status === "settled") {
+    const bound: { intent: Intent; destination: Destination } = state;
     const hash: `0x${string}` = state.txHash;
-    return hash;
+    return { bound, hash };
   }
   return undefined;
 }
@@ -87,7 +88,7 @@ export type PinnedSettlementHash = import("@settle-kit/core").SettlementHash;
 
 export const smartAccountAdapter: SettleAdapter = {
   id: "usdc-4337",
-  quote: async (): Promise<Quote> => ({
+  prepare: async (): Promise<Intent> => ({
     requestId: "q",
     amount: "0.1",
     amountAtomic: "100000",

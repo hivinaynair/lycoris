@@ -7,7 +7,7 @@ import type { CheckoutAppearance } from "./appearance.ts";
 export type SettleAppConfig = {
   appName: string;
   getSigner: () => Promise<PaymentSigner>;
-  /** Default recipient. `pay` input or the quote may supply it instead. */
+  /** Default recipient. `pay` input or prepare may supply it instead. */
   destination?: Destination | undefined;
   method?: SettleAdapter | undefined;
 };

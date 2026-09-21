@@ -119,8 +119,6 @@ export function BuyReport() {
   switch (state.status) {
     case "idle":
       return <button onClick={() => void pay({ amount: "0.1" })}>Pay 0.1 USDC</button>;
-    case "quoting":
-      return <p>Preparing payment…</p>;
     case "settling":
       return state.confirmationError
         ? <button onClick={() => void retryConfirmation()}>Check payment status</button>
@@ -133,7 +131,7 @@ export function BuyReport() {
 }
 ```
 
-`pay({ amount })` quotes, sends, and waits for a receipt. If the receipt is
+`pay({ amount })` prepares, sends, and waits for a receipt. If the receipt is
 missing, call `retryConfirmation()` — do not send again.
 
 In this repo: [checkout-embed.tsx](apps/lycoris/app/checkout/checkout-embed.tsx) mounts the
@@ -160,7 +158,7 @@ export function preparePayment(getSigner: () => Promise<PaymentSigner>) {
   return { checkout, unsubscribe };
 }
 
-// await checkout.pay(); // quotes, submits, waits for a receipt
+// await checkout.pay(); // prepares, submits, waits for a receipt
 ```
 
 In this repo: [user-op-explorer.ts](apps/lycoris/app/checkout/user-op-explorer.ts) reads userOp
@@ -283,11 +281,11 @@ In this repo: [burner-signer.ts](apps/lycoris/app/checkout/burner-signer.ts) and
 | Code | Whose problem | Do |
 | --- | --- | --- |
 | `insufficient_usdc` | Buyer | Show the shortfall — preflight caught it before signing |
-| `quote_expired` | Buyer | Re-quote, let them retry |
+| `expired` | Buyer | The session timed out before send. Let them retry |
 | `wallet_rejected` | Buyer | They declined. Offer the button again |
 | `wallet_unavailable` | Buyer | No wallet reachable — **your `getSigner` throws this**, core never does |
 | `wrong_network` | Buyer | Ask them to switch to Base Sepolia |
-| `transfer_failed` | External | Reverted, or a quote failed validation. Check `txHash` |
+| `transfer_failed` | External | Reverted, or intent failed validation. Check `txHash` |
 | `invalid_config` | **You** | Bad amount, unresolved destination, illegal call order |
 
 The first six arrive as state to render. `invalid_config` is a bug in your

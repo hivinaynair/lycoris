@@ -5,7 +5,7 @@ import {
   BASE_SEPOLIA_CHAIN_ID,
   BASE_SEPOLIA_USDC_ADDRESS,
   type Destination,
-  type Quote,
+  type Intent,
   type SettleAdapter,
 } from "./types";
 
@@ -15,7 +15,7 @@ const destination: Destination = {
   recipient: "0x1111111111111111111111111111111111111111",
 };
 
-const quote: Quote = {
+const intent: Intent = {
   requestId: "q1",
   amount: "12.50",
   amountAtomic: "12500000",
@@ -27,31 +27,36 @@ function adapter(overrides: Partial<SettleAdapter> = {}): SettleAdapter {
   return {
     id: "usdc",
     confirm: async () => "success",
-    quote: async () => quote,
+    prepare: async () => intent,
     settle: async () => "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
     ...overrides,
   };
 }
 
 describe("checkout reducer", () => {
-  it("walks idle → quoting → settling → settled", () => {
-    const quoting = reduce(IDLE_STATE, { type: "QUOTING", amount: "12.50" });
-    expect(quoting.status).toBe("quoting");
-
-    const settling = reduce(quoting, { type: "QUOTE_OK", quote, destination });
+  it("walks idle → settling → settled", () => {
+    const settling = reduce(IDLE_STATE, { type: "SETTLING", amount: "12.50" });
     expect(settling.status).toBe("settling");
 
-    const settled = reduce(settling, {
+    const bound = reduce(settling, { type: "PREPARE_OK", intent, destination });
+    expect(bound.status).toBe("settling");
+    if (bound.status === "settling") {
+      expect(bound.intent).toEqual(intent);
+      expect(bound.destination).toEqual(destination);
+    }
+
+    const settled = reduce(bound, {
       type: "SETTLED",
       txHash: "0xabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabcabca",
     });
     expect(settled.status).toBe("settled");
     if (settled.status === "settled") {
       expect(settled.txHash.startsWith("0xabc")).toBe(true);
+      expect(settled.intent).toEqual(intent);
     }
   });
 
-  it("maps an expired quote to failed without settling", async () => {
+  it("maps an expired intent to failed without settling", async () => {
     const checkout = createCheckout({
       destination,
       amount: "12.50",
@@ -59,7 +64,7 @@ describe("checkout reducer", () => {
         throw new Error("signer should not be requested");
       },
       method: adapter({
-        quote: async () => ({ ...quote, expiresAt: Date.now() - 1 }),
+        prepare: async () => ({ ...intent, expiresAt: Date.now() - 1 }),
       }),
     });
 
@@ -67,11 +72,11 @@ describe("checkout reducer", () => {
     const state = checkout.getState();
     expect(state.status).toBe("failed");
     if (state.status === "failed") {
-      expect(state.error.code).toBe("quote_expired");
+      expect(state.error.code).toBe("expired");
     }
   });
 
-  it("quotes and pays from idle in one call", async () => {
+  it("prepares and pays from idle in one call", async () => {
     const checkout = createCheckout({
       destination,
       amount: "12.50",

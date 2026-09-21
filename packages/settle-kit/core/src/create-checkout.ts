@@ -1,14 +1,15 @@
 import { parseUsdcAmount } from "./amounts.ts";
 import { assertDestination } from "./destination.ts";
 import { invalidConfig, SettleKitError, toSettleError } from "./errors.ts";
+import { validateIntent } from "./intent.ts";
 import { createUsdcMethod } from "./methods/usdc.ts";
-import { validateQuote } from "./quote-client.ts";
 import { type CheckoutAction, IDLE_STATE, reduce } from "./state.ts";
 import {
   type CheckoutManager,
   type CheckoutState,
   type CreateCheckoutInput,
   type Destination,
+  type Intent,
   type PaymentSigner,
   SETTLE_METHOD_IDS,
   type SettleAdapter,
@@ -22,6 +23,17 @@ type ResolvedCheckout = {
   method: SettleAdapter;
 };
 
+type BoundSettling = Extract<CheckoutState, { status: "settling" }> & {
+  intent: Intent;
+  destination: Destination;
+};
+
+function isBoundSettling(state: CheckoutState): state is BoundSettling {
+  return (
+    state.status === "settling" && state.intent !== undefined && state.destination !== undefined
+  );
+}
+
 function resolveInput(input: CreateCheckoutInput): ResolvedCheckout {
   if (typeof input.getSigner !== "function") {
     invalidConfig("getSigner is required");
@@ -31,11 +43,11 @@ function resolveInput(input: CreateCheckoutInput): ResolvedCheckout {
   if (!(SETTLE_METHOD_IDS as readonly string[]).includes(method.id))
     invalidConfig(`Unknown payment method: ${method.id}`);
   if (
-    typeof method.quote !== "function" ||
+    typeof method.prepare !== "function" ||
     typeof method.settle !== "function" ||
     typeof method.confirm !== "function"
   )
-    invalidConfig(`Method ${method.id} needs quote, settle, and confirm`);
+    invalidConfig(`Method ${method.id} needs prepare, settle, and confirm`);
   parseUsdcAmount(input.amount);
   return {
     amount: input.amount.trim(),
@@ -57,14 +69,14 @@ function notifyCheckout(listeners: Set<() => void>) {
 
 async function confirmPayment(
   adapter: SettleAdapter,
-  current: Extract<CheckoutState, { status: "settling" }>,
+  current: BoundSettling,
   txHash: SettlementHash,
   setState: (action: CheckoutAction) => void,
 ) {
   try {
     const result = await adapter.confirm({
       txHash,
-      quote: current.quote,
+      intent: current.intent,
       destination: current.destination,
     });
     if (result === "success") setState({ type: "SETTLED", txHash });
@@ -92,7 +104,7 @@ async function confirmPayment(
 /**
  * Start a checkout session for a USDC amount.
  *
- * Call `pay()` to quote, submit, and wait for a receipt. The manager is
+ * Call `pay()` to prepare, submit, and wait for a receipt. The manager is
  * in-memory: keep the page open until confirmation.
  */
 export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
@@ -118,34 +130,32 @@ export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
 
   function checkExpiry(expiresAt: number) {
     if (expiresAt <= Date.now())
-      throw new SettleKitError("quote_expired", "Quote expired before payment");
+      throw new SettleKitError("expired", "Payment expired before it was sent");
   }
 
-  async function quote() {
+  async function prepare() {
     if (state.status !== "idle")
       invalidConfig(`pay() requires idle; current status is ${state.status}`);
     const token = ++generation;
-    setState({ type: "QUOTING", amount });
+    setState({ type: "SETTLING", amount });
     try {
-      const value = await adapter.quote({ amount, destination });
+      const value = await adapter.prepare({ amount, destination });
       if (token !== generation) return;
-      const quoted = validateQuote(value, amount, destination, adapter.id);
-      const settleTo = quoted.destination ?? destination;
+      const intent = validateIntent(value, amount, destination, adapter.id);
+      const settleTo = intent.destination ?? destination;
       if (!settleTo) {
-        invalidConfig(
-          "destination is required: set it on the checkout or return it from the quote",
-        );
+        invalidConfig("destination is required: set it on the checkout or return it from prepare");
       }
-      setState({ type: "QUOTE_OK", quote: quoted, destination: settleTo });
+      setState({ type: "PREPARE_OK", intent, destination: settleTo });
     } catch (error) {
       if (token !== generation) return;
-      setState({ type: "QUOTE_FAILED", error: toSettleError(error) });
+      setState({ type: "FAILED", error: toSettleError(error) });
       if (error instanceof SettleKitError && error.code === "invalid_config") throw error;
     }
   }
 
   async function confirm() {
-    if (state.status !== "settling" || !state.txHash || confirming) {
+    if (!isBoundSettling(state) || !state.txHash || confirming) {
       invalidConfig("Confirmation requires a submitted transaction and no active receipt lookup");
     }
     const current = state;
@@ -162,18 +172,18 @@ export function createCheckout(input: CreateCheckoutInput): CheckoutManager {
   async function pay() {
     if (state.status !== "idle")
       invalidConfig(`pay() requires idle; current status is ${state.status}`);
-    await quote();
+    await prepare();
     const current = getState();
-    if (current.status !== "settling") {
+    if (!isBoundSettling(current)) {
       if (current.status === "failed" || current.status === "idle") return;
       invalidConfig(`pay() could not start settlement; current status is ${current.status}`);
     }
     try {
-      checkExpiry(current.quote.expiresAt);
+      checkExpiry(current.intent.expiresAt);
       const signer = await config.getSigner();
-      checkExpiry(current.quote.expiresAt);
+      checkExpiry(current.intent.expiresAt);
       const txHash = await adapter.settle({
-        quote: current.quote,
+        intent: current.intent,
         destination: current.destination,
         signer,
       });

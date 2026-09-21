@@ -110,12 +110,12 @@ export function createSponsoredPayment(recipient: Address) {
 
   const adapter: SettleAdapter = {
     ...method,
-    async quote(input) {
+    async prepare(input) {
       const purchase = beginSponsoredPurchase(localStorage);
       if (input.amount !== WEATHER_PRICE_USDC || input.destination?.recipient !== recipient)
         throw new SettleKitError("invalid_config", "Only the demo weather report is sponsored.");
-      const quote = await method.quote(input);
-      return { ...quote, requestId: purchase.id };
+      const intent = await method.prepare(input);
+      return { ...intent, requestId: purchase.id };
     },
     async settle(input) {
       // Fund first, then delegate. The SDK's balance preflight runs inside
@@ -127,24 +127,24 @@ export function createSponsoredPayment(recipient: Address) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            purchaseId: input.quote.requestId,
+            purchaseId: input.intent.requestId,
             payer: input.signer.address,
           }),
         });
         const result = await response.json();
         if (!response.ok) throw new Error(result.error ?? "Could not fund the demo account.");
-        await waitForFunding(input.signer.address, BigInt(input.quote.amountAtomic));
+        await waitForFunding(input.signer.address, BigInt(input.intent.amountAtomic));
 
         setSettlePhase("submitting");
         const userOpHash = await method.settle(input);
         writeSponsoredPurchase(localStorage, {
           ...readSponsoredPurchase(localStorage),
-          id: input.quote.requestId,
+          id: input.intent.requestId,
           txHash: userOpHash,
         });
         localStorage.setItem(
           `${SPONSORED_PURCHASE_STORAGE_KEY}:${userOpHash}`,
-          input.quote.requestId,
+          input.intent.requestId,
         );
         return userOpHash;
       } finally {
