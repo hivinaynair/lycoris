@@ -19,7 +19,7 @@ class SplineStage extends Component<{ children: ReactNode }, { failed: boolean }
   render() {
     if (this.state.failed) {
       return (
-        // eslint-disable-next-line @next/next/no-img-element
+        // biome-ignore lint/performance/noImgElement: static PNG fallback when Spline fails to load
         <img src="/agent.png" alt="" className="h-full w-full object-contain" />
       );
     }

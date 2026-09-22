@@ -49,7 +49,10 @@ const IDENTITY_STATUS_LABELS: Record<number, string> = {
 };
 
 function Erc8004Detail({ data }: { data: Extract<GateRawData, { gate: "erc8004" }> }) {
-  const statusLabel = IDENTITY_STATUS_LABELS[data.identityStatus!] ?? "Not Found";
+  const statusLabel =
+    data.identityStatus == null
+      ? "Not Found"
+      : (IDENTITY_STATUS_LABELS[data.identityStatus] ?? "Not Found");
   return (
     <div className="flex flex-col gap-4">
       <Section title="Identity Registry Lookup">
@@ -76,7 +79,7 @@ function Ap2Detail({ data }: { data: Extract<GateRawData, { gate: "ap2" }> }) {
           {"MandatePayload {"}
           {mandate.types.MandatePayload.map((f) => (
             <span key={f.name} className="block pl-4">
-              {f.type} {f.name};
+              {`${f.type} ${f.name};`}
             </span>
           ))}
           {"}"}

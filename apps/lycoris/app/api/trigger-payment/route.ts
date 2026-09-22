@@ -25,7 +25,13 @@ export async function POST(request: Request) {
           : {}),
       }
     : undefined;
-  const agentName = DEMO_SCENARIO_AGENTS[scenarioIndex]!;
+  const agentName = DEMO_SCENARIO_AGENTS[scenarioIndex];
+  if (!agentName) {
+    return Response.json(
+      { error: "Enter a message of 1–2,000 characters and choose a valid scenario." },
+      { status: 400 },
+    );
+  }
   const route = getDemoReportRoute(DEMO_AGENT_ROUTE[agentName]);
   const targetUrl = `${new URL(request.url).origin}${route.path}`;
   const demoAgent = demoAgents.find((a) => a.id === agentName);

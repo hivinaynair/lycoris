@@ -2,7 +2,13 @@
 
 import { cn } from "@repo/ui/lib/utils";
 import { motion } from "framer-motion";
-import { gateState, packetPosition, packetStops, settlementGates } from "../lib/settlement-gates";
+import {
+  gateState,
+  packetPosition,
+  packetStopAt,
+  packetStops,
+  settlementGates,
+} from "../lib/settlement-gates";
 import { AgentActor } from "./settlement-actor";
 import { GateModule } from "./settlement-gate-ui";
 
@@ -28,8 +34,8 @@ export function DesktopSettlementScene({
   horizontalBarClass: string;
 }) {
   const packetLeft = packetPosition(activeStep, rejectedReason);
-  const railStart = packetStops[1]!;
-  const railEnd = packetStops[packetStops.length - 1]!;
+  const railStart = packetStopAt(1);
+  const railEnd = packetStopAt(packetStops.length - 1);
   const railProgress = (packetLeft - railStart) / (railEnd - railStart);
 
   return (

@@ -46,8 +46,15 @@ function DemoPage({ initialIndex }: { initialIndex: number }) {
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
   const [activeGateStep, setActiveGateStep] = useState<TraceStep | null>(null);
 
-  const selectedScenario = SCENARIOS[selectedIndex]!;
-  const selectedAgent = demoAgents.find((agent) => agent.id === selectedScenario.agentName)!;
+  const selectedScenario = SCENARIOS[selectedIndex] ?? SCENARIOS[0];
+  if (!selectedScenario) {
+    throw new Error("SCENARIOS is empty");
+  }
+  const selectedAgent =
+    demoAgents.find((agent) => agent.id === selectedScenario.agentName) ?? demoAgents[0];
+  if (!selectedAgent) {
+    throw new Error("demoAgents is empty");
+  }
   const { activeStep, approved, loading, resetRunState, result, sendMessage, messages, chatError } =
     usePaymentRun({ selectedIndex });
 

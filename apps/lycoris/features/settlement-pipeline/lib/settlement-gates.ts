@@ -24,6 +24,14 @@ export const settlementGates = [
 
 export const packetStops = [17, 34, 51, 70, 85, 95] as const;
 
+export function packetStopAt(index: number): number {
+  const stop = packetStops[index];
+  if (stop === undefined) {
+    throw new Error(`packetStops out of range: ${index}`);
+  }
+  return stop;
+}
+
 export function gateState(
   index: number,
   activeStep: number,
@@ -53,8 +61,8 @@ export function gateState(
 
 export function packetPosition(activeStep: number, rejectedReason?: string) {
   const fail = settlementFailureStep(rejectedReason);
-  if (fail > 0) return packetStops[fail]!;
-  return packetStops[Math.min(Math.max(activeStep, 0), packetStops.length - 1)]!;
+  if (fail > 0) return packetStopAt(fail);
+  return packetStopAt(Math.min(Math.max(activeStep, 0), packetStops.length - 1));
 }
 
 export function latestAgentReasoning(reasoning?: string) {

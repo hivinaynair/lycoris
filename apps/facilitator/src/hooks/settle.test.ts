@@ -3,6 +3,11 @@ import type { SignedMandate } from "@repo/shared/mandate";
 import { serializeMandateHeader } from "@repo/shared/mandate-header";
 import type { AgentProfile } from "@repo/shared/types";
 import { Decision } from "@repo/shared/types";
+import type {
+  FacilitatorSettleContext,
+  FacilitatorSettleFailureContext,
+  FacilitatorSettleResultContext,
+} from "@x402/core/facilitator";
 import * as attest from "../lib/attest.js";
 import { requestCtx } from "../lib/request-context.js";
 
@@ -108,7 +113,7 @@ const AUTH_NONCE = "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefde
 const NETWORK = "eip155:84532" as const;
 const SETTLEMENT_TX = "0xsettlementtxhash";
 
-function makePayload(nonce?: string) {
+function makePayload(nonce?: string): FacilitatorSettleContext["paymentPayload"] {
   return {
     resource: { url: "http://localhost:3003/api/weather/public", mimeType: "application/json" },
     payload: { from: PAYER, authorization: { from: PAYER, nonce } },
@@ -120,10 +125,10 @@ function makePayload(nonce?: string) {
       payTo: MERCHANT,
       maxTimeoutSeconds: 60,
     },
-  };
+  } as FacilitatorSettleContext["paymentPayload"];
 }
 
-function makeRequirements(amount = "10000000") {
+function makeRequirements(amount = "10000000"): FacilitatorSettleContext["requirements"] {
   return {
     amount,
     network: NETWORK,
@@ -131,7 +136,7 @@ function makeRequirements(amount = "10000000") {
     asset: "usdc",
     payTo: MERCHANT,
     maxTimeoutSeconds: 60,
-  };
+  } as FacilitatorSettleContext["requirements"];
 }
 
 function withMandateCtx<T>(fn: () => Promise<T>): Promise<T> {
@@ -165,8 +170,8 @@ describe("onBeforeSettle", () => {
   it("does not abort when amount is within mandate", async () => {
     const result = await withMandateCtx(() =>
       onBeforeSettle({
-        paymentPayload: makePayload(AUTH_NONCE) as any,
-        requirements: makeRequirements("1000") as any,
+        paymentPayload: makePayload(AUTH_NONCE),
+        requirements: makeRequirements("1000"),
       }),
     );
     expect(result).toBeUndefined();
@@ -174,16 +179,16 @@ describe("onBeforeSettle", () => {
 
   it("aborts with mandate reason when mandate validation fails (no mandate header)", async () => {
     const result = await onBeforeSettle({
-      paymentPayload: makePayload(AUTH_NONCE) as any,
-      requirements: makeRequirements("1000") as any,
+      paymentPayload: makePayload(AUTH_NONCE),
+      requirements: makeRequirements("1000"),
     });
     expect(result).toEqual({ abort: true, reason: "mandate_missing" });
   });
 
   it("paymentHash is deterministic for mandate rejection — same inputs produce same value in DB", async () => {
-    const ctx = {
-      paymentPayload: makePayload(AUTH_NONCE) as any,
-      requirements: makeRequirements("200000000") as any, // 200 USDC > $100 mandate
+    const ctx: FacilitatorSettleContext = {
+      paymentPayload: makePayload(AUTH_NONCE),
+      requirements: makeRequirements("200000000"), // 200 USDC > $100 mandate
     };
     await withMandateCtx(() => onBeforeSettle(ctx));
     await withMandateCtx(() => onBeforeSettle(ctx));
@@ -197,8 +202,8 @@ describe("onBeforeSettle", () => {
     mockReadContract.mockImplementationOnce(async () => 500n); // 0.0005 USDC — less than 1000 atomic
     const result = await withMandateCtx(() =>
       onBeforeSettle({
-        paymentPayload: makePayload(AUTH_NONCE) as any,
-        requirements: makeRequirements("1000") as any,
+        paymentPayload: makePayload(AUTH_NONCE),
+        requirements: makeRequirements("1000"),
       }),
     );
     expect(result).toEqual({ abort: true, reason: "insufficient_funds" });
@@ -208,8 +213,8 @@ describe("onBeforeSettle", () => {
     mockReadContract.mockImplementationOnce(async () => 1000n); // exactly 1000 atomic
     const result = await withMandateCtx(() =>
       onBeforeSettle({
-        paymentPayload: makePayload(AUTH_NONCE) as any,
-        requirements: makeRequirements("1000") as any,
+        paymentPayload: makePayload(AUTH_NONCE),
+        requirements: makeRequirements("1000"),
       }),
     );
     expect(result).toBeUndefined();
@@ -218,12 +223,11 @@ describe("onBeforeSettle", () => {
 
 describe("onAfterSettle", () => {
   it("inserts approved record with authorizationNonce", async () => {
-    await withMandateCtx(() =>
-      onAfterSettle({
-        paymentPayload: makePayload(AUTH_NONCE) as any,
-        result: { success: true, transaction: SETTLEMENT_TX, network: NETWORK },
-      }),
-    );
+    const settleResult: FacilitatorSettleResultContext = {
+      paymentPayload: makePayload(AUTH_NONCE),
+      result: { success: true, transaction: SETTLEMENT_TX, network: NETWORK },
+    };
+    await withMandateCtx(() => onAfterSettle(settleResult));
     expect(mockInsertValues).toHaveBeenCalledWith(
       expect.objectContaining({
         settlementTx: SETTLEMENT_TX,
@@ -243,7 +247,7 @@ describe("onAfterSettle", () => {
   it("still inserts DB record if attestation write fails", async () => {
     mockPublishAttestation.mockResolvedValueOnce(null);
     await onAfterSettle({
-      paymentPayload: makePayload(AUTH_NONCE) as any,
+      paymentPayload: makePayload(AUTH_NONCE),
       result: { success: true, transaction: SETTLEMENT_TX, network: NETWORK },
     });
     expect(mockInsertValues).toHaveBeenCalledWith(
@@ -258,7 +262,7 @@ describe("onAfterSettle", () => {
 
   it("stores a rejected record when result is not successful", async () => {
     await onAfterSettle({
-      paymentPayload: makePayload(AUTH_NONCE) as any,
+      paymentPayload: makePayload(AUTH_NONCE),
       result: {
         success: false,
         transaction: "",
@@ -285,7 +289,7 @@ describe("onAfterSettle", () => {
     mockWaitForTransactionReceipt.mockImplementationOnce(async () => ({ status: "reverted" }));
 
     await onAfterSettle({
-      paymentPayload: makePayload(AUTH_NONCE) as any,
+      paymentPayload: makePayload(AUTH_NONCE),
       result: { success: true, transaction: SETTLEMENT_TX, network: NETWORK },
     });
 
@@ -311,7 +315,7 @@ describe("onAfterSettle", () => {
     mockWaitForTransactionReceipt.mockRejectedValueOnce(new Error("receipt unavailable"));
 
     await onAfterSettle({
-      paymentPayload: makePayload(AUTH_NONCE) as any,
+      paymentPayload: makePayload(AUTH_NONCE),
       result: { success: true, transaction: SETTLEMENT_TX, network: NETWORK },
     });
 
@@ -336,18 +340,19 @@ describe("onAfterSettle", () => {
 
 describe("onSettleFailure", () => {
   it("returns void when auth nonce is missing from payload", async () => {
-    const result = await onSettleFailure({
-      paymentPayload: makePayload(undefined) as any,
-      requirements: makeRequirements() as any,
+    const failureCtx: FacilitatorSettleFailureContext = {
+      paymentPayload: makePayload(undefined),
+      requirements: makeRequirements(),
       error: new Error("nonce used"),
-    });
+    };
+    const result = await onSettleFailure(failureCtx);
     expect(result).toBeUndefined();
   });
 
   it("returns void when no matching approved record in DB", async () => {
     const result = await onSettleFailure({
-      paymentPayload: makePayload(AUTH_NONCE) as any,
-      requirements: makeRequirements() as any,
+      paymentPayload: makePayload(AUTH_NONCE),
+      requirements: makeRequirements(),
       error: new Error("nonce used"),
     });
     expect(result).toBeUndefined();
@@ -359,8 +364,8 @@ describe("onSettleFailure", () => {
     ]);
 
     const result = await onSettleFailure({
-      paymentPayload: makePayload(AUTH_NONCE) as any,
-      requirements: makeRequirements() as any,
+      paymentPayload: makePayload(AUTH_NONCE),
+      requirements: makeRequirements(),
       error: new Error("nonce used"),
     });
 
@@ -376,8 +381,8 @@ describe("onSettleFailure", () => {
     ]);
 
     const result = await onSettleFailure({
-      paymentPayload: makePayload(AUTH_NONCE) as any,
-      requirements: makeRequirements() as any,
+      paymentPayload: makePayload(AUTH_NONCE),
+      requirements: makeRequirements(),
       error: new Error("nonce used"),
     });
     expect(result).toBeUndefined();

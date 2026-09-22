@@ -1,8 +1,8 @@
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, type PublicClient } from "viem";
 import { baseSepolia } from "viem/chains";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const publicClient: any = createPublicClient({
-  chain: baseSepolia,
-  transport: http("https://sepolia.base.org"),
-});
+export const publicClient: Pick<PublicClient, "readContract" | "getTransactionReceipt"> =
+  createPublicClient({
+    chain: baseSepolia,
+    transport: http("https://sepolia.base.org"),
+  });

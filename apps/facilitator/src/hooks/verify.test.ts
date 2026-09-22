@@ -2,6 +2,8 @@ import { afterAll, describe, expect, it, mock, spyOn } from "bun:test";
 import type { SignedMandate } from "@repo/shared/mandate";
 import { serializeMandateHeader } from "@repo/shared/mandate-header";
 import type { AgentProfile } from "@repo/shared/types";
+import type { FacilitatorVerifyContext } from "@x402/core/facilitator";
+import type { PublicClient } from "viem";
 import * as attest from "../lib/attest.js";
 import { requestCtx } from "../lib/request-context.js";
 
@@ -48,7 +50,7 @@ const VALID_PROFILE: AgentProfile = {
 const DEFAULT_AMOUNT_ATOMIC = "10000";
 const AUTH_NONCE = "0xabc123";
 
-function makeCtx(amountAtomic = DEFAULT_AMOUNT_ATOMIC) {
+function makeCtx(amountAtomic = DEFAULT_AMOUNT_ATOMIC): FacilitatorVerifyContext {
   return {
     paymentPayload: {
       resource: "http://localhost:3000/api/settlement-risk-report",
@@ -56,7 +58,13 @@ function makeCtx(amountAtomic = DEFAULT_AMOUNT_ATOMIC) {
       accepted: { amount: amountAtomic },
     },
     requirements: { amount: amountAtomic, payTo: MERCHANT },
-  } as any;
+  } as FacilitatorVerifyContext;
+}
+
+function mockReadContractClient(balance: bigint): Pick<PublicClient, "readContract"> {
+  return {
+    readContract: mock(async () => balance),
+  } as Pick<PublicClient, "readContract">;
 }
 
 function happyDeps(overrides: Partial<VerifyDeps> = {}): VerifyDeps {
@@ -64,7 +72,7 @@ function happyDeps(overrides: Partial<VerifyDeps> = {}): VerifyDeps {
     verifyMandateSignature: mock(async () => true),
     lookupIdentity: mock(async () => VALID_PROFILE),
     registryAddress: REGISTRY,
-    client: { readContract: mock(async () => 1000000000n) } as any,
+    client: mockReadContractClient(1000000000n),
     ...overrides,
   };
 }
@@ -194,7 +202,7 @@ describe("onBeforeVerify", () => {
       onBeforeVerify(
         makeCtx("10000"),
         happyDeps({
-          client: { readContract: mock(async () => 9999n) } as any,
+          client: mockReadContractClient(9999n),
         }),
       ),
     );
