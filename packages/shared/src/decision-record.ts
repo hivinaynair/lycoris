@@ -10,7 +10,7 @@ export function formatUsdcAtomic(amount: bigint) {
 
 export function routeFromResource(resource: unknown, amountAtomic: bigint) {
   // x402 v2 carries ResourceInfo ({ url, description, mimeType }). Older records
-  // and preclear requests carry a URL string. Both must name the purchased route.
+  // and older records carry a URL string. Both must name the purchased route.
   const url =
     typeof resource === "string"
       ? resource

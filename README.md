@@ -221,8 +221,8 @@ export async function buyReport(url: string, scheme: Scheme, mandateHeader: stri
 
 Keep the URL allowlist, credential storage and spend policy in your host app.
 
-In this repo: [fetch_paid_resource.ts](apps/agent/agent/tools/fetch_paid_resource.ts) — note it
-preclears in the approval gate, before the signer is ever touched.
+In this repo: [fetch_paid_resource.ts](apps/agent/agent/tools/fetch_paid_resource.ts) quotes,
+signs, and pays. Identity, mandate, and balance are enforced on verify and settle.
 
 ### An MCP client buys something
 
@@ -312,8 +312,8 @@ flowchart LR
 ```
 
 For agents, x402 supplies the challenge and the signed retry; the facilitator
-checks ERC-8004 identity, AP2 permission and balance before settling. Identity is
-not KYC, and `/preclear` checks permission rather than locking funds. The host
+checks ERC-8004 identity, AP2 permission and balance on verify and settle.
+Identity is not KYC, and those checks are not a separate permission call. The host
 binds the wallet and the allowed URL — the model cannot pick an arbitrary merchant,
 and each turn gets one payment attempt.
 

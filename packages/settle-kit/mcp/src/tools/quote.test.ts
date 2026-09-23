@@ -80,16 +80,14 @@ describe("quote_resource", () => {
     expect((cfg as unknown as { facilitatorCalls: () => number }).facilitatorCalls()).toBe(0);
   });
 
-  it("returns terms plus the preclear verdict as money", async () => {
+  it("returns x402 terms as money and does not ask the facilitator", async () => {
     const agent = privateKeyToAccount(generatePrivateKey());
-    const result = await quoteResourceTool(
-      URL,
-      options({ header: await headerFor(agent.address), address: agent.address, quote }),
-    );
+    const cfg = options({ header: await headerFor(agent.address), address: agent.address, quote });
+    const result = await quoteResourceTool(URL, cfg);
     expect(result.isError).toBeUndefined();
     const body = JSON.parse(result.content[0]?.text ?? "{}") as {
       amount: { display: string; atomic: string; currency: string };
-      preclear: { ok: boolean };
+      preclear?: unknown;
     };
     expect(body.amount).toEqual({
       decimal: "0.10",
@@ -97,6 +95,7 @@ describe("quote_resource", () => {
       currency: "USDC",
       display: "0.10 USDC",
     });
-    expect(body.preclear).toEqual({ ok: true });
+    expect(body.preclear).toBeUndefined();
+    expect((cfg as unknown as { facilitatorCalls: () => number }).facilitatorCalls()).toBe(0);
   });
 });

@@ -32,8 +32,7 @@ export async function validateMandateForPayment(
     authorizationNonce?: string | undefined;
     resource?: unknown;
     /**
-     * Who this payment actually pays. Supplied by the gate, never by the caller.
-     * Absent only at preclear, which is advisory and settles nothing.
+     * Who this payment actually pays. Supplied by verify and settle, never by the buyer.
      */
     payTo?: string | undefined;
   },

@@ -87,7 +87,7 @@ export function PaymentWorkspace({
             viewBox={`0 ${DIAGRAM_BOUNDS.y} ${canvasWidth} ${DIAGRAM_BOUNDS.height}`}
             preserveAspectRatio="xMidYMin meet"
             role="img"
-            aria-label="Lycoris requests the Weather API, receives HTTP 402, and retries with a payment signature and mandate. The Weather API calls the facilitator for identity, mandate, balance, and settlement checks. USDC moves from agent to merchant, then the API returns the report. A separate preflight connects Lycoris to the facilitator."
+            aria-label="Lycoris requests the Weather API, receives HTTP 402, and retries with a payment signature and mandate. The Weather API calls the facilitator, which checks identity, mandate, balance, and settlement. USDC moves from agent to merchant, then the API returns the report."
           >
             <g data-artwork="true">
               <PaymentMachine

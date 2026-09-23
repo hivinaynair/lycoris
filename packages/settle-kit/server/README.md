@@ -54,11 +54,9 @@ settlement uncertain; do not automatically retry a purchase without reconciling 
 - `@settle-kit/agents` is for the buyer: discover terms, sign, and retry paid fetches.
 - `@settle-kit/server/next` is for the provider: require payment and coordinate verification and settlement.
 
-Lycoris's Eve tool additionally calls the facilitator's `/preclear` before signing.
-That optional preflight is an early identity/mandate check, not a payment or balance
-guarantee. The current tool quotes once before preflight, then paid fetch encounters
-another 402 before signing. The facilitator enforces the checks again when the
-API forwards the payment. The animation condenses those repeated challenges.
+Lycoris's Eve tool quotes, signs, and retries. It does not ask the facilitator
+for permission first. The facilitator enforces identity, mandate, and balance
+when the API forwards the payment to verify and settle.
 
 The package ships ESM and declarations, is not published, and contains no demo
 allowlists, application environment imports, Eve dependency, or database code.

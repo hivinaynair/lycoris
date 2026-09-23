@@ -1,11 +1,7 @@
 import { MANDATE_EIP712_DOMAIN, MANDATE_EIP712_TYPES } from "@repo/shared/mandate";
 import type { MandateHeaderValue } from "@repo/shared/mandate-header";
 import type { DecisionRecord, RawMandate } from "@repo/shared/types";
-import {
-  type PreclearResult,
-  getDecisionRecord as pollDecisionRecord,
-  preclear,
-} from "@settle-kit/agents";
+import { getDecisionRecord as pollDecisionRecord } from "@settle-kit/agents";
 
 export function toRawMandate(entry: MandateHeaderValue): RawMandate {
   return {
@@ -32,25 +28,7 @@ export function toRawMandate(entry: MandateHeaderValue): RawMandate {
   };
 }
 
-export type { PreclearResult };
-
-export async function preclearPayment(input: {
-  amountAtomic: bigint;
-  mandateHeader: string;
-  payer: string;
-  resource: string;
-}): Promise<PreclearResult> {
-  const facilitatorUrl = process.env.FACILITATOR_URL;
-  if (!facilitatorUrl) return { ok: false, reason: "facilitator_unreachable" };
-  return preclear({
-    facilitatorUrl,
-    amountAtomic: input.amountAtomic.toString(),
-    mandateHeader: input.mandateHeader,
-    payer: input.payer,
-    resource: input.resource,
-  });
-}
-
+/** Read the record the facilitator wrote while verifying or settling. */
 export async function getDecisionRecord(
   input: {
     authorizationNonce?: string;

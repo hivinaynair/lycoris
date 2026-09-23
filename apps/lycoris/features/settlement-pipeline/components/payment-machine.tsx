@@ -42,27 +42,24 @@ function Cloud({ x, y }: { x: number; y: number }) {
 
 function BuyerExchange({ apiX, apiY, ...props }: Props & { apiX: number; apiY: number }) {
   const returning = props.step === 1 || props.step === 6;
-  const preflight = props.step === 2 || props.step === 3;
-  const state: GateState =
-    props.chatting || preflight
-      ? "idle"
-      : props.step === 6
-        ? props.delivered
-        : props.step >= 4
-          ? props.state(4)
-          : props.preview && props.step === 0
-            ? "running"
-            : props.state(1);
+  const signed = props.step >= 2 && props.step < 6;
+  const state: GateState = props.chatting
+    ? "idle"
+    : props.step === 6
+      ? props.delivered
+      : signed
+        ? props.state(props.step >= 4 ? 4 : props.step)
+        : props.preview && props.step === 0
+          ? "running"
+          : props.state(1);
   const label =
     props.step === 6
       ? "Report received"
-      : props.step >= 4
+      : signed
         ? "Signed payment + mandate"
         : props.step === 1
           ? "402 · payment required"
-          : preflight
-            ? "Waiting for permission"
-            : "Request weather";
+          : "Request weather";
   // Reuse a pair of physical wires. Their direction and caption follow the exchange.
   const upper = `M${AGENT_X} 100 C${apiX - 110} 100 ${apiX - 95} ${apiY + 20} ${apiX} ${apiY + 20}`;
   const lower = `M${apiX} ${apiY + 50} C${apiX - 110} ${apiY + 50} ${AGENT_X + 80} 115 ${AGENT_X} 100`;
@@ -82,22 +79,6 @@ function BuyerExchange({ apiX, apiY, ...props }: Props & { apiX: number; apiY: n
         {returning ? "" : " →"}
       </text>
     </>
-  );
-}
-
-function Preflight({ targetX, targetY, ...props }: Props & { targetX: number; targetY: number }) {
-  if (props.chatting || props.step < 2 || props.step > 3) return null;
-  return (
-    <g className={styles.exchangeReveal}>
-      <Wire
-        d={`M${AGENT_X} 100 C${AGENT_X + 95} 100 210 61 295 61 H${targetX - 35} Q${targetX} 61 ${targetX} ${targetY}`}
-        state={props.state(props.step)}
-        kind="preflight"
-      />
-      <text className={styles.wireLabel} x={(295 + targetX) / 2} y="48" textAnchor="middle">
-        Check permission before signing
-      </text>
-    </g>
   );
 }
 
@@ -153,14 +134,14 @@ export function PaymentMachine(props: Props) {
   );
   const apiState =
     props.delivered !== "idle" ? props.delivered : props.step <= 1 ? props.state(1) : "idle";
-  const paidFlow = props.step >= 4 && !props.chatting ? props.state(4) : "idle";
+  const paidFlow =
+    props.step >= 2 && !props.chatting ? props.state(props.step >= 4 ? 4 : props.step) : "idle";
   return (
     <g data-variant="rail">
       <g className={styles.guide}>
         <path d={`M${gatesX - gap / 2} 84 V322 M${settleX - gap / 2} 84 V322`} />
       </g>
       <BuyerExchange {...props} apiX={apiX} apiY={173} />
-      <Preflight {...props} targetX={gatesX + gateWidth / 2} targetY={108} />
       <Wire
         d={`M${apiX + apiWidth} 201 C${apiX + apiWidth + gap / 2} 201 ${gatesX - gap / 2} 135 ${gatesX} 135`}
         state={paidFlow}

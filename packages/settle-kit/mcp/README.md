@@ -86,7 +86,7 @@ Six of the seven are read-only. Money is one object, never a JSON number:
 | `get_agent_identity` | payer address, ERC-8004 registry id, whether registered |
 | `get_mandate` | delegator, cap, expiry, bound merchant |
 | `get_balance` | USDC balance as a money object |
-| `quote_resource(url)` | x402 terms **and a preclear verdict** |
+| `quote_resource(url)` | x402 terms only. Does not spend or check permission |
 | `pay_for_resource(url)` | derived `pay_` id, settlement hash, explorer link |
 | `get_payment_status(pay_id)` | status, hash, explorer link |
 | `get_decision_record(pay_id)` | facilitator evidence, failing gate |
@@ -96,9 +96,8 @@ Six of the seven are read-only. Money is one object, never a JSON number:
 the call after a broken stream (which 2026-07-28 requires, with a new request
 id) gets the original payment back instead of buying twice.
 
-A held preclear asks a human in-band via MRTR (`input_required`). Approving
-`0.10` and then seeing a different quote refuses and re-asks; it does not pay
-the new number.
+Permission is not a tool the buyer calls. A payment that the mandate, identity,
+or balance cannot cover fails when the facilitator verifies or settles it.
 
 ## In-memory store
 

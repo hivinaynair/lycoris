@@ -1,4 +1,4 @@
-// Reserve the full wire envelope, including preflight above and receipts below.
+// Reserve the full wire envelope, including the request above and receipts below.
 export const DIAGRAM_BOUNDS = { y: 28, height: 376 };
 
 export const phases = [
@@ -12,11 +12,11 @@ export const phases = [
   ],
   [
     "Check the agent’s identity.",
-    "Lycoris first calls the facilitator’s /preclear endpoint. It checks the agent’s registered identity and mandate before signing.",
+    "The Weather API sends the signed payment to the facilitator. Verify checks that an ERC-8004 registration matches this payer.",
   ],
   [
     "Check permission to spend.",
-    "The mandate must authorize this purchase. Preflight can stop the agent early; the facilitator enforces these checks again on the API’s payment request.",
+    "The same verify and settle path checks the mandate: payer, merchant, ceiling, and expiry. The agent does not make a separate permission call.",
   ],
   [
     "Send USDC to the weather provider.",

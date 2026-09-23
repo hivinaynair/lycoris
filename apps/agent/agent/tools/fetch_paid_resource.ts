@@ -6,8 +6,8 @@ import { defineTool } from "eve/tools";
 import { z } from "zod";
 import { getCdp } from "../lib/cdp.js";
 import { getAp2CredentialForAgent } from "../lib/credentials.js";
+import { getDecisionRecord, toRawMandate } from "../lib/decision-record.js";
 import { paymentScope } from "../lib/payment-scope.js";
-import { getDecisionRecord, preclearPayment, toRawMandate } from "../lib/preclear.js";
 
 const attempt = defineState("lycoris.payment-attempt", () => ({ turnId: "" }));
 
@@ -16,7 +16,7 @@ const denied = (reason: string) => ({ type: "denied" as const, reason });
 export default defineTool({
   description:
     "Buy Melbourne’s next 1 PM weather report for 0.1 test USDC using the configured wallet. " +
-    "If identity or the mandate refuses the payment, it is never signed.",
+    "The facilitator enforces identity, the mandate, and balance when it verifies and settles.",
   inputSchema: z.object({}),
   approval: async (ctx) => {
     const { agentName, url } = paymentScope(
@@ -39,14 +39,6 @@ export default defineTool({
       return denied(`Could not quote ${url}: ${(err as Error).message}`);
     }
     if (!quoted) return denied(`${url} is not an x402-gated resource`);
-
-    const verdict = await preclearPayment({
-      amountAtomic: BigInt(quoted.amountAtomic),
-      mandateHeader: credential.header,
-      payer: account.address,
-      resource: url,
-    });
-    if (!verdict.ok) return denied(verdict.reason);
     return "not-applicable";
   },
   async execute(_input, ctx) {

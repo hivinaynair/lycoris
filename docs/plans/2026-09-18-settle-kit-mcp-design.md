@@ -109,10 +109,10 @@ packages/settle-kit/mcp/
     index.ts          createSettleMcpServer()
     bin.ts            stdio entry
     tools/            one file per tool
-    facilitator.ts    preclear + decision record over HTTP
+    facilitator.ts    decision record over HTTP
     ids.ts            prefixed + derived ids
     money.ts          the money object
-    state.ts          requestState codec wiring
+    store.ts          payment idempotency
 ```
 
 One export, transport-agnostic:
@@ -203,15 +203,14 @@ leaking at the boundary. Never emit a JSON number for money.
 | `get_agent_identity` | payer address, `agt_`, ERC-8004 registry id, whether registered |
 | `get_mandate` | `mdt_`, delegator, cap, expiry, bound merchant, spent, remaining |
 | `get_balance` | USDC balance as a money object |
-| `quote_resource(url)` | x402 terms **and a preclear verdict** — may I pay this? |
+| `quote_resource(url)` | x402 terms only — what does this cost? |
 | `pay_for_resource(url)` | the money tool; see below |
 | `get_payment_status(pay_id)` | status, settlement hash, explorer link |
 | `get_decision_record(pay_id)` | facilitator evidence, failing gate |
 
-`quote_resource` folding in `/preclear` is what makes "start read-only" real.
-Preclear checks permission **without locking funds**, so a model can answer "can
-I afford this, and am I allowed?" before anything moves. Six of the seven tools
-are read-only by design.
+`quote_resource` is terms only, which keeps it read-only. Permission is not a
+buyer call: the facilitator enforces identity, mandate, and balance on verify
+and settle. Six of the seven tools are read-only by design.
 
 Reuse from `@settle-kit/agents`: `quoteResource`, `createPaidFetch`,
 `payForResource`, `serializeMandateHeader`, `verifyMandateLocal`.
@@ -236,44 +235,14 @@ it, and it improves prompt-cache hit rates downstream.
    that, not a throw.
 3. Derive `pay_`. A completed payment under that id → return it verbatim. This is
    the re-issue path and it is load-bearing.
-4. Preclear. Three outcomes:
-   - **ok** → pay.
-   - **held** (over cap, or policy wants a human) → `inputRequired`, below.
-   - **refused** (`identity_not_found`, `mandate_*`) → a structured refusal
-     naming the gate via the existing `failureGateForReason` mapping.
-5. On approval re-entry: verify `requestState`, read the response, then
-   **re-quote and compare against the sealed nonce**. If the price moved, refuse
-   and ask again rather than paying the new number.
-6. `payForResource({ url, paidFetch })` → poll the decision record → return
-   settled, hash, explorer link, evidence, mandate.
+4. `payForResource({ url, paidFetch })`. The facilitator verifies and settles.
+   A bad mandate, identity, or balance fails on that path and comes back on the
+   decision record, not from a buyer permission call.
+5. Poll the decision record → return settled, hash, explorer link, and evidence.
 
-Step 5's re-quote is the hole an approval round opens, and it is the same rule
-Natural applies to `fulfill_payment_request`: re-read the request, reject any
-mismatch against the amount the human agreed to, *then* submit. A human who
-approved `0.10` must never fund `0.15`.
-
-### Held payments over MRTR
-
-The server returns, from the tool handler:
-
-```ts
-return inputRequired({
-  inputRequests: { approval: inputRequired.elicit({ /* schema */ }) },
-  requestState: await stateCodec.mint({
-    phase: 'awaiting-approval', payId, url, amountAtomic, quoteNonce,
-  }),
-});
-```
-
-The client fulfils the elicitation through its own registered handler and retries
-the original call with `inputResponses` and a byte-exact `requestState` echo.
-Clients auto-fulfil by default, up to `inputRequired.maxRounds` (default 10).
-Read the response on re-entry with `acceptedContent(ctx.mcpReq.inputResponses, 'approval')`.
-
-This is distinct from the client's blanket tool-permission prompt. That prompt
-asks "may this tool run?" once. This asks "may *this payment* proceed?" per
-payment, because the mandate said so, with the amount and merchant in front of
-the human.
+There is no buyer permission round. A hold that only existed to ask “is this
+allowed?” before spend is the same check verify and settle already run, and it
+could say yes and then fail. The grant is the mandate. The rail enforces it.
 
 ### `requestState` is untrusted input
 
@@ -295,20 +264,16 @@ Model the phases as a discriminated union and switch on the phase. `inputRespons
 are **per round** and replace rather than accumulate, so anything learned in an
 earlier round must be threaded through `requestState` itself.
 
-For this package the key is process-local and random — there is no second
-instance to share it with. That changes if a hosted server ever lands.
+`pay_for_resource` does not mint request state. A future human hold on the
+money path would seal that state this way, with a process-local key.
 
 ## Boundary consequence
 
 `check-boundaries` will not let `@settle-kit/mcp` reach into `@repo/shared`, and
-it should not. But preclear and decision-record polling live there and in
-`apps/agent` today:
+it should not. Decision-record polling lives in `@settle-kit/agents` and the
+Eve tool reads it after a payment. The buyer does not call a permission endpoint.
 
-- `apps/agent/agent/lib/preclear.ts` — `POST {facilitator}/preclear` with an
-  `X-AP2-Mandate` header, returns `{ ok: true } | { ok: false, reason }`
-- `@repo/shared/facilitator` — decision-record polling with retries
-
-The package implements both in `facilitator.ts` against that HTTP contract,
+The package polls decision records in `facilitator.ts` against that HTTP contract,
 taking `facilitatorUrl` from the factory. Mandate helpers are already exported
 from `@settle-kit/agents` and come free.
 

@@ -30,7 +30,7 @@ export default function CheckoutPage() {
           <p>
             Both rails and the agent buy the same Melbourne weather report for 0.1 USDC, paid to the
             same merchant. Each purchase is a separate transfer. ERC-8004 is agent identity, not
-            KYC; preclear checks mandate and identity, not balance.
+            KYC. The facilitator checks mandate and identity when it verifies and settles.
           </p>
           <p>
             The faucet has a total budget of {SPONSORED_CHECKOUT_BUDGET} funded purchases (5 test

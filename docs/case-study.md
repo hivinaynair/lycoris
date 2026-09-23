@@ -41,8 +41,7 @@ flowchart TD
   Operation --> Receipt[Verify operation success and USDC transfer]
   Receipt --> Report[Release report]
   Agent[Agent requests paid API] --> Challenge[HTTP 402 terms]
-  Challenge --> Preclear[Host-bound wallet and permission preclear]
-  Preclear --> Retry[Signed payment retry]
+  Challenge --> Retry[Signed payment retry]
   Retry --> Facilitator[Facilitator verifies identity, mandate and balance]
   Facilitator --> Settlement[USDC settlement and decision evidence]
   Settlement --> Report
@@ -82,9 +81,9 @@ Evidence: [receipt adapter](../packages/settle-kit/core/src/methods/user-op-rece
 ### 3. Keep spending authority outside the model
 
 The agent tool takes no model-supplied wallet or merchant arguments. Its authenticated
-session selects the wallet and resource. Preclear checks identity and the signed
-mandate before the payment signature is requested. The facilitator checks again
-at verification and settlement, including merchant binding and balance.
+session selects the wallet and resource. The signed mandate is the grant. The
+facilitator enforces identity, that mandate, merchant binding, and balance when
+it verifies and settles the payment.
 
 The mandate supplies a per-payment ceiling and expiry; it is not a cumulative
 budget or a balance lock. ERC-8004 supplies an identity binding, not KYC. Keeping
