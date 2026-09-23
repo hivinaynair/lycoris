@@ -44,6 +44,35 @@ export function CheckoutControls({ look, setLook, rail, setRail }: ControlsProps
   );
 }
 
+function ChoiceButton({
+  pressed,
+  label,
+  disabled,
+  title,
+  onClick,
+}: {
+  pressed: boolean;
+  label: string;
+  disabled?: boolean;
+  title?: string;
+  onClick: () => void;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      className="h-10 w-full min-w-0 shrink justify-between gap-2 overflow-hidden rounded-none border border-border px-3"
+      type="button"
+      aria-pressed={pressed}
+      disabled={disabled}
+      title={title ?? label}
+      onClick={onClick}
+    >
+      <span className="min-w-0 truncate text-left">{label}</span>
+      <Check className={pressed ? "size-4" : "invisible size-4"} aria-hidden="true" />
+    </Button>
+  );
+}
+
 function RailControls({
   rail,
   setRail,
@@ -59,21 +88,16 @@ function RailControls({
         How you pay
       </legend>
       {CHECKOUT_RAILS.map((value) => (
-        <Button
+        <ChoiceButton
           key={value}
-          variant="ghost"
-          className="h-10 w-full justify-between rounded-none border border-border"
-          type="button"
-          aria-pressed={rail === value}
+          pressed={rail === value}
+          label={CHECKOUT_RAIL_LABEL[value]}
           disabled={disabled}
-          title={disabled ? "Wait for this payment to finish before switching." : undefined}
+          {...(disabled ? { title: "Wait for this payment to finish before switching." } : {})}
           onClick={() => {
             setRail(value);
           }}
-        >
-          {CHECKOUT_RAIL_LABEL[value]}
-          {rail === value && <Check className="size-4" aria-hidden="true" />}
-        </Button>
+        />
       ))}
       <p className="text-[length:var(--font-small-size)] leading-relaxed text-muted-foreground">
         Same <code>pay()</code>. Sponsored wraps the USDC method for a faucet and a 4337 receipt.
@@ -97,18 +121,14 @@ function AppearanceControls({ look, setLook }: Pick<ControlsProps, "look" | "set
           ["custom", "Merchant UI"],
         ] as const
       ).map(([value, label]) => (
-        <Button
+        <ChoiceButton
           key={value}
-          variant="ghost"
-          className="h-10 w-full justify-between rounded-none border border-border"
-          aria-pressed={look === value}
+          pressed={look === value}
+          label={label}
           onClick={() => {
             setLook(value);
           }}
-        >
-          {label}
-          {look === value && <Check className="size-4" aria-hidden="true" />}
-        </Button>
+        />
       ))}
       <p className="text-[length:var(--font-small-size)] leading-relaxed text-muted-foreground">
         Change the look mid-payment. The session stays intact.

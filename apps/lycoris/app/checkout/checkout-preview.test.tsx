@@ -5,7 +5,7 @@ import { render } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { CheckoutPreview } from "./checkout-preview";
 
-function Preview({ look }: { look: "default" | "brand" }) {
+function Preview({ look }: { look: "default" | "brand" | "custom" }) {
   return (
     <SettleProvider
       config={{
@@ -25,21 +25,28 @@ function Preview({ look }: { look: "default" | "brand" }) {
   );
 }
 
-function cardFrame(node: ReactNode) {
+function bodyClass(node: ReactNode) {
   const view = render(node);
-  const card = view.container.querySelector(".sk-checkout");
-  if (!card?.parentElement) throw new Error("checkout card missing");
-  return card.parentElement.className;
+  const body = view.container.querySelector("[data-checkout-body]");
+  if (!body) throw new Error("checkout body missing");
+  return body.className;
 }
 
-test("merchant theme keeps padding inside the checkout card", () => {
-  const className = cardFrame(<Preview look="brand" />);
-  expect(className).toContain("[&_.sk-checkout]:p-6");
-  expect(className).not.toContain("[&_.sk-checkout]:p-0");
-});
-
-test("default appearance stays flush with the preview panel", () => {
-  const className = cardFrame(<Preview look="default" />);
-  expect(className).toContain("[&_.sk-checkout]:p-0");
-  expect(className).not.toContain("[&_.sk-checkout]:p-6");
+test("every appearance shares one card slot and the same padding", () => {
+  const view = render(<Preview look="brand" />);
+  const looks = [...view.container.querySelectorAll("[data-look]")];
+  expect(looks.map((cell) => cell.getAttribute("data-look"))).toEqual([
+    "default",
+    "light",
+    "brand",
+    "custom",
+  ]);
+  for (const cell of looks) {
+    expect(cell.className).toContain("col-start-1");
+    expect(cell.className).toContain("row-start-1");
+  }
+  const visible = looks.find((cell) => !cell.classList.contains("invisible"));
+  expect(visible?.getAttribute("data-look")).toBe("brand");
+  expect(bodyClass(<Preview look="default" />)).toBe(bodyClass(<Preview look="brand" />));
+  expect(bodyClass(<Preview look="default" />)).not.toContain("[&_.sk-checkout]:p-0");
 });

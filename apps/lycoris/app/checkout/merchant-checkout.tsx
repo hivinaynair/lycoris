@@ -28,7 +28,7 @@ export function MerchantCheckout({
   const txHash = "txHash" in state ? state.txHash : undefined;
   const settlementUrl = useSettlementExplorerUrl();
   return (
-    <Card className="rounded-none border border-border shadow-sm">
+    <Card className="w-full rounded-none border border-border shadow-sm">
       <CardHeader>
         <CardDescription>Melbourne weather · test checkout</CardDescription>
         <CardTitle>

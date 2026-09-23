@@ -1,7 +1,7 @@
 {
   "extends": "@repo/typescript-config/base.json",
   "include": ["src", "api"],
-  "exclude": ["src/**/*.test.ts"],
+  "exclude": ["src/**/*.test.ts", "src/lib/clients-test-double.ts"],
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
