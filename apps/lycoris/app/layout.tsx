@@ -41,7 +41,7 @@ export default function RootLayout({
         <DesignFonts />
       </head>
       <body className="bg-canvas bg-[repeating-linear-gradient(0deg,var(--canvas-line)_0px,var(--canvas-line)_1px,transparent_1px,transparent_5px)]">
-        <ThemeProvider defaultTheme="dark" storageKey="lycoris-theme">
+        <ThemeProvider forcedTheme="light" enableSystem={false} storageKey="lycoris-theme">
           <NuqsAdapter>
             <TooltipProvider>
               <AppShell>{children}</AppShell>

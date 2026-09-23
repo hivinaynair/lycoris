@@ -1,6 +1,5 @@
 "use client";
 
-import { ThemeToggle } from "@repo/ui/components/theme-toggle";
 import { cn } from "@repo/ui/lib/utils";
 import { ArrowUpRight, Asterisk } from "lucide-react";
 import Link from "next/link";
@@ -55,7 +54,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                 {label}
               </Link>
             ))}
-            <ThemeToggle />
             <a
               href="https://github.com/hivinaynair/lycoris"
               className="hidden items-center gap-1 bg-primary px-4 py-2 text-primary-foreground sm:flex"
