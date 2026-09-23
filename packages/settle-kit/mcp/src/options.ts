@@ -32,8 +32,6 @@ export type SettleMcpOptions = {
   allowlist: string[];
   /** Idempotency store. Defaults to a per-process in-memory store. */
   store?: PaymentStore;
-  requestStateKey?: Uint8Array;
-  requestStateTtlSeconds?: number;
   rpcUrl?: string;
   registryAddress?: Address;
   ports?: SettleMcpPorts;

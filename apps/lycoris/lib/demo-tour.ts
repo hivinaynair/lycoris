@@ -12,16 +12,16 @@ export const DEMO_TOUR = [
     href: "/demo?scenario=0&tour=1",
     action: "Try the agent",
     description:
-      "Choose Get me the report. The agent requests the paid API, checks its permission to spend, and buys the same report over x402.",
-    evidence: "The request, payment terms, permission checks, and settlement in one trace.",
+      "Choose Get me the report. The agent requests the paid API, signs the payment, and buys the same report over x402.",
+    evidence: "The request, payment terms, facilitator checks, and settlement in one trace.",
   },
   {
     title: "See a purchase refused",
     href: "/demo?scenario=1&tour=1",
     action: "Try the spending limit",
     description:
-      "Request the report with the spending-limit scenario. This agent’s mandate cannot cover the price, so the purchase is refused before signing.",
-    evidence: "A spending-limit explanation and no settlement transaction.",
+      "Request the report with the spending-limit scenario. This agent’s mandate cannot cover the price, so the facilitator refuses the payment when it verifies.",
+    evidence: "A spending-limit refusal from verification, and no settled purchase.",
   },
   {
     title: "Inspect the evidence",

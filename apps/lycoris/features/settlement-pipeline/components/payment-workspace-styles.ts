@@ -11,7 +11,7 @@ const styles = {
   agentName: "text-[length:calc(15px*var(--rig-text-scale,1))] fill-foreground",
   guide:
     "fill-muted-foreground font-mono text-[length:calc(10px*var(--rig-text-scale,1))] tracking-[1.3px] [&_path]:stroke-border [&_path]:[stroke-dasharray:2_7]",
-  wire: "group/wire fill-none stroke-border stroke-[1.5] data-[flow=preflight]:[&>path:first-child]:[stroke-dasharray:4_5] data-[state=approved]:stroke-chart-2 data-[state=rejected]:stroke-destructive data-[state=skipped]:[stroke-dasharray:3_6]",
+  wire: "group/wire fill-none stroke-border stroke-[1.5] data-[state=approved]:stroke-chart-2 data-[state=rejected]:stroke-destructive data-[state=skipped]:[stroke-dasharray:3_6]",
   exchangeReveal: "animate-machine-reveal",
   packet:
     "stroke-primary stroke-3 [stroke-dasharray:7_29] opacity-0 group-data-[state=running]/wire:opacity-100 group-data-[state=running]/wire:animate-machine-travel group-data-[state=approved]/wire:opacity-70 group-data-[state=approved]/wire:animate-machine-travel-slow",

@@ -23,7 +23,7 @@ const decisions = [
   },
   {
     title: "Payment authority belongs to the host",
-    text: "The agent can request a report, but its authenticated session determines the wallet and allowed resource. A signed mandate binds the payer, merchant, per-payment ceiling, and expiry. Preclear can refuse a purchase before signing; the facilitator checks permission again at verification and settlement. Identity proves a registry binding, not KYC.",
+    text: "The agent can request a report, but its authenticated session determines the wallet and allowed resource. A signed mandate is the grant: payer, merchant, per-payment ceiling, and expiry. The facilitator enforces that grant, plus identity and balance, when it verifies and settles. Identity proves a registry binding, not KYC.",
     source: "apps/agent/agent/tools/fetch_paid_resource.ts",
     label: "Read the agent payment tool",
   },
@@ -77,8 +77,8 @@ export default function CaseStudyPage() {
               → USDC transfer → receipt → report.
             </p>
             <p>
-              <strong>Agent:</strong> paid API request → HTTP 402 → permission preclear → signed
-              retry → facilitator verification and settlement → report and decision evidence.
+              <strong>Agent:</strong> paid API request → HTTP 402 → signed retry → facilitator
+              verification and settlement → report and decision evidence.
             </p>
           </div>
           <p className="text-muted-foreground">

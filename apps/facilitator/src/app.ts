@@ -4,11 +4,8 @@ import type { Context } from "hono";
 import { Hono } from "hono";
 import { isHex, keccak256 } from "viem";
 import { getDb } from "./lib/db.js";
-import { verifyDeps } from "./lib/deps.js";
-import { parseBigIntField, readJsonObject } from "./lib/http.js";
 import { type PaymentBody, readPaymentBody } from "./lib/payment.js";
 import { pipelineGateFor } from "./lib/pipeline-progress.js";
-import { evaluatePreclear } from "./lib/preclear.js";
 import { requestCtx } from "./lib/request-context.js";
 import { facilitator } from "./lib/x402.js";
 
@@ -81,34 +78,6 @@ app.get("/pipeline/progress", (c) => {
   return c.json({
     gate: pipelineGateFor(payer, Number.isFinite(since) ? since : 0),
   });
-});
-
-app.post("/preclear", async (c) => {
-  try {
-    const body = await readJsonObject(c);
-    if (body instanceof Response) return body;
-    if (typeof body.payer !== "string" || !body.payer.startsWith("0x")) {
-      return c.json({ error: "payer is required" }, 400);
-    }
-    const amountAtomic = parseBigIntField(body.amountAtomic, "amountAtomic");
-    if (typeof amountAtomic === "string") return c.json({ error: amountAtomic }, 400);
-    const payer = body.payer;
-    const resource = typeof body.resource === "string" ? body.resource : undefined;
-    const mandateJson = c.req.header("X-AP2-Mandate");
-    const result = await requestCtx.run({ mandateJson }, () =>
-      evaluatePreclear(
-        {
-          payer,
-          amountAtomic,
-          resource,
-        },
-        verifyDeps,
-      ),
-    );
-    return c.json(result);
-  } catch (error) {
-    return c.json({ error: error instanceof Error ? error.message : String(error) }, 500);
-  }
 });
 
 export default app;

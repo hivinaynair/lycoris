@@ -190,9 +190,8 @@ You already do this on the rail. Be precise in the interview:
 
 | Step | What it checks |
 | --- | --- |
-| Agent `/preclear` | Mandate / identity — **not** USDC balance |
-| Facilitator `onBeforeVerify` | `balanceOf` — abort before settle |
-| Facilitator `onBeforeSettle` | `balanceOf` **again** — money can move between the two |
+| Facilitator `onBeforeVerify` | Mandate, identity, and `balanceOf` |
+| Facilitator `onBeforeSettle` | The same checks again — money can move between the two |
 
 Checkout has no facilitator in the middle, so `pay()` does the verify-time job:
 
@@ -271,7 +270,7 @@ await payForResource({ url, paidFetch })
 
 **AP2 mandate in the kit:** sign / serialize / local verify. “This agent may spend up to X until expiry.” Optional header. Not KYC.
 
-**Stay in the Lycoris app:** Eve, allowlist, credential DB, preclear, gate UI. Policy workbench is already gone.
+**Stay in the Lycoris app:** Eve, allowlist, credential DB, and the demo UI. Policy workbench is already gone. The facilitator enforces the mandate on verify and settle.
 
 `apps/agent` `performX402Fetch` becomes `createPaidFetch` + `payForResource`.
 
@@ -443,7 +442,7 @@ flowchart LR
 
 `create-paid-fetch.ts` wraps `fetch` with `@x402/fetch` + host `scheme`. Attaches `X-AP2-Mandate` when `getMandateHeader` returns a string.
 
-`apps/agent/agent/lib/tools.ts` `performX402Fetch` **deletes** in favor of these imports. `fetch_paid_resource.ts` keeps allowlist + preclear + agent-name lookup.
+`apps/agent/agent/lib/tools.ts` `performX402Fetch` **deletes** in favor of these imports. `fetch_paid_resource.ts` keeps the allowlist and agent-name lookup, then pays. Verify and settle enforce the grant.
 
 Mandate EIP-712 stays `AP2Mandate` / chain `84532` — lift from [`packages/shared/src/mandate.ts`](../../packages/shared/src/mandate.ts) so facilitator verify does not drift.
 

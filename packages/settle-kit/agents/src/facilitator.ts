@@ -1,13 +1,3 @@
-export type PreclearResult = { ok: true } | { ok: false; reason: string };
-
-export type PreclearInput = {
-  facilitatorUrl: string;
-  amountAtomic: string;
-  mandateHeader: string;
-  payer: string;
-  resource: string;
-};
-
 export type DecisionRecord = {
   agentId?: string;
   payer?: string;
@@ -20,34 +10,6 @@ export type DecisionRecord = {
   attestationTxHash?: string;
   [key: string]: unknown;
 };
-
-/** Ask the facilitator whether this payment is permitted before spending. */
-export async function preclear(
-  input: PreclearInput,
-  fetchImpl: typeof fetch = fetch,
-): Promise<PreclearResult> {
-  const baseUrl = input.facilitatorUrl.replace(/\/+$/, "");
-  const response = await fetchImpl(`${baseUrl}/preclear`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "X-AP2-Mandate": input.mandateHeader,
-    },
-    body: JSON.stringify({
-      payer: input.payer,
-      amountAtomic: input.amountAtomic,
-      resource: input.resource,
-    }),
-  }).catch(() => undefined);
-
-  if (!response?.ok) return { ok: false, reason: "facilitator_unreachable" };
-
-  const body = (await response.json().catch(() => undefined)) as PreclearResult | undefined;
-  if (!body || typeof body !== "object" || !("ok" in body)) {
-    return { ok: false, reason: "facilitator_unreachable" };
-  }
-  return body;
-}
 
 /** Poll the facilitator for the decision record that follows a settlement. */
 export async function getDecisionRecord(

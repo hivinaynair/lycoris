@@ -53,6 +53,9 @@ function harness(input: {
     ports: {
       fetch: async (url, init) => {
         facilitatorCalls += 1;
+        if (String(url).includes("/preclear")) {
+          throw new Error("pay must not call /preclear");
+        }
         if (String(url).includes("decision-records")) {
           return new Response(JSON.stringify({ decisionRecord: { agentId: "1" } }), {
             status: 200,

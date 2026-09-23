@@ -21,7 +21,7 @@ describe("decision resource evidence", () => {
     expect(record.route).toEqual({ path: "/api/weather/public", price: "0.1 USDC" });
   });
 
-  it("retains legacy and preclear URL strings", () => {
+  it("retains URL strings from older records", () => {
     expect(routeFromResource("https://lycoris.example/api/weather/public", 100_000n)).toEqual({
       path: "/api/weather/public",
       price: "0.1 USDC",

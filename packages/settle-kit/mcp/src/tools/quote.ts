@@ -1,5 +1,4 @@
-import { parseMandateHeader, quoteResource } from "@settle-kit/agents";
-import { preclear } from "../facilitator.ts";
+import { quoteResource } from "@settle-kit/agents";
 import { quoteNonceFor } from "../ids.ts";
 import { toMoney } from "../money.ts";
 import type { SettleMcpOptions } from "../options.ts";
@@ -9,6 +8,7 @@ export function isAllowlisted(url: string, allowlist: string[]): boolean {
   return allowlist.includes(url);
 }
 
+/** x402 terms only. Permission is enforced later, on verify and settle. */
 export async function quoteResourceTool(url: string, options: SettleMcpOptions) {
   if (!isAllowlisted(url, options.allowlist)) {
     return jsonError("not_allowlisted", { url, reason: "not_allowlisted" });
@@ -20,19 +20,6 @@ export async function quoteResourceTool(url: string, options: SettleMcpOptions) 
   if (!quoted) {
     return jsonError("not_x402", { url, reason: "not_x402" });
   }
-
-  const [signer, mandateHeader] = await Promise.all([options.getSigner(), options.getMandate()]);
-  const parsed = parseMandateHeader(mandateHeader);
-  const verdict = await preclear(
-    {
-      facilitatorUrl: options.facilitatorUrl,
-      amountAtomic: quoted.amountAtomic,
-      mandateHeader,
-      payer: signer.address,
-      resource: url,
-    },
-    fetchImpl,
-  );
 
   const nonce = quoteNonceFor({
     amountAtomic: quoted.amountAtomic,
@@ -46,7 +33,5 @@ export async function quoteResourceTool(url: string, options: SettleMcpOptions) 
     payTo: quoted.payTo,
     quoteNonce: nonce,
     challenge: quoted.challenge,
-    preclear: verdict,
-    mandateValid: Boolean(parsed),
   });
 }

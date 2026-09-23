@@ -15,7 +15,7 @@ const body = `# Lycoris · Settle Kit
 
 - @settle-kit/core: createCheckout({ amount, getSigner, destination }). pay() prepares and submits; settled waits for a receipt. No React, DOM, wagmi or x402.
 - @settle-kit/react: SettleProvider, useCheckout().pay({ amount }), optional Checkout card. React 19 and viem 2.
-- @settle-kit/agents: createPaidFetch + payForResource, AP2 mandate helpers, facilitator preclear.
+- @settle-kit/agents: createPaidFetch + payForResource, AP2 mandate helpers, decision-record lookup.
 - @settle-kit/server: a Next.js paid-route wrapper.
 - @settle-kit/mcp: a local stdio MCP server that buys x402-gated resources. Modern-only (2026-07-28). bunx @settle-kit/mcp does not work yet; nothing is published.
 

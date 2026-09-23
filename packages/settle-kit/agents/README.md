@@ -14,7 +14,7 @@ await payForResource({ url, paidFetch });
 
 Mandate: `signMandate` / `serializeMandateHeader` / `verifyMandateLocal`. EIP-712 domain `AP2Mandate` on chain `84532` — same as the Lycoris facilitator. Optional `X-AP2-Mandate` header. Not KYC.
 
-`preclear` and `getDecisionRecord` talk to that facilitator. Stay in the host app: Eve, URL allowlist, credential store, gate UI.
+`getDecisionRecord` reads the facilitator’s verify and settle evidence. Stay in the host app: Eve, URL allowlist, and credential store.
 
 ## Fetch compatibility and request metadata
 

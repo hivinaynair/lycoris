@@ -1,9 +1,4 @@
-import {
-  acceptedContent,
-  type CallToolResult,
-  type InputRequiredResult,
-  inputRequired,
-} from "@modelcontextprotocol/server";
+import type { CallToolResult } from "@modelcontextprotocol/server";
 import {
   createPaidFetch,
   type PaidFetch,
@@ -12,33 +7,19 @@ import {
   quoteResource,
   verifyMandateLocal,
 } from "@settle-kit/agents";
-import { failureGateForReason, getDecisionRecord, isHeldReason, preclear } from "../facilitator.ts";
+import { failureGateForReason, getDecisionRecord } from "../facilitator.ts";
 import { derivePaymentId, quoteNonceFor } from "../ids.ts";
 import { toMoney } from "../money.ts";
 import { BASE_SEPOLIA_CAIP2, type SettleMcpOptions } from "../options.ts";
 import { jsonError, jsonResult } from "../result.ts";
-import type { PayPhase } from "../state.ts";
 import { explorerUrl, type PaymentRecord, type PaymentStore } from "../store.ts";
 import { isAllowlisted } from "./quote.ts";
-
-export type PayRound = {
-  requestState: () => PayPhase | undefined;
-  inputResponses: unknown;
-  mint: (phase: PayPhase) => Promise<string>;
-};
-
-const APPROVAL_SCHEMA = {
-  type: "object" as const,
-  properties: { approved: { type: "boolean" as const } },
-  required: ["approved"],
-};
 
 export async function payForResourceTool(
   url: string,
   options: SettleMcpOptions,
   store: PaymentStore,
-  round?: PayRound,
-): Promise<CallToolResult | InputRequiredResult> {
+): Promise<CallToolResult> {
   if (!isAllowlisted(url, options.allowlist)) {
     return jsonError("not_allowlisted", { url, reason: "not_allowlisted" });
   }
@@ -64,23 +45,7 @@ export async function payForResourceTool(
   const existing = await store.get(payId);
   if (existing?.settled) return jsonResult(existing);
 
-  const state = round?.requestState();
-  if (state?.step === "awaiting-approval") {
-    return continueAfterApproval({
-      url,
-      options,
-      store,
-      ...(round ? { round } : {}),
-      signer,
-      mandateHeader,
-      quoted,
-      quoteNonce,
-      payId,
-      fetchImpl,
-      state,
-    });
-  }
-
+  // The grant the agent already holds. The facilitator checks it again on verify and settle.
   const parsed = parseMandateHeader(mandateHeader);
   if (!parsed) return jsonError("mandate_invalid", { reason: "mandate_invalid", payId });
 
@@ -103,42 +68,6 @@ export async function payForResourceTool(
     );
   }
 
-  const verdict = await preclear(
-    {
-      facilitatorUrl: options.facilitatorUrl,
-      amountAtomic: quoted.amountAtomic,
-      mandateHeader,
-      payer: signer.address,
-      resource: url,
-    },
-    fetchImpl,
-  );
-
-  if (!verdict.ok && isHeldReason(verdict.reason)) {
-    if (!round) {
-      return jsonError("held", {
-        reason: verdict.reason,
-        payId,
-        amount: toMoney(quoted.amountAtomic),
-      });
-    }
-    return askApproval(round, {
-      step: "awaiting-approval",
-      payId,
-      url,
-      amountAtomic: quoted.amountAtomic,
-      quoteNonce,
-    });
-  }
-
-  if (!verdict.ok) {
-    return jsonError(verdict.reason, {
-      reason: verdict.reason,
-      payId,
-      gate: failureGateForReason(verdict.reason),
-    });
-  }
-
   return submitPayment({
     url,
     options,
@@ -148,82 +77,6 @@ export async function payForResourceTool(
     quoted,
     payId,
     fetchImpl,
-  });
-}
-
-async function continueAfterApproval(input: {
-  url: string;
-  options: SettleMcpOptions;
-  store: PaymentStore;
-  round?: PayRound;
-  signer: Awaited<ReturnType<SettleMcpOptions["getSigner"]>>;
-  mandateHeader: string;
-  quoted: NonNullable<Awaited<ReturnType<typeof quoteResource>>>;
-  quoteNonce: string;
-  payId: string;
-  fetchImpl: typeof fetch;
-  state: PayPhase;
-}): Promise<CallToolResult | InputRequiredResult> {
-  const accepted = acceptedContent<{ approved: boolean }>(
-    input.round?.inputResponses as never,
-    "approval",
-  );
-  if (!accepted?.approved) {
-    return jsonError("approval_declined", {
-      reason: "approval_declined",
-      payId: input.state.payId,
-    });
-  }
-
-  if (
-    input.quoted.amountAtomic !== input.state.amountAtomic ||
-    input.quoteNonce !== input.state.quoteNonce ||
-    input.url !== input.state.url
-  ) {
-    if (!input.round) {
-      return jsonError("quote_drift", {
-        reason: "quote_drift",
-        payId: input.state.payId,
-        approved: toMoney(input.state.amountAtomic),
-        current: toMoney(input.quoted.amountAtomic),
-      });
-    }
-    return askApproval(input.round, {
-      step: "awaiting-approval",
-      payId: derivePaymentId({
-        agent: input.signer.address,
-        resource: input.url,
-        amountAtomic: input.quoted.amountAtomic,
-        quoteNonce: input.quoteNonce,
-      }),
-      url: input.url,
-      amountAtomic: input.quoted.amountAtomic,
-      quoteNonce: input.quoteNonce,
-    });
-  }
-
-  return submitPayment({
-    url: input.url,
-    options: input.options,
-    store: input.store,
-    signer: input.signer,
-    mandateHeader: input.mandateHeader,
-    quoted: input.quoted,
-    payId: input.state.payId,
-    fetchImpl: input.fetchImpl,
-  });
-}
-
-async function askApproval(round: PayRound, phase: PayPhase): Promise<InputRequiredResult> {
-  const amount = toMoney(phase.amountAtomic);
-  return inputRequired({
-    inputRequests: {
-      approval: inputRequired.elicit({
-        message: `Approve payment of ${amount.display} for ${phase.url}?`,
-        requestedSchema: APPROVAL_SCHEMA,
-      }),
-    },
-    requestState: await round.mint(phase),
   });
 }
 

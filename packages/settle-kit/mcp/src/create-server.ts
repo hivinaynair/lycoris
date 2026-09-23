@@ -1,11 +1,6 @@
-import {
-  createRequestStateCodec,
-  McpServer,
-  type ServerContext,
-} from "@modelcontextprotocol/server";
+import { McpServer } from "@modelcontextprotocol/server";
 import { z } from "zod";
 import type { SettleMcpOptions } from "./options.ts";
-import type { PayPhase } from "./state.ts";
 import { createMemoryStore } from "./store.ts";
 import { getDecisionRecordTool, getPaymentStatus } from "./tools/evidence.ts";
 import { getAgentIdentity, getBalance, getMandate } from "./tools/identity.ts";
@@ -22,18 +17,10 @@ const PayIdArgs = z.object({ pay_id: z.string() });
  */
 export function createSettleMcpServer(options: SettleMcpOptions): McpServer {
   const store = options.store ?? createMemoryStore();
-  const stateCodec = createRequestStateCodec<PayPhase>({
-    key: options.requestStateKey ?? crypto.getRandomValues(new Uint8Array(32)),
-    ttlSeconds: options.requestStateTtlSeconds ?? 300,
-    bind: (ctx) => String(ctx.mcpReq.method),
-  });
 
   const server = new McpServer(
     { name: "settle-kit", version: "0.0.1" },
-    {
-      capabilities: { tools: {} },
-      requestState: { verify: stateCodec.verify },
-    },
+    { capabilities: { tools: {} } },
   );
 
   server.registerTool(
@@ -70,7 +57,7 @@ export function createSettleMcpServer(options: SettleMcpOptions): McpServer {
     "quote_resource",
     {
       title: "Quote a resource",
-      description: "x402 terms and a preclear verdict for a URL. Does not spend.",
+      description: "x402 terms for a URL. Does not spend or check permission.",
       inputSchema: UrlArgs,
     },
     async ({ url }) => quoteResourceTool(url, options),
@@ -83,12 +70,7 @@ export function createSettleMcpServer(options: SettleMcpOptions): McpServer {
       description: "Buy an x402-gated resource. Idempotent for the same business event.",
       inputSchema: UrlArgs,
     },
-    async ({ url }, ctx: ServerContext) =>
-      payForResourceTool(url, options, store, {
-        requestState: () => ctx.mcpReq.requestState<PayPhase>(),
-        inputResponses: ctx.mcpReq.inputResponses,
-        mint: (phase) => stateCodec.mint(phase, ctx),
-      }),
+    async ({ url }) => payForResourceTool(url, options, store),
   );
 
   server.registerTool(

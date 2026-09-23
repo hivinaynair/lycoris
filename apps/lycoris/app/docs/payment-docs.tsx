@@ -60,10 +60,9 @@ function AgentsSection() {
       </p>
       <CodeExample title="buy-resource.ts" code={examples.paidFetch} language="typescript" />
       <p className="text-muted-foreground">
-        The host owns its URL allowlist, signer, credentials, and optional preclear. The package
-        also exports quoteResource, signMandate, serializeMandateHeader, and verifyMandateLocal.
-        Payment metadata belongs to each response, so concurrent requests do not share a
-        last-payment record.
+        The host owns its URL allowlist, signer, and credentials. The package also exports
+        quoteResource, signMandate, serializeMandateHeader, and verifyMandateLocal. Payment metadata
+        belongs to each response, so concurrent requests do not share a last-payment record.
       </p>
     </DocsSection>
   );
