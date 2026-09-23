@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { committedRecordFrom, verifyCommitment } from "@repo/shared/commitment";
 import { Decision, IdentityStatus } from "@repo/shared/types";
+import { clientsDouble } from "./clients-test-double.ts";
 
 process.env.DATABASE_URL = "postgresql://fake";
 process.env.FACILITATOR_PRIVATE_KEY =
@@ -12,11 +13,7 @@ const mockWriteContract = mock(async ({ args }: { args: unknown[] }) => {
   captured.args = args;
   return "0xattesttx";
 });
-
-mock.module("./clients.js", () => ({
-  account: "0xaccount",
-  walletClient: { writeContract: mockWriteContract },
-}));
+clientsDouble.writeContract = mockWriteContract;
 
 mock.module("../env.js", () => ({
   env: { ATTESTATION_REGISTRY_ADDRESS: "0x0000000000000000000000000000000000000001" },

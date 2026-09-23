@@ -9,6 +9,7 @@ import type {
   FacilitatorSettleResultContext,
 } from "@x402/core/facilitator";
 import * as attest from "../lib/attest.js";
+import { clientsDouble } from "../lib/clients-test-double.ts";
 import { requestCtx } from "../lib/request-context.js";
 
 const MERCHANT = "0x9999999999999999999999999999999999999999" as const;
@@ -38,14 +39,9 @@ mock.module("@repo/db", () => ({
 const mockWriteContract = mock(async () => "0xattesttx");
 const mockWaitForTransactionReceipt = mock(async () => ({ status: "success" }));
 const mockReadContract = mock(async () => 1000000000n); // 1000 USDC — sufficient by default
-mock.module("../lib/clients.js", () => ({
-  walletClient: { writeContract: mockWriteContract },
-  publicClient: {
-    waitForTransactionReceipt: mockWaitForTransactionReceipt,
-    readContract: mockReadContract,
-  },
-  account: "0xaccount",
-}));
+clientsDouble.writeContract = mockWriteContract;
+clientsDouble.waitForTransactionReceipt = mockWaitForTransactionReceipt;
+clientsDouble.readContract = mockReadContract;
 
 const mockPublishAttestation = spyOn(attest, "publishAttestation").mockImplementation(async () => ({
   attestationTx: "0xattesttx",
