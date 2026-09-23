@@ -27,7 +27,9 @@ export function CheckoutPreview({ look, rail }: { look: Look; rail: CheckoutRail
             : "Real transactions with test USDC from your connected wallet. You pay the transfer and gas."}
         </p>
       </div>
-      <div className={styles.checkoutBody}>
+      <div
+        className={`${styles.checkoutBody} ${look === "brand" ? styles.merchantCard : styles.flushCard}`}
+      >
         {look === "custom" ? (
           <div className="w-full max-w-[400px]">
             <MerchantCheckout

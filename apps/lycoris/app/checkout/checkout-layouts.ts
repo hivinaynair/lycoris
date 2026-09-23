@@ -10,7 +10,9 @@ const styles = {
   preview:
     "min-w-0 w-full max-w-[560px] justify-self-end border border-border bg-card max-[761px]:max-w-none",
   checkoutBody:
-    "flex justify-center p-5 max-[761px]:p-3 [&_.sk-checkout]:max-w-none [&_.sk-checkout]:border-0 [&_.sk-checkout]:p-0 [&_.sk-checkout]:shadow-none [&_.sk-merchant]:hidden [&_.sk-footer]:hidden",
+    "flex justify-center p-5 max-[761px]:p-3 [&_.sk-checkout]:max-w-none [&_.sk-checkout]:border-0 [&_.sk-checkout]:shadow-none [&_.sk-merchant]:hidden [&_.sk-footer]:hidden",
+  flushCard: "[&_.sk-checkout]:p-0",
+  merchantCard: "[&_.sk-checkout]:p-6 max-[761px]:[&_.sk-checkout]:p-5",
   disclosure: "group min-w-0 border-t border-border last:border-b",
   summary:
     "flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-small font-medium [&::-webkit-details-marker]:hidden",
