@@ -33,3 +33,15 @@ test("switches from the sponsored rail to the wallet rail", () => {
   fireEvent.click(screen.getByRole("button", { name: "Your wallet (EOA)" }));
   expect(screen.getByTestId("checkout-rail").textContent).toBe("wallet");
 });
+
+test("keeps a check slot in every option so the icon cannot overflow the button", () => {
+  render(<Controls />);
+  const options = screen.getAllByRole("button");
+  expect(options.length).toBeGreaterThan(0);
+  for (const option of options) {
+    const icon = option.querySelector("svg");
+    expect(icon).not.toBeNull();
+    expect(option.className).toContain("overflow-hidden");
+    expect(option.className).toContain("min-w-0");
+  }
+});

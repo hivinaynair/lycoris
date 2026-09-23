@@ -8,13 +8,20 @@ import styles from "./checkout-layouts";
 import type { CheckoutRail } from "./checkout-rail";
 import { IntegrationCode } from "./integration-code";
 
+const LOOKS = ["default", "light", "brand", "custom"] as const satisfies readonly Look[];
+
+function embedCode(look: Look, rail: CheckoutRail) {
+  if (look === "custom") {
+    return `import { useCheckout } from "@settle-kit/react";\n\n// Your components. The same payment lifecycle.\nconst { state, pay } = useCheckout();\n\n// Call from your Pay button.\nawait pay({ amount: "0.1" });\n// State narrows on state.status.`;
+  }
+  const appearance = JSON.stringify(appearances[look], null, 2);
+  return rail === "wallet"
+    ? `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, getSigner }}\n  appearance={${appearance}}\n>\n  <Checkout amount="0.1" title="Melbourne weather report" />\n</SettleProvider>`
+    : `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, ...createSponsoredPayment(recipient) }}\n  appearance={${appearance}}\n>\n  <Checkout amount="0.1" title="Melbourne weather report" />\n</SettleProvider>`;
+}
+
 export function CheckoutEmbed({ look, rail }: { look: Look; rail: CheckoutRail }) {
-  const code =
-    look === "custom"
-      ? `import { useCheckout } from "@settle-kit/react";\n\n// Your components. The same payment lifecycle.\nconst { state, pay } = useCheckout();\n\n// Call from your Pay button.\nawait pay({ amount: "0.1" });\n// State narrows on state.status.`
-      : rail === "wallet"
-        ? `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, getSigner }}\n  appearance={${JSON.stringify(appearances[look], null, 2)}}\n>\n  <Checkout amount="0.1" title="Melbourne weather report" />\n</SettleProvider>`
-        : `import { SettleProvider } from "@settle-kit/react";\nimport { Checkout } from "@settle-kit/react/ui";\nimport "@settle-kit/react/styles.css";\n\n<SettleProvider\n  config={{ appName: "Melbourne weather", destination, ...createSponsoredPayment(recipient) }}\n  appearance={${JSON.stringify(appearances[look], null, 2)}}\n>\n  <Checkout amount="0.1" title="Melbourne weather report" />\n</SettleProvider>`;
+  const code = embedCode(look, rail);
   return (
     <details className={styles.disclosure} open>
       <summary className={styles.summary}>
@@ -39,7 +46,21 @@ export function CheckoutEmbed({ look, rail }: { look: Look; rail: CheckoutRail }
           </h2>
           <CopyCode key={`${look}:${rail}`} code={code} />
         </div>
-        <IntegrationCode code={code} />
+        <div className="grid">
+          {LOOKS.map((value) => {
+            const active = value === look;
+            return (
+              <div
+                key={value}
+                className={active ? "col-start-1 row-start-1" : "invisible col-start-1 row-start-1"}
+                inert={active ? undefined : true}
+                aria-hidden={active ? undefined : true}
+              >
+                <IntegrationCode code={embedCode(value, rail)} />
+              </div>
+            );
+          })}
+        </div>
         <p className="border-t border-border px-5 py-4 text-[length:var(--font-small-size)] leading-relaxed text-muted-foreground">
           {rail === "wallet"
             ? "This matches the live Your wallet rail: getSigner is a Coinbase Wallet or other injected EOA. pay({ amount }) is unchanged."

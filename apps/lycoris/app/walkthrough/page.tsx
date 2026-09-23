@@ -52,11 +52,14 @@ export default function WalkthroughPage() {
           </li>
         ))}
       </ol>
-      <details className="border border-border p-5 sm:p-6">
-        <summary className="cursor-pointer font-medium">
+      <section
+        className="space-y-5 border border-border p-5 sm:p-6"
+        aria-labelledby="overview-heading"
+      >
+        <h2 id="overview-heading" className="font-medium">
           Watch the narrated overview · 90 seconds
-        </summary>
-        <div className="mt-5 max-w-5xl space-y-3">
+        </h2>
+        <div className="max-w-5xl space-y-3">
           <video
             className="aspect-[8/5] w-full border border-border"
             controls
@@ -86,7 +89,7 @@ export default function WalkthroughPage() {
             Read the transcript
           </a>
         </div>
-      </details>
+      </section>
       <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
         If a live service is unavailable or the sponsor budget is exhausted, use the existing
         records in the{" "}

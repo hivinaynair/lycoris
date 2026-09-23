@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { PageFrame, PageHead } from "@/components/page-chrome";
+import { PageFrame } from "@/components/page-chrome";
 
 export const metadata: Metadata = {
   title: "Engineering USDC checkout for people and agents · Lycoris",
@@ -32,23 +32,30 @@ const decisions = [
 export default function CaseStudyPage() {
   return (
     <PageFrame className="pt-8 sm:pt-12">
-      <PageHead
-        eyebrow="Engineering case study · Vinay Nair"
-        title="Making a payment useful to an application."
-        question="I built Lycoris to explore what it takes for a person or an AI agent to buy a paid API response with USDC: permission, confirmation, delivery, and evidence."
-      />
-      <div className="flex flex-wrap gap-5 text-sm">
-        <Link href="/walkthrough" className="font-medium underline underline-offset-4">
-          Take the guided tour →
-        </Link>
-        <a
-          href="https://github.com/hivinaynair/lycoris/blob/main/docs/case-study.md"
-          className="underline underline-offset-4"
-        >
-          Full write-up and code references ↗
-        </a>
-      </div>
-      <article className="max-w-3xl space-y-10 text-base leading-relaxed">
+      <article className="mx-auto flex w-full max-w-2xl flex-col gap-10 text-base leading-relaxed">
+        <header className="space-y-5">
+          <p className="font-sans text-micro tracking-[0.16em] text-muted-foreground uppercase">
+            Engineering case study · Vinay Nair
+          </p>
+          <h1 className="text-display font-medium leading-[1.04] tracking-[-0.03em]">
+            Making a payment useful to an application.
+          </h1>
+          <p className="text-lead leading-[1.6] text-muted-foreground">
+            I built Lycoris to explore what it takes for a person or an AI agent to buy a paid API
+            response with USDC: permission, confirmation, delivery, and evidence.
+          </p>
+        </header>
+        <div className="flex flex-wrap gap-5 text-sm">
+          <Link href="/walkthrough" className="font-medium underline underline-offset-4">
+            Take the guided tour →
+          </Link>
+          <a
+            href="https://github.com/hivinaynair/lycoris/blob/main/docs/case-study.md"
+            className="underline underline-offset-4"
+          >
+            Full write-up and code references ↗
+          </a>
+        </div>
         <section className="space-y-3">
           <h2 className="text-2xl font-medium tracking-tight">A deliberately small product</h2>
           <p className="text-muted-foreground">
@@ -130,10 +137,10 @@ export default function CaseStudyPage() {
             and carries no granted open-source license. Those limits are part of the design scope.
           </p>
         </section>
+        <Link href="/walkthrough" className="text-sm font-medium underline underline-offset-4">
+          See those decisions in the demo →
+        </Link>
       </article>
-      <Link href="/walkthrough" className="text-sm font-medium underline underline-offset-4">
-        See those decisions in the demo →
-      </Link>
     </PageFrame>
   );
 }
