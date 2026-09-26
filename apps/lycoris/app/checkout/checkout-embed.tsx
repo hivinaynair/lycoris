@@ -8,8 +8,6 @@ import styles from "./checkout-layouts";
 import type { CheckoutRail } from "./checkout-rail";
 import { IntegrationCode } from "./integration-code";
 
-const LOOKS = ["default", "light", "brand", "custom"] as const satisfies readonly Look[];
-
 function embedCode(look: Look, rail: CheckoutRail) {
   if (look === "custom") {
     return `import { useCheckout } from "@settle-kit/react";\n\n// Your components. The same payment lifecycle.\nconst { state, pay } = useCheckout();\n\n// Call from your Pay button.\nawait pay({ amount: "0.1" });\n// State narrows on state.status.`;
@@ -46,21 +44,7 @@ export function CheckoutEmbed({ look, rail }: { look: Look; rail: CheckoutRail }
           </h2>
           <CopyCode key={`${look}:${rail}`} code={code} />
         </div>
-        <div className="grid">
-          {LOOKS.map((value) => {
-            const active = value === look;
-            return (
-              <div
-                key={value}
-                className={active ? "col-start-1 row-start-1" : "invisible col-start-1 row-start-1"}
-                inert={active ? undefined : true}
-                aria-hidden={active ? undefined : true}
-              >
-                <IntegrationCode code={embedCode(value, rail)} />
-              </div>
-            );
-          })}
-        </div>
+        <IntegrationCode code={code} />
         <p className="border-t border-border px-5 py-4 text-[length:var(--font-small-size)] leading-relaxed text-muted-foreground">
           {rail === "wallet"
             ? "This matches the live Your wallet rail: getSigner is a Coinbase Wallet or other injected EOA. pay({ amount }) is unchanged."

@@ -70,7 +70,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </Suspense>
         {children}
       </div>
-      <footer className="mx-auto flex max-w-7xl flex-wrap justify-between gap-3 border-t border-border px-5 py-6 text-xs text-muted-foreground sm:px-7">
+      <footer className="flex w-full flex-wrap justify-between gap-3 border-t border-border px-6 py-6 text-xs text-muted-foreground sm:px-7">
         <p>
           Built by Vinay Nair ·{" "}
           <Link href="/case-study" className="underline underline-offset-4">
